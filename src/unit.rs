@@ -1,83 +1,267 @@
-use anyhow::anyhow;
-use std::collections::{btree_map, BTreeMap};
+use crate::parser::Parser;
+use std::collections::BTreeMap;
 use std::fmt;
-use std::iter::Peekable;
+
+/// The data for a base.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct BaseData {
+    /// The current power.
+    pub power: i32,
+    /// The current prefix.
+    pub prefix: Prefix,
+    /// The multiple of the value contained.
+    pub multiple: u32,
+}
+
+impl BaseData {
+    pub fn big_factor(&self) -> bigdecimal::BigDecimal {
+        let prefix = self.prefix.big_factor();
+
+        if self.multiple == 1 {
+            return prefix;
+        }
+
+        prefix * bigdecimal::BigDecimal::from(self.multiple)
+    }
+
+    pub fn max(self, other: Self) -> Self {
+        if self.big_factor() > other.big_factor() {
+            self
+        } else {
+            other
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(u8)]
+pub enum Prefix {
+    /// `P`.
+    Peta,
+    /// `T`.
+    Tera,
+    /// `G`.
+    Giga,
+    /// `M`.
+    Mega,
+    /// `k`.
+    Kilo,
+    /// Empty prefix.
+    None,
+    /// `m`.
+    Milli,
+    /// `μ`.
+    Micro,
+    /// `n`.
+    Nano,
+}
+
+impl Prefix {
+    /// Get the factor for a given prefix.
+    pub fn factor(&self) -> i32 {
+        match self {
+            Prefix::Peta => 15,
+            Prefix::Tera => 12,
+            Prefix::Giga => 9,
+            Prefix::Mega => 6,
+            Prefix::Kilo => 3,
+            Prefix::None => 0,
+            Prefix::Milli => -3,
+            Prefix::Micro => -6,
+            Prefix::Nano => -9,
+        }
+    }
+
+    /// Get the factor as a bigdecimal.
+    pub fn big_factor(&self) -> bigdecimal::BigDecimal {
+        let mut pow = self.factor();
+
+        if pow == 0 {
+            return bigdecimal::BigDecimal::from(1);
+        }
+
+        let mut base = bigdecimal::BigDecimal::from(10);
+
+        while pow > 0 {
+            base = base * bigdecimal::BigDecimal::from(10);
+            pow -= 1;
+        }
+
+        while pow < 0 {
+            base = base / bigdecimal::BigDecimal::from(10);
+            pow += 1;
+        }
+
+        base
+    }
+
+    /// Parse a character as a prefix.
+    pub(crate) fn parse(c: char) -> Option<Prefix> {
+        Some(match c {
+            'P' => Prefix::Peta,
+            'T' => Prefix::Tera,
+            'G' => Prefix::Giga,
+            'M' => Prefix::Mega,
+            'k' => Prefix::Kilo,
+            'm' => Prefix::Milli,
+            'μ' => Prefix::Micro,
+            'n' => Prefix::Nano,
+            _ => return None,
+        })
+    }
+}
+
+impl Default for Prefix {
+    fn default() -> Self {
+        Prefix::None
+    }
+}
+
+impl fmt::Display for Prefix {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Prefix::Peta => 'P'.fmt(f),
+            Prefix::Tera => 'T'.fmt(f),
+            Prefix::Giga => 'G'.fmt(f),
+            Prefix::Mega => 'M'.fmt(f),
+            Prefix::Kilo => 'k'.fmt(f),
+            Prefix::None => Ok(()),
+            Prefix::Milli => 'm'.fmt(f),
+            Prefix::Micro => 'μ'.fmt(f),
+            Prefix::Nano => 'n'.fmt(f),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(u8)]
+pub enum Base {
+    /// Second base unit.
+    /// Designated as `s`.
+    Second,
+    /// Gram base unit.
+    /// Designated by default as `g`.
+    Gram,
+    /// Meter base unit.
+    /// Designated as `m`.
+    Meter,
+}
+
+impl Base {
+    /// Parse the given character as a base unit.
+    pub fn parse(c: char) -> Option<Self> {
+        Some(match c {
+            's' => Base::Second,
+            'g' => Base::Gram,
+            'm' => Base::Meter,
+            _ => return None,
+        })
+    }
+}
+
+impl fmt::Display for Base {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Base::Second => 's'.fmt(f),
+            Base::Gram => 'g'.fmt(f),
+            Base::Meter => 'm'.fmt(f),
+        }
+    }
+}
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Unit {
-    num: BTreeMap<char, u32>,
-    den: BTreeMap<char, u32>,
+    bases: BTreeMap<Base, BaseData>,
 }
 
 impl Unit {
     pub fn empty() -> Self {
         Self {
-            num: BTreeMap::new(),
-            den: BTreeMap::new(),
+            bases: BTreeMap::new(),
         }
+    }
+
+    /// Construct a new unit.
+    pub(crate) fn new(bases: BTreeMap<Base, BaseData>) -> Self {
+        Self { bases }
     }
 
     /// Test if the unit is the special empty unit.
     pub fn is_empty(&self) -> bool {
-        self.num.iter().all(|e| *e.1 == 0) && self.den.iter().all(|e| *e.1 == 0)
+        self.bases.is_empty()
     }
 
-    /// Create a new unit.
-    pub fn new<N, D>(num: N, den: D) -> Self
-    where
-        N: IntoIterator<Item = (char, u32)>,
-        D: IntoIterator<Item = (char, u32)>,
-    {
-        Self {
-            num: num.into_iter().collect(),
-            den: den.into_iter().collect(),
-        }
-    }
+    /// Get the value factor.
+    pub fn value_factor(&self) -> bigdecimal::BigDecimal {
+        let mut factor = bigdecimal::BigDecimal::from(1);
 
-    pub fn div(mut self, other: Self) -> Option<Self> {
-        for (unit, pow) in other.num {
-            match self.num.entry(unit) {
-                btree_map::Entry::Vacant(..) => return None,
-                btree_map::Entry::Occupied(mut o) => {
-                    let n = (*o.get()).checked_sub(pow)?;
-
-                    if n == 0 {
-                        let _ = o.remove_entry();
-                    } else {
-                        *o.get_mut() = n;
-                    }
-                }
+        for data in self.bases.values() {
+            if data.power > 0 {
+                factor *= bigdecimal::BigDecimal::from(data.multiple);
+            } else {
+                factor = factor / bigdecimal::BigDecimal::from(data.multiple);
             }
         }
 
-        for (unit, pow) in other.den {
-            match self.den.entry(unit) {
-                btree_map::Entry::Vacant(..) => return None,
-                btree_map::Entry::Occupied(mut o) => {
-                    let n = (*o.get()).checked_sub(pow)?;
+        factor
+    }
 
-                    if n == 0 {
-                        let _ = o.remove_entry();
-                    } else {
-                        *o.get_mut() = n;
-                    }
-                }
+    /// Calculate the factor for coercing one unit to another.
+    pub fn factor(
+        &mut self,
+        other: &Self,
+    ) -> Option<(bigdecimal::BigDecimal, bigdecimal::BigDecimal)> {
+        let mut lhs_factor = bigdecimal::BigDecimal::from(1);
+        let mut rhs_factor = bigdecimal::BigDecimal::from(1);
+
+        if self.is_empty() || other.is_empty() {
+            return Some((lhs_factor, rhs_factor));
+        }
+
+        for (unit, rhs) in &other.bases {
+            let lhs = self.bases.get_mut(unit)?;
+
+            if lhs.power != rhs.power {
+                return None;
+            }
+
+            let from = BaseData::max(*lhs, *rhs);
+            lhs_factor *= lhs.big_factor() / from.big_factor();
+            rhs_factor *= rhs.big_factor() / from.big_factor();
+            lhs.prefix = from.prefix;
+            lhs.multiple = from.multiple;
+        }
+
+        Some((lhs_factor, rhs_factor))
+    }
+
+    pub fn mul(&mut self, other: Self, n: i32) -> (bigdecimal::BigDecimal, bigdecimal::BigDecimal) {
+        let mut lhs_factor = bigdecimal::BigDecimal::from(1);
+        let mut rhs_factor = bigdecimal::BigDecimal::from(1);
+
+        for (unit, rhs) in other.bases {
+            let lhs = self.bases.entry(unit).or_insert_with(|| BaseData {
+                prefix: rhs.prefix,
+                power: 0,
+                multiple: 1,
+            });
+            let rhs_power = rhs.power * n;
+
+            let from = BaseData::max(*lhs, rhs);
+            lhs_factor *= lhs.big_factor() / from.big_factor();
+            rhs_factor *= rhs.big_factor() / from.big_factor();
+
+            lhs.power += rhs_power;
+
+            if lhs.power == 0 {
+                self.bases.remove(&unit);
+            } else {
+                lhs.prefix = from.prefix;
+                lhs.multiple = from.multiple;
             }
         }
 
-        Some(self)
-    }
-
-    pub fn mul(mut self, other: Self) -> Self {
-        for (unit, pow) in other.num {
-            *self.num.entry(unit).or_default() += pow;
-        }
-
-        for (unit, pow) in other.den {
-            *self.den.entry(unit).or_default() += pow;
-        }
-
-        self
+        (lhs_factor, rhs_factor)
     }
 }
 
@@ -85,74 +269,24 @@ impl std::str::FromStr for Unit {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s == "1" {
-            return Ok(Unit::default());
-        }
-
-        let mut it = s.char_indices().peekable();
-
-        let mut num = BTreeMap::new();
-        let mut den = BTreeMap::new();
-
-        inner(s, &mut num, &mut it)?;
-        inner(s, &mut den, &mut it)?;
-
-        return Ok(Self { num, den });
-
-        fn inner(
-            s: &str,
-            map: &mut BTreeMap<char, u32>,
-            it: &mut Peekable<impl Iterator<Item = (usize, char)>>,
-        ) -> anyhow::Result<()> {
-            let mut unit = None;
-
-            while let Some((_, c)) = it.next() {
-                match (unit, c) {
-                    (_, '/') => break,
-                    (Some(add), '^') => {
-                        let (start, _) = it.next().ok_or_else(|| anyhow!("missing digit"))?;
-
-                        while let Some((_, '0'..='9')) = it.peek().copied() {
-                            it.next();
-                        }
-
-                        let end = it.peek().map(|n| n.0).unwrap_or(s.len());
-                        let pow = str::parse::<u32>(&s[start..end])?;
-                        *map.entry(add).or_default() += pow;
-                        unit = None;
-                    }
-                    (None, u) => {
-                        unit = Some(u);
-                    }
-                    (Some(add), u) => {
-                        *map.entry(add).or_default() += 1;
-                        unit = Some(u);
-                    }
-                }
-            }
-
-            if let Some(unit) = unit {
-                *map.entry(unit).or_default() += 1;
-            }
-
-            Ok(())
-        }
+        let node = Parser::new(s).parse_unit();
+        crate::eval::unit(s, node)
     }
 }
 
 impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let without_den = self.den.iter().all(|c| *c.1 == 0);
+        let without_den = self.bases.iter().all(|c| c.1.power >= 0);
 
-        if self.num.iter().all(|c| *c.1 == 0) {
+        if self.bases.iter().all(|c| c.1.power == 0) {
             if without_den {
                 return Ok(());
             }
 
             write!(f, "1")?;
         } else {
-            for (unit, pow) in self.num.iter() {
-                fmt_base(*unit, *pow, f)?;
+            for (base, data) in self.bases.iter().filter(|e| e.1.power >= 0) {
+                fmt_base(base, f, data, 1)?;
             }
         }
 
@@ -162,25 +296,40 @@ impl fmt::Display for Unit {
 
         write!(f, "/")?;
 
-        for (unit, pow) in self.den.iter() {
-            fmt_base(*unit, *pow, f)?;
+        for (base, data) in self.bases.iter().filter(|e| e.1.power < 0) {
+            fmt_base(base, f, data, -1)?;
         }
 
         return Ok(());
 
-        fn fmt_base(unit: char, pow: u32, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "{}", unit)?;
+        fn fmt_base(
+            base: &Base,
+            f: &mut fmt::Formatter<'_>,
+            data: &BaseData,
+            n: i32,
+        ) -> fmt::Result {
+            write!(f, "{}", data.prefix)?;
 
-            if pow != 1 {
-                if pow < 10 {
-                    pow_into_char(pow).fmt(f)?;
+            match (base, data.multiple) {
+                (Base::Second, 60) => {
+                    write!(f, "{{minutes}}")?;
+                }
+                (base, _) => {
+                    write!(f, "{}", base)?;
+                }
+            }
+
+            let mut power = (data.power * n) as u32;
+
+            if power != 1 {
+                if power < 10 {
+                    pow_into_char(power).fmt(f)?;
                 } else {
                     let mut chars = Vec::new();
-                    let mut pow = pow;
 
-                    while pow != 0 {
-                        chars.push(pow_into_char(pow % 10));
-                        pow /= 10;
+                    while power != 0 {
+                        chars.push(pow_into_char(power % 10));
+                        power /= 10;
                     }
 
                     for c in chars.into_iter().rev() {

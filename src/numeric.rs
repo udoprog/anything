@@ -2,13 +2,13 @@ use crate::unit::Unit;
 use std::fmt;
 
 pub struct Numeric {
-    pub value: f64,
+    pub value: bigdecimal::BigDecimal,
     pub unit: Unit,
 }
 
 impl Numeric {
     /// Construct a new numerical value.
-    pub fn new(value: f64, unit: Unit) -> Self {
+    pub fn new(value: bigdecimal::BigDecimal, unit: Unit) -> Self {
         Self { value, unit }
     }
 }

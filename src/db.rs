@@ -10,36 +10,20 @@ const SEED: u64 = 0x681da70f3e1e3494;
 /// A matched thing from the database.
 pub enum Match<'a> {
     /// A constant was matched.
-    Constant(&'a Constant),
+    Constant(&'a DbConstant),
 }
 
 /// Open the database.
 pub fn open() -> Result<Db> {
     let hasher = Hasher(());
 
-    let doc: self::serde::Doc = toml::de::from_slice(PHYSICS)?;
+    let mut db = Db {
+        hasher,
+        constants: HashMap::new(),
+    };
 
-    let mut constants: HashMap<Hash, Vec<Arc<Constant>>> = HashMap::new();
-
-    for c in doc.constants {
-        let constant = Arc::new(Constant {
-            names: c.names.iter().cloned().collect(),
-            value: c.value,
-            unit: c
-                .unit
-                .as_deref()
-                .map(str::parse::<Unit>)
-                .transpose()?
-                .unwrap_or_default(),
-        });
-
-        for name in &constant.names {
-            let hash = hasher.hash(name);
-            constants.entry(hash).or_default().push(constant.clone());
-        }
-    }
-
-    Ok(Db { hasher, constants })
+    db.load_bytes(PHYSICS)?;
+    Ok(db)
 }
 
 /// The hash of the constant.
@@ -75,15 +59,22 @@ impl Hasher {
     }
 }
 
-/// A single constant.
+/// A special unit.
 #[derive(Debug)]
-pub struct Constant {
-    names: HashSet<Box<str>>,
-    pub value: f64,
+pub struct DbUnit {
+    pub value: bigdecimal::BigDecimal,
     pub unit: Unit,
 }
 
-impl Constant {
+/// A single constant.
+#[derive(Debug)]
+pub struct DbConstant {
+    names: HashSet<Box<str>>,
+    pub value: bigdecimal::BigDecimal,
+    pub unit: Unit,
+}
+
+impl DbConstant {
     /// If the given constant matches.
     fn matches(&self, s: &str) -> bool {
         self.names.contains(s)
@@ -93,7 +84,7 @@ impl Constant {
 /// The database of facts.
 pub struct Db {
     hasher: Hasher,
-    constants: HashMap<Hash, Vec<Arc<Constant>>>,
+    constants: HashMap<Hash, Vec<Arc<DbConstant>>>,
 }
 
 impl Db {
@@ -115,6 +106,34 @@ impl Db {
 
         None
     }
+
+    /// Load a document from the given bytes.
+    pub fn load_bytes(&mut self, bytes: &[u8]) -> Result<()> {
+        let doc: self::serde::Doc = toml::de::from_slice(bytes)?;
+
+        for c in doc.constants {
+            let constant = Arc::new(DbConstant {
+                names: c.names.iter().cloned().collect(),
+                value: c.value,
+                unit: c
+                    .unit
+                    .as_deref()
+                    .map(str::parse::<Unit>)
+                    .transpose()?
+                    .unwrap_or_default(),
+            });
+
+            for name in &constant.names {
+                let hash = self.hasher.hash(name);
+                self.constants
+                    .entry(hash)
+                    .or_default()
+                    .push(constant.clone());
+            }
+        }
+
+        Ok(())
+    }
 }
 
 pub(crate) mod serde {
@@ -122,13 +141,14 @@ pub(crate) mod serde {
 
     #[derive(Debug, Deserialize)]
     pub struct Doc {
+        #[serde(default)]
         pub constants: Vec<Constant>,
     }
 
     #[derive(Debug, Deserialize)]
     pub struct Constant {
         pub names: Vec<Box<str>>,
-        pub value: f64,
+        pub value: bigdecimal::BigDecimal,
         #[serde(default)]
         pub unit: Option<Box<str>>,
     }

@@ -1,7 +1,7 @@
 pub mod db;
 
 mod unit;
-pub use self::unit::Unit;
+pub use self::unit::{Base, Prefix, Unit};
 
 pub mod parser;
 
@@ -13,3 +13,5 @@ mod lexer;
 
 mod numeric;
 pub use self::numeric::Numeric;
+
+pub mod eval;

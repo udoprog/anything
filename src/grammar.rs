@@ -35,17 +35,24 @@ pub fn root(p: &mut Parser<'_>) {
     p.finish_node();
 }
 
-fn unit_component(c: &mut Parser<'_>, mut word: bool) {
+fn unit_component(c: &mut Parser<'_>, mut letter: bool) {
     loop {
         match c.nth(Skip::ZERO, 0) {
-            WORD => {
-                word = true;
+            UNIT_LETTER => {
+                letter = true;
                 c.bump();
             }
-            CARET if word => {
-                word = false;
+            UNIT_ESCAPED_WORD => {
+                c.bump();
+            }
+            STAR if letter => {
+                letter = false;
+                c.bump();
+            }
+            CARET if letter => {
+                letter = false;
 
-                if !c.eat(Skip::ZERO, &[CARET, NUMBER]) {
+                if !c.eat(Skip::ZERO, &[CARET, UNIT_NUMBER]) {
                     break;
                 }
             }
@@ -56,22 +63,30 @@ fn unit_component(c: &mut Parser<'_>, mut word: bool) {
     }
 }
 
-fn unit(p: &mut Parser<'_>, number: Checkpoint) {
+pub(crate) fn unit(p: &mut Parser<'_>) -> bool {
+    p.set_mode(true, true);
     let skip = p.count_skip();
 
-    if let WORD = p.nth(skip, 0) {
-        p.skip(skip);
+    let unit = match p.nth(skip, 0) {
+        UNIT_LETTER | UNIT_ESCAPED_WORD => {
+            p.skip(skip);
+            p.set_mode(true, false);
 
-        let c = p.checkpoint();
-        unit_component(p, false);
+            let c = p.checkpoint();
+            unit_component(p, false);
 
-        if p.eat(Skip::ZERO, &[SLASH, WORD]) {
-            unit_component(p, true);
+            if p.eat(Skip::ZERO, &[SLASH]) {
+                unit_component(p, true);
+            }
+
+            p.finish_node_at(c, UNIT);
+            true
         }
+        _ => false,
+    };
 
-        p.finish_node_at(c, UNIT);
-        p.finish_node_at(number, NUMBER_WITH_UNIT);
-    }
+    p.set_mode(false, true);
+    unit
 }
 
 fn value(p: &mut Parser<'_>) -> bool {
@@ -84,11 +99,12 @@ fn value(p: &mut Parser<'_>) -> bool {
             let c = p.checkpoint();
             p.bump();
 
-            let skip = p.count_skip();
+            let mut skip = p.count_skip();
 
             while let WORD = p.nth(skip, 0) {
                 p.skip(skip);
                 p.bump();
+                skip = p.count_skip();
             }
 
             p.finish_node_at(c, SENTENCE);
@@ -107,7 +123,10 @@ fn value(p: &mut Parser<'_>) -> bool {
                 }
                 _ => {
                     p.finish_node_at(c, NUMBER);
-                    unit(p, c);
+
+                    if unit(p) {
+                        p.finish_node_at(c, NUMBER_WITH_UNIT);
+                    }
                 }
             }
 
@@ -187,6 +206,7 @@ fn op(kind: SyntaxKind) -> Option<u32> {
     match kind {
         PLUS | DASH => Some(1),
         STAR | SLASH => Some(2),
+        CARET => Some(3),
         _ => None,
     }
 }

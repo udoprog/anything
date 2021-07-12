@@ -31,6 +31,10 @@ pub enum SyntaxKind {
     OPEN_PAREN,
     /// Close delimiter.
     CLOSE_PAREN,
+    /// Open brace.
+    OPEN_BRACE,
+    /// Close brace.
+    CLOSE_BRACE,
     /// A word.
     WORD,
     /// A sentence of words.
@@ -44,6 +48,14 @@ pub enum SyntaxKind {
     PERCENTAGE,
     /// A unit suffix to a number.
     UNIT,
+    /// An escaped word which circumvents language analysis.
+    UNIT_ESCAPED_WORD,
+    /// A single unit letter.
+    UNIT_LETTER,
+    /// A quoted unit word.
+    UNIT_WORD,
+    /// A simple unit number.
+    UNIT_NUMBER,
 
     /// An operator in an operation.
     OPERATOR,
@@ -107,9 +119,19 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// Consume and parse the parser.
-    pub fn parse(mut self) -> SyntaxNode {
+    /// Consume and parse a root node.
+    pub fn parse_root(mut self) -> SyntaxNode {
         crate::grammar::root(&mut self);
+        SyntaxNode::new_root(self.builder.finish())
+    }
+
+    /// Consume and parse a unit node.
+    pub fn parse_unit(mut self) -> SyntaxNode {
+        if !crate::grammar::unit(&mut self) {
+            self.builder.start_node(UNIT.into());
+            self.builder.finish_node();
+        }
+
         SyntaxNode::new_root(self.builder.finish())
     }
 
@@ -150,6 +172,13 @@ impl<'a> Parser<'a> {
     pub(crate) fn error_node_at(&mut self, c: Checkpoint) {
         self.builder.start_node_at(c, ERROR.into());
         self.builder.finish_node();
+    }
+
+    /// Switch to unit mode.
+    pub(crate) fn set_mode(&mut self, unit_mode: bool, ws_mode: bool) {
+        let head = self.buf.pop_front();
+        self.buf.clear();
+        self.lexer.set_mode(head, unit_mode, ws_mode);
     }
 
     /// Fill the buffer up until the size of `n`.

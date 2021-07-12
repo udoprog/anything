@@ -1,3 +1,5 @@
+use crate::unit::Unit;
+use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 use std::fmt;
 use std::sync::Arc;
@@ -12,7 +14,7 @@ pub enum Match<'a> {
 }
 
 /// Open the database.
-pub fn open() -> anyhow::Result<Db> {
+pub fn open() -> Result<Db> {
     let hasher = Hasher(());
 
     let doc: self::serde::Doc = toml::de::from_slice(PHYSICS)?;
@@ -22,6 +24,13 @@ pub fn open() -> anyhow::Result<Db> {
     for c in doc.constants {
         let constant = Arc::new(Constant {
             names: c.names.iter().cloned().collect(),
+            value: c.value,
+            unit: c
+                .unit
+                .as_deref()
+                .map(str::parse::<Unit>)
+                .transpose()?
+                .unwrap_or_default(),
         });
 
         for name in &constant.names {
@@ -70,6 +79,8 @@ impl Hasher {
 #[derive(Debug)]
 pub struct Constant {
     names: HashSet<Box<str>>,
+    pub value: f64,
+    pub unit: Unit,
 }
 
 impl Constant {
@@ -117,5 +128,8 @@ pub(crate) mod serde {
     #[derive(Debug, Deserialize)]
     pub struct Constant {
         pub names: Vec<Box<str>>,
+        pub value: f64,
+        #[serde(default)]
+        pub unit: Option<Box<str>>,
     }
 }

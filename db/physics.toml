@@ -1,2 +1,14 @@
 [[constants]]
+names = ["pi"]
+unit = "1"
+value = 3.1415926535
+
+[[constants]]
 names = ["c", "speed of light", "lightspeed"]
+unit = "m/s"
+value = 299792458
+
+[[constants]]
+names = ["standard gravity", "g0"]
+unit = "m/s^2"
+value = 9.80665

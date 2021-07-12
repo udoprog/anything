@@ -1,194 +1,196 @@
-use std::collections::BTreeMap;
+use anyhow::anyhow;
+use std::collections::{btree_map, BTreeMap};
 use std::fmt;
+use std::iter::Peekable;
 
-/// A base unit.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Base {
-    Meter,
-    Second,
-}
-
-impl fmt::Display for Base {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            Self::Meter => write!(f, "m"),
-            Self::Second => write!(f, "s"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Unit {
-    /// The unitless base unit.
-    One,
-    /// Units multiplied together.
-    Mul { units: Vec<Unit> },
-    /// One unit divided by another.
-    Div { num: Box<Unit>, den: Box<Unit> },
-    /// The units and its powers.
-    Pow { base: Base, pow: u32 },
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct Unit {
+    num: BTreeMap<char, u32>,
+    den: BTreeMap<char, u32>,
 }
 
 impl Unit {
-    /// Normalize the unit.
-    pub fn normalize(self) -> Self {
-        let mut numerators = BTreeMap::new();
-        let mut denominators = BTreeMap::new();
-
-        match self {
-            Unit::Pow { base, pow } => {
-                return Self::Pow { base, pow };
-            }
-            unit => {
-                unit.normalize_inner(&mut numerators, &mut denominators, false);
-            }
+    pub fn empty() -> Self {
+        Self {
+            num: BTreeMap::new(),
+            den: BTreeMap::new(),
         }
+    }
 
-        let num = match Self::normalized_into_unit(numerators) {
-            Some(num) => num,
-            None => Self::One,
-        };
+    /// Test if the unit is the special empty unit.
+    pub fn is_empty(&self) -> bool {
+        self.num.iter().all(|e| *e.1 == 0) && self.den.iter().all(|e| *e.1 == 0)
+    }
 
-        if let Some(den) = Self::normalized_into_unit(denominators) {
-            if den.is_one() {
-                num
-            } else {
-                Self::Div {
-                    num: Box::new(num),
-                    den: Box::new(den),
+    /// Create a new unit.
+    pub fn new<N, D>(num: N, den: D) -> Self
+    where
+        N: IntoIterator<Item = (char, u32)>,
+        D: IntoIterator<Item = (char, u32)>,
+    {
+        Self {
+            num: num.into_iter().collect(),
+            den: den.into_iter().collect(),
+        }
+    }
+
+    pub fn div(mut self, other: Self) -> Option<Self> {
+        for (unit, pow) in other.num {
+            match self.num.entry(unit) {
+                btree_map::Entry::Vacant(..) => return None,
+                btree_map::Entry::Occupied(mut o) => {
+                    let n = (*o.get()).checked_sub(pow)?;
+
+                    if n == 0 {
+                        let _ = o.remove_entry();
+                    } else {
+                        *o.get_mut() = n;
+                    }
                 }
             }
-        } else {
-            num
-        }
-    }
-
-    /// Convert a normalized map into a unit.
-    fn normalized_into_unit(map: BTreeMap<Base, u32>) -> Option<Self> {
-        let mut it = map.into_iter().peekable();
-        let (base, pow) = it.next()?;
-
-        let first = Self::pow(base, pow);
-
-        if it.peek().is_none() {
-            return Some(first);
         }
 
-        let mut units = vec![first];
+        for (unit, pow) in other.den {
+            match self.den.entry(unit) {
+                btree_map::Entry::Vacant(..) => return None,
+                btree_map::Entry::Occupied(mut o) => {
+                    let n = (*o.get()).checked_sub(pow)?;
 
-        for (base, pow) in it {
-            units.push(Self::pow(base, pow));
-        }
-
-        Some(Self::Mul { units })
-    }
-
-    fn normalize_inner(
-        self,
-        numerators: &mut BTreeMap<Base, u32>,
-        denominators: &mut BTreeMap<Base, u32>,
-        denom: bool,
-    ) {
-        match self {
-            Self::Mul { units } => {
-                for unit in units {
-                    unit.normalize_inner(numerators, denominators, denom);
+                    if n == 0 {
+                        let _ = o.remove_entry();
+                    } else {
+                        *o.get_mut() = n;
+                    }
                 }
             }
-            Self::Div { num, den } if denom => {
-                num.normalize_inner(numerators, denominators, denom);
-                den.normalize_inner(numerators, denominators, denom);
+        }
+
+        Some(self)
+    }
+
+    pub fn mul(mut self, other: Self) -> Self {
+        for (unit, pow) in other.num {
+            *self.num.entry(unit).or_default() += pow;
+        }
+
+        for (unit, pow) in other.den {
+            *self.den.entry(unit).or_default() += pow;
+        }
+
+        self
+    }
+}
+
+impl std::str::FromStr for Unit {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s == "1" {
+            return Ok(Unit::default());
+        }
+
+        let mut it = s.char_indices().peekable();
+
+        let mut num = BTreeMap::new();
+        let mut den = BTreeMap::new();
+
+        inner(s, &mut num, &mut it)?;
+        inner(s, &mut den, &mut it)?;
+
+        return Ok(Self { num, den });
+
+        fn inner(
+            s: &str,
+            map: &mut BTreeMap<char, u32>,
+            it: &mut Peekable<impl Iterator<Item = (usize, char)>>,
+        ) -> anyhow::Result<()> {
+            let mut unit = None;
+
+            while let Some((_, c)) = it.next() {
+                match (unit, c) {
+                    (_, '/') => break,
+                    (Some(add), '^') => {
+                        let (start, _) = it.next().ok_or_else(|| anyhow!("missing digit"))?;
+
+                        while let Some((_, '0'..='9')) = it.peek().copied() {
+                            it.next();
+                        }
+
+                        let end = it.peek().map(|n| n.0).unwrap_or(s.len());
+                        let pow = str::parse::<u32>(&s[start..end])?;
+                        *map.entry(add).or_default() += pow;
+                        unit = None;
+                    }
+                    (None, u) => {
+                        unit = Some(u);
+                    }
+                    (Some(add), u) => {
+                        *map.entry(add).or_default() += 1;
+                        unit = Some(u);
+                    }
+                }
             }
-            Self::Div { num, den } => {
-                num.normalize_inner(numerators, denominators, denom);
-                // We flip numerators and denominators for the first level of
-                // denominator.
-                // So that `a/b/c/d` -> `a/b * 1/c * 1/d` -> `a / bcd`.
-                den.normalize_inner(denominators, numerators, true);
+
+            if let Some(unit) = unit {
+                *map.entry(unit).or_default() += 1;
             }
-            Self::One | Self::Pow { pow: 0, .. } => {}
-            Self::Pow { base, pow } => {
-                *numerators.entry(base).or_default() += pow;
-            }
-        }
-    }
 
-    /// Test if the unit is the special one unit.
-    pub fn is_one(&self) -> bool {
-        matches!(self, Self::One | Self::Pow { pow: 0, .. })
-    }
-
-    /// Create the meter base unit.
-    pub fn meter() -> Self {
-        Self::Pow {
-            base: Base::Meter,
-            pow: 1,
-        }
-    }
-
-    /// Create a the second base unit.
-    pub fn second() -> Self {
-        Self::Pow {
-            base: Base::Second,
-            pow: 1,
-        }
-    }
-
-    /// Create a divisor unit.
-    pub fn div(num: Self, den: Self) -> Self {
-        Self::Div {
-            num: Box::new(num),
-            den: Box::new(den),
-        }
-    }
-
-    /// Create a power unit.
-    pub fn pow(base: Base, pow: u32) -> Self {
-        match pow {
-            0 => Self::One,
-            pow => Self::Pow { base, pow },
+            Ok(())
         }
     }
 }
 
 impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::One | Self::Pow { pow: 0, .. } => {
-                write!(f, "1")?;
-            }
-            Self::Mul { units } => {
-                for u in units {
-                    u.fmt(f)?;
-                }
-            }
-            Self::Div { num, den } => {
-                write!(f, "{}/{}", num, den)?;
-            }
-            Self::Pow { base, pow } => {
-                write!(f, "{}", base)?;
-                let mut pow = *pow;
+        let without_den = self.den.iter().all(|c| *c.1 == 0);
 
-                if pow != 1 {
-                    if pow < 10 {
-                        pow_into_char(pow).fmt(f)?;
-                    } else {
-                        let mut chars = Vec::new();
+        if self.num.iter().all(|c| *c.1 == 0) {
+            if without_den {
+                return Ok(());
+            }
 
-                        while pow != 0 {
-                            chars.push(pow_into_char(pow % 10));
-                            pow /= 10;
-                        }
-
-                        for c in chars.into_iter().rev() {
-                            c.fmt(f)?;
-                        }
-                    }
-                }
+            write!(f, "1")?;
+        } else {
+            for (unit, pow) in self.num.iter() {
+                fmt_base(*unit, *pow, f)?;
             }
         }
 
-        Ok(())
+        if without_den {
+            return Ok(());
+        }
+
+        write!(f, "/")?;
+
+        for (unit, pow) in self.den.iter() {
+            fmt_base(*unit, *pow, f)?;
+        }
+
+        return Ok(());
+
+        fn fmt_base(unit: char, pow: u32, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", unit)?;
+
+            if pow != 1 {
+                if pow < 10 {
+                    pow_into_char(pow).fmt(f)?;
+                } else {
+                    let mut chars = Vec::new();
+                    let mut pow = pow;
+
+                    while pow != 0 {
+                        chars.push(pow_into_char(pow % 10));
+                        pow /= 10;
+                    }
+
+                    for c in chars.into_iter().rev() {
+                        c.fmt(f)?;
+                    }
+                }
+            }
+
+            Ok(())
+        }
     }
 }
 

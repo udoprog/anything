@@ -1,48 +1,13 @@
+use crate::parser::SyntaxKind;
+use crate::span::Span;
 use std::cell::Cell;
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("unsupported character `{character}` at {pos}")]
-    Unsupported { pos: usize, character: char },
-}
-
-/// The kind of a delimiter.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Delim {
-    /// A parenthesis.
-    Parenthesis,
-}
-
-/// The kind of a token.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Kind {
-    /// `*`.
-    Star,
-    /// `/`.
-    Slash,
-    /// `+`.
-    Plus,
-    /// `-`.
-    Dash,
-    /// `^`.
-    Caret,
-    /// Open delimiter.
-    Open(Delim),
-    /// Close delimiter.
-    Close(Delim),
-    /// A regular word.
-    Word,
-    /// A number.
-    Number,
-}
+use SyntaxKind::*;
 
 /// A lexed token.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Token {
-    pub start: usize,
-    pub end: usize,
-    pub kind: Kind,
+    pub span: Span,
+    pub kind: SyntaxKind,
 }
 
 /// The facts lexer.
@@ -60,26 +25,86 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Get the text for the given span.
+    pub fn text(&self, span: Span) -> &str {
+        self.source
+            .get(span.start()..span.end())
+            .expect("expected span")
+    }
+
     /// Peek the next character.
     fn peek(&self) -> Option<char> {
         let n = self.pos.get();
         self.source[n..].chars().next()
     }
 
-    /// Get the next character.
-    fn advance(&self) -> Option<char> {
+    /// Advance to the next character.
+    fn advance(&self) {
         let n = self.pos.get();
-        let mut it = self.source[n..].char_indices();
-        let c = it.next()?.1;
-        let n = it.next().map(|v| n + v.0).unwrap_or(self.source.len());
+        let mut it = self.source[n..].chars();
+
+        let n = match it.next() {
+            Some(c) => n + c.len_utf8(),
+            None => self.source.len(),
+        };
+
         self.pos.set(n);
-        Some(c)
+    }
+
+    fn consume_number(&self) -> usize {
+        let mut dot = false;
+        let mut count = 0;
+
+        if let Some('-' | '+') = self.peek() {
+            self.advance();
+            count += 1;
+        }
+
+        while let Some(c) = self.peek() {
+            match c {
+                '0'..='9' => {
+                    self.advance();
+                }
+                '.' if !dot => {
+                    self.advance();
+                    dot = true;
+                }
+                'e' | 'E' => {
+                    self.advance();
+
+                    if let Some('-' | '+') = self.peek() {
+                        self.advance();
+                    }
+
+                    while let Some('0'..='9') = self.peek() {
+                        self.advance();
+                    }
+                }
+                _ => {
+                    break;
+                }
+            }
+        }
+
+        count
+    }
+
+    fn consume_word(&self) {
+        while let Some(c) = self.peek() {
+            match c {
+                c if c.is_alphanumeric() => {}
+                '\'' => {}
+                _ => break,
+            }
+
+            self.advance();
+        }
     }
 
     /// Consume until ws.
-    fn until_ws(&self) {
+    fn consume_whitespace(&self) {
         while let Some(c) = self.peek() {
-            if c.is_whitespace() {
+            if !c.is_whitespace() {
                 break;
             }
 
@@ -93,64 +118,69 @@ impl<'a> Lexer<'a> {
     }
 
     /// Get the next token.
-    pub fn next(&self) -> Result<Option<Token>, Error> {
-        let mut start = self.pos();
+    pub fn next(&self) -> Option<Token> {
+        let start = self.pos() as u32;
+        let c = self.peek()?;
 
-        while let Some(c) = self.advance() {
-            if c.is_whitespace() {
-                start = self.pos();
-                continue;
-            }
-
-            let kind = match c {
+        let kind = if c.is_whitespace() {
+            self.consume_whitespace();
+            WHITESPACE
+        } else {
+            match c {
                 '.' | '0'..='9' => {
-                    self.until_ws();
-                    Kind::Number
+                    self.consume_number();
+                    NUMBER
                 }
-                '*' => Kind::Star,
-                '/' => Kind::Slash,
-                '+' => Kind::Plus,
-                '-' => Kind::Dash,
-                '^' => Kind::Caret,
-                '(' => Kind::Open(Delim::Parenthesis),
-                ')' => Kind::Close(Delim::Parenthesis),
+                '*' => {
+                    self.advance();
+                    STAR
+                }
+                '/' => {
+                    self.advance();
+                    SLASH
+                }
+                '+' => {
+                    self.advance();
+
+                    if self.consume_number() > 0 {
+                        NUMBER
+                    } else {
+                        PLUS
+                    }
+                }
+                '-' => {
+                    if self.consume_number() > 0 {
+                        NUMBER
+                    } else {
+                        DASH
+                    }
+                }
+                '^' => {
+                    self.advance();
+                    CARET
+                }
+                '%' => {
+                    self.advance();
+                    PERCENTAGE
+                }
+                '(' => {
+                    self.advance();
+                    OPEN_PAREN
+                }
+                ')' => {
+                    self.advance();
+                    CLOSE_PAREN
+                }
                 _ => {
-                    self.until_ws();
-                    Kind::Word
+                    self.consume_word();
+                    WORD
                 }
-            };
-
-            return Ok(Some(Token {
-                start,
-                end: self.pos(),
-                kind,
-            }));
-        }
-
-        Ok(None)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Kind, Lexer, Token};
-
-    #[test]
-    fn test_lexer() {
-        let source = "  42  ";
-        let lexer = Lexer::new(source);
-
-        let tok = lexer.next().unwrap().unwrap();
-
-        assert!(matches!(
-            tok,
-            Token {
-                kind: Kind::Number,
-                ..
             }
-        ));
+        };
 
-        assert_eq!("42", &source[tok.start..tok.end]);
-        assert!(lexer.next().unwrap().is_none());
+        Some(Token {
+            span: Span::new(start, self.pos() as u32),
+            kind,
+        })
     }
 }

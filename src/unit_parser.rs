@@ -1,137 +1,194 @@
 use crate::unit::Multiple;
 use crate::{Base, Prefix};
 use anyhow::{anyhow, Result};
+use logos::Logos;
+
+#[derive(Logos, Debug, PartialEq)]
+enum Token {
+    #[token("s")]
+    #[token("sec")]
+    #[token("second")]
+    #[token("seconds")]
+    Second,
+    #[token("metre")]
+    #[token("meter")]
+    #[token("meters")]
+    Meter,
+    #[token("g")]
+    #[token("gram")]
+    Gram,
+    #[token("minute")]
+    #[token("minutes")]
+    #[token("min")]
+    Minute,
+    #[token("hour")]
+    #[token("hours")]
+    #[token("H")]
+    Hour,
+    #[token("day")]
+    #[token("days")]
+    #[token("D")]
+    Day,
+
+    #[token("P")]
+    #[token("peta")]
+    Peta,
+    #[token("T")]
+    #[token("tera")]
+    Tera,
+    #[token("G")]
+    #[token("giga")]
+    Giga,
+    #[token("M")]
+    #[token("mega")]
+    Mega,
+    #[token("k")]
+    #[token("kilo")]
+    Kilo,
+    #[token("m")]
+    MilliOrMeter,
+    #[token("milli")]
+    Milli,
+    #[token("μ")]
+    #[token("micro")]
+    Micro,
+    #[token("n")]
+    #[token("nano")]
+    Nano,
+
+    #[error]
+    Error,
+}
 
 /// Helper to parse collection of units from a string.
 pub struct UnitParser<'a> {
-    source: &'a str,
+    lexer: logos::Lexer<'a, Token>,
 }
 
 impl<'a> UnitParser<'a> {
     pub fn new(source: &'a str) -> Self {
-        Self { source }
+        Self {
+            lexer: Token::lexer(source),
+        }
     }
 
     /// Parse the next unit and base.
     pub fn next(&mut self) -> Result<Option<(Prefix, Base, Multiple)>> {
-        if self.source.is_empty() {
-            return Ok(None);
-        }
-
-        let mut s = self.source;
-        let mut it = s.chars();
         let mut prefix = Prefix::None;
-        let mut might_be_meter = false;
 
-        loop {
-            match it.as_str() {
-                "P" | "peta" if prefix.is_none() => {
-                    prefix = Prefix::Peta;
-                }
-                "T" | "tera" if prefix.is_none() => {
-                    prefix = Prefix::Tera;
-                }
-                "G" | "giga" if prefix.is_none() => {
-                    prefix = Prefix::Giga;
-                }
-                "M" | "mega" if prefix.is_none() => {
-                    prefix = Prefix::Mega;
-                }
-                "k" | "kilo" if prefix.is_none() => {
-                    prefix = Prefix::Kilo;
-                }
-                "m" if prefix.is_none() => {
-                    prefix = Prefix::Milli;
-                    might_be_meter = true;
-                }
-                "milli" if prefix.is_none() => {
-                    prefix = Prefix::Milli;
-                }
-                "μ" | "micro" if prefix.is_none() => {
-                    prefix = Prefix::Micro;
-                }
-                "n" | "nano" if prefix.is_none() => {
-                    prefix = Prefix::Nano;
-                }
-                "s" | "sec" | "second" | "seconds" => {
-                    self.source = &s[it.as_str().len()..];
+        while let Some(token) = self.lexer.next() {
+            match token {
+                Token::Second => {
                     return Ok(Some((prefix, Base::Second, Multiple::None)));
                 }
-                "m" | "metre" | "meter" | "meters" => {
-                    self.source = &s[it.as_str().len()..];
-                    return Ok(Some((prefix, Base::Meter, Multiple::None)));
-                }
-                "g" | "gram" => {
-                    self.source = &s[it.as_str().len()..];
+                Token::Gram => {
                     return Ok(Some((prefix, Base::Gram, Multiple::None)));
                 }
-                "minute" | "minutes" | "min" => {
-                    self.source = &s[it.as_str().len()..];
+                Token::Minute => {
                     return Ok(Some((prefix, Base::Second, Multiple::Minute)));
                 }
-                "hour" | "hours" => {
-                    self.source = &s[it.as_str().len()..];
+                Token::Hour => {
                     return Ok(Some((prefix, Base::Second, Multiple::Hour)));
                 }
-                "day" | "days" => {
-                    self.source = &s[it.as_str().len()..];
+                Token::Day => {
                     return Ok(Some((prefix, Base::Second, Multiple::Day)));
                 }
-                _ => {
-                    if it.next_back().is_none() {
-                        break;
+                Token::Peta if prefix.is_none() => {
+                    prefix = Prefix::Peta;
+                }
+                Token::Tera if prefix.is_none() => {
+                    prefix = Prefix::Tera;
+                }
+                Token::Giga if prefix.is_none() => {
+                    prefix = Prefix::Giga;
+                }
+                Token::Mega if prefix.is_none() => {
+                    prefix = Prefix::Mega;
+                }
+                Token::Kilo if prefix.is_none() => {
+                    prefix = Prefix::Kilo;
+                }
+                Token::MilliOrMeter => {
+                    if self.lexer.remainder().is_empty() || !prefix.is_none() {
+                        return Ok(Some((prefix, Base::Meter, Multiple::None)));
                     }
 
-                    continue;
+                    prefix = Prefix::Milli;
+                }
+                Token::Milli if prefix.is_none() => {
+                    prefix = Prefix::Milli;
+                }
+                Token::Micro if prefix.is_none() => {
+                    prefix = Prefix::Micro;
+                }
+                Token::Nano if prefix.is_none() => {
+                    prefix = Prefix::Nano;
+                }
+                _ => {
+                    return Err(anyhow!(
+                        "not a valid unit `{}{}`",
+                        self.lexer.slice(),
+                        self.lexer.remainder()
+                    ));
                 }
             }
-
-            s = &s[it.as_str().len()..];
-
-            if s.is_empty() {
-                // Special case: the lone milli prefix can also be
-                // interpreted as "meter".
-                if might_be_meter {
-                    self.source = s;
-                    return Ok(Some((Prefix::None, Base::Meter, Multiple::None)));
-                }
-            }
-
-            it = s.chars();
         }
 
-        Err(anyhow!("not a valid unit: {}", self.source))
+        if prefix.is_none() {
+            Ok(None)
+        } else {
+            Err(anyhow!(
+                "not a valid unit `{}{}`",
+                self.lexer.slice(),
+                self.lexer.remainder()
+            ))
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::UnitParser;
-    use crate::{Base, Prefix};
+    use crate::{unit::Multiple, Base, Prefix};
 
     #[test]
     fn test_kilo() {
         let mut p = UnitParser::new("kilominutes");
-        assert_eq!(p.next().unwrap(), Some((Prefix::Kilo, Base::Second, 60)));
+        assert_eq!(
+            p.next().unwrap(),
+            Some((Prefix::Kilo, Base::Second, Multiple::Minute))
+        );
         assert!(p.next().unwrap().is_none());
 
         let mut p = UnitParser::new("kminutes");
-        assert_eq!(p.next().unwrap(), Some((Prefix::Kilo, Base::Second, 60)));
+        assert_eq!(
+            p.next().unwrap(),
+            Some((Prefix::Kilo, Base::Second, Multiple::Minute))
+        );
         assert!(p.next().unwrap().is_none());
     }
 
     #[test]
     fn test_minutes() {
         let mut p = UnitParser::new("minutes");
-        assert_eq!(p.next().unwrap(), Some((Prefix::None, Base::Second, 60)));
+        assert_eq!(
+            p.next().unwrap(),
+            Some((Prefix::None, Base::Second, Multiple::Minute))
+        );
         assert!(p.next().unwrap().is_none());
 
         let mut p = UnitParser::new("minute");
-        assert_eq!(p.next().unwrap(), Some((Prefix::None, Base::Second, 60)));
+        assert_eq!(
+            p.next().unwrap(),
+            Some((Prefix::None, Base::Second, Multiple::Minute))
+        );
         assert!(p.next().unwrap().is_none());
 
         let mut p = UnitParser::new("min");
-        assert_eq!(p.next().unwrap(), Some((Prefix::None, Base::Second, 60)));
+        assert_eq!(
+            p.next().unwrap(),
+            Some((Prefix::None, Base::Second, Multiple::Minute))
+        );
         assert!(p.next().unwrap().is_none());
     }
 
@@ -154,7 +211,7 @@ mod tests {
 
                 assert_eq!(
                     p.next().unwrap(),
-                    Some((prefix, Base::Gram, 1)),
+                    Some((prefix, Base::Gram, Multiple::None)),
                     "failed prefix test: test = {}, prefix = {}",
                     test,
                     prefix

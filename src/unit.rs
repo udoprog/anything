@@ -10,25 +10,27 @@ pub struct BaseData {
     /// The current prefix.
     pub prefix: Prefix,
     /// If the unit is a special multiple unit.
-    pub multiple: Multiple,
+    pub special: Option<Special>,
 }
 
 impl BaseData {
     pub fn factor(&self) -> bigdecimal::BigDecimal {
         let prefix = self.prefix.factor();
 
-        if let Multiple::None = self.multiple {
-            return prefix;
+        if let Some(special) = &self.special {
+            return prefix * special.factor();
         }
 
-        prefix * self.multiple.factor()
+        prefix
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Multiple {
+pub enum Special {
     /// `Y` or `(3600 * 24 * 365)s`.
     Year,
+    /// `M`.
+    Month,
     /// `d` or `(3600 * 24 * 7)s`.
     Week,
     /// `d` or `86400s`.
@@ -39,37 +41,39 @@ pub enum Multiple {
     Minute,
     /// A British Thermal Unit, or `1055J`.
     Btu,
-    /// No specific multiple.
-    None,
 }
 
-impl Multiple {
+impl Special {
     /// Convert the multiple into a multiplication factor.
     pub fn factor(&self) -> bigdecimal::BigDecimal {
         let m: u32 = match self {
-            Multiple::Year => 3600 * 24 * 265,
-            Multiple::Week => 3600 * 24 * 7,
-            Multiple::Day => 3600 * 24,
-            Multiple::Hour => 3600,
-            Multiple::Minute => 60,
-            Multiple::Btu => 1055,
-            Multiple::None => 1,
+            Special::Year => {
+                return bigdecimal::BigDecimal::new(3147113076u32.into(), 2);
+            }
+            Special::Month => {
+                return bigdecimal::BigDecimal::new(262259423u32.into(), 2);
+            }
+            Special::Week => 3600 * 24 * 7,
+            Special::Day => 3600 * 24,
+            Special::Hour => 3600,
+            Special::Minute => 60,
+            Special::Btu => 1055,
         };
 
         bigdecimal::BigDecimal::from(m)
     }
 }
 
-impl fmt::Display for Multiple {
+impl fmt::Display for Special {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Multiple::Year => "Y".fmt(f),
-            Multiple::Week => "W".fmt(f),
-            Multiple::Day => "d".fmt(f),
-            Multiple::Hour => "H".fmt(f),
-            Multiple::Minute => "m".fmt(f),
-            Multiple::Btu => "BTU".fmt(f),
-            Multiple::None => "*".fmt(f),
+            Special::Year => "Y".fmt(f),
+            Special::Month => "M".fmt(f),
+            Special::Week => "W".fmt(f),
+            Special::Day => "d".fmt(f),
+            Special::Hour => "H".fmt(f),
+            Special::Minute => "m".fmt(f),
+            Special::Btu => "BTU".fmt(f),
         }
     }
 }
@@ -77,34 +81,35 @@ impl fmt::Display for Multiple {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum Prefix {
-    /// `P`.
+    Yotta,
+    Zetta,
+    Exa,
     Peta,
-    /// `T`.
     Tera,
-    /// `G`.
     Giga,
-    /// `M`.
     Mega,
-    /// `k`.
     Kilo,
     /// Empty prefix.
     None,
-    /// `d`.
     Deci,
-    /// `c`.
     Centi,
-    /// `m`.
     Milli,
-    /// `μ`.
     Micro,
-    /// `n`.
     Nano,
+    Pico,
+    Femto,
+    Atto,
+    Zepto,
+    Yocto,
 }
 
 impl Prefix {
     /// Get the factor for a given prefix.
     pub fn pow(&self) -> i32 {
         match self {
+            Prefix::Yotta => 24,
+            Prefix::Zetta => 21,
+            Prefix::Exa => 18,
             Prefix::Peta => 15,
             Prefix::Tera => 12,
             Prefix::Giga => 9,
@@ -116,6 +121,11 @@ impl Prefix {
             Prefix::Milli => -3,
             Prefix::Micro => -6,
             Prefix::Nano => -9,
+            Prefix::Pico => -12,
+            Prefix::Femto => -15,
+            Prefix::Atto => -18,
+            Prefix::Zepto => -21,
+            Prefix::Yocto => -24,
         }
     }
 
@@ -157,6 +167,9 @@ impl Default for Prefix {
 impl fmt::Display for Prefix {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Prefix::Yotta => 'Y'.fmt(f),
+            Prefix::Zetta => 'Z'.fmt(f),
+            Prefix::Exa => 'E'.fmt(f),
             Prefix::Peta => 'P'.fmt(f),
             Prefix::Tera => 'T'.fmt(f),
             Prefix::Giga => 'G'.fmt(f),
@@ -168,6 +181,11 @@ impl fmt::Display for Prefix {
             Prefix::Milli => 'm'.fmt(f),
             Prefix::Micro => 'μ'.fmt(f),
             Prefix::Nano => 'n'.fmt(f),
+            Prefix::Pico => 'p'.fmt(f),
+            Prefix::Femto => 'f'.fmt(f),
+            Prefix::Atto => 'a'.fmt(f),
+            Prefix::Zepto => 'z'.fmt(f),
+            Prefix::Yocto => 'y'.fmt(f),
         }
     }
 }
@@ -184,13 +202,11 @@ pub enum Base {
     /// Meter base unit.
     /// Designated as `m`.
     Meter,
-    /// A joule.
-    ///
-    /// Designated as `J`.
-    Joule,
     /// A byte.
     /// Designated as `B`.
     Byte,
+    /// A Joule.
+    Joule,
 }
 
 impl fmt::Display for Base {
@@ -199,8 +215,8 @@ impl fmt::Display for Base {
             Base::Second => 's'.fmt(f),
             Base::Gram => 'g'.fmt(f),
             Base::Meter => 'm'.fmt(f),
-            Base::Joule => 'J'.fmt(f),
             Base::Byte => 'B'.fmt(f),
+            Base::Joule => 'J'.fmt(f),
         }
     }
 }
@@ -232,10 +248,12 @@ impl Unit {
         let mut factor = bigdecimal::BigDecimal::from(1);
 
         for data in self.bases.values() {
-            if data.power > 0 {
-                factor *= data.multiple.factor();
-            } else {
-                factor = factor / data.multiple.factor();
+            if let Some(special) = &data.special {
+                if data.power > 0 {
+                    factor *= special.factor();
+                } else {
+                    factor = factor / special.factor();
+                }
             }
         }
 
@@ -272,7 +290,7 @@ impl Unit {
                     e.insert(BaseData {
                         prefix: rhs.prefix,
                         power: rhs.power * n,
-                        multiple: rhs.multiple,
+                        special: rhs.special,
                     });
                 }
                 btree_map::Entry::Occupied(mut o) => {
@@ -336,12 +354,12 @@ impl fmt::Display for Unit {
         ) -> fmt::Result {
             write!(f, "{}", data.prefix)?;
 
-            match (base, data.multiple) {
-                (base, Multiple::None) => {
+            match data.special {
+                None => {
                     write!(f, "{}", base)?;
                 }
-                (_, multiple) => {
-                    write!(f, "{}", multiple)?;
+                Some(special) => {
+                    write!(f, "{}", special)?;
                 }
             }
 

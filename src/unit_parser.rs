@@ -1,4 +1,4 @@
-use crate::unit::Multiple;
+use crate::unit::Special;
 use crate::{Base, Prefix};
 use anyhow::{anyhow, Result};
 use logos::Logos;
@@ -26,9 +26,11 @@ enum Token {
     #[token("weeks")]
     #[token("W")]
     Week,
+    #[token("month")]
+    #[token("months")]
+    Month,
     #[token("year")]
     #[token("years")]
-    #[token("Y")]
     Year,
 
     #[token("metre")]
@@ -51,6 +53,16 @@ enum Token {
     #[token("Btu")]
     Btu,
 
+    #[token("Y")]
+    YottaOrYear,
+    #[token("yotta")]
+    Yotta,
+    #[token("Z")]
+    #[token("zetta")]
+    Zetta,
+    #[token("E")]
+    #[token("exa")]
+    Exa,
     #[token("P")]
     #[token("peta")]
     Peta,
@@ -61,6 +73,7 @@ enum Token {
     #[token("giga")]
     Giga,
     #[token("M")]
+    MegaOrMonth,
     #[token("mega")]
     Mega,
     #[token("k")]
@@ -82,6 +95,21 @@ enum Token {
     #[token("n")]
     #[token("nano")]
     Nano,
+    #[token("p")]
+    #[token("pico")]
+    Pico,
+    #[token("f")]
+    #[token("femto")]
+    Femto,
+    #[token("a")]
+    #[token("atto")]
+    Atto,
+    #[token("z")]
+    #[token("zepto")]
+    Zepto,
+    #[token("y")]
+    #[token("yocto")]
+    Yocto,
 
     #[error]
     Error,
@@ -100,40 +128,59 @@ impl<'a> UnitParser<'a> {
     }
 
     /// Parse the next unit and base.
-    pub fn next(&mut self) -> Result<Option<(Prefix, Base, Multiple)>> {
+    pub fn next(&mut self) -> Result<Option<(Prefix, Base, Option<Special>)>> {
         let mut prefix = Prefix::None;
 
         while let Some(token) = self.lexer.next() {
             match token {
                 Token::Second => {
-                    return Ok(Some((prefix, Base::Second, Multiple::None)));
+                    return Ok(Some((prefix, Base::Second, None)));
                 }
                 Token::Gram => {
-                    return Ok(Some((prefix, Base::Gram, Multiple::None)));
+                    return Ok(Some((prefix, Base::Gram, None)));
                 }
                 Token::Joule => {
-                    return Ok(Some((prefix, Base::Joule, Multiple::None)));
+                    return Ok(Some((prefix, Base::Joule, None)));
                 }
                 Token::Byte => {
-                    return Ok(Some((prefix, Base::Byte, Multiple::None)));
+                    return Ok(Some((prefix, Base::Byte, None)));
                 }
                 Token::Minute => {
-                    return Ok(Some((prefix, Base::Second, Multiple::Minute)));
+                    return Ok(Some((prefix, Base::Second, Some(Special::Minute))));
                 }
                 Token::Hour => {
-                    return Ok(Some((prefix, Base::Second, Multiple::Hour)));
+                    return Ok(Some((prefix, Base::Second, Some(Special::Hour))));
                 }
                 Token::Day => {
-                    return Ok(Some((prefix, Base::Second, Multiple::Day)));
+                    return Ok(Some((prefix, Base::Second, Some(Special::Day))));
                 }
                 Token::Week => {
-                    return Ok(Some((prefix, Base::Second, Multiple::Week)));
+                    return Ok(Some((prefix, Base::Second, Some(Special::Week))));
+                }
+                Token::Month => {
+                    return Ok(Some((prefix, Base::Second, Some(Special::Month))));
                 }
                 Token::Year => {
-                    return Ok(Some((prefix, Base::Second, Multiple::Year)));
+                    return Ok(Some((prefix, Base::Second, Some(Special::Year))));
                 }
                 Token::Btu => {
-                    return Ok(Some((prefix, Base::Joule, Multiple::Btu)));
+                    return Ok(Some((prefix, Base::Joule, Some(Special::Btu))));
+                }
+                Token::YottaOrYear if prefix.is_none() => {
+                    if self.lexer.remainder().is_empty() || !prefix.is_none() {
+                        return Ok(Some((prefix, Base::Second, Some(Special::Year))));
+                    }
+
+                    prefix = Prefix::Yotta;
+                }
+                Token::Yotta if prefix.is_none() => {
+                    prefix = Prefix::Yotta;
+                }
+                Token::Zetta if prefix.is_none() => {
+                    prefix = Prefix::Zetta;
+                }
+                Token::Exa if prefix.is_none() => {
+                    prefix = Prefix::Exa;
                 }
                 Token::Peta if prefix.is_none() => {
                     prefix = Prefix::Peta;
@@ -143,6 +190,13 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::Giga if prefix.is_none() => {
                     prefix = Prefix::Giga;
+                }
+                Token::MegaOrMonth if prefix.is_none() => {
+                    if self.lexer.remainder().is_empty() || !prefix.is_none() {
+                        return Ok(Some((prefix, Base::Second, Some(Special::Month))));
+                    }
+
+                    prefix = Prefix::Mega;
                 }
                 Token::Mega if prefix.is_none() => {
                     prefix = Prefix::Mega;
@@ -158,7 +212,7 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::MilliOrMeter => {
                     if self.lexer.remainder().is_empty() || !prefix.is_none() {
-                        return Ok(Some((prefix, Base::Meter, Multiple::None)));
+                        return Ok(Some((prefix, Base::Meter, None)));
                     }
 
                     prefix = Prefix::Milli;
@@ -172,9 +226,25 @@ impl<'a> UnitParser<'a> {
                 Token::Nano if prefix.is_none() => {
                     prefix = Prefix::Nano;
                 }
+                Token::Pico if prefix.is_none() => {
+                    prefix = Prefix::Pico;
+                }
+                Token::Femto if prefix.is_none() => {
+                    prefix = Prefix::Femto;
+                }
+                Token::Atto if prefix.is_none() => {
+                    prefix = Prefix::Atto;
+                }
+                Token::Zepto if prefix.is_none() => {
+                    prefix = Prefix::Zepto;
+                }
+                Token::Yocto if prefix.is_none() => {
+                    prefix = Prefix::Yocto;
+                }
                 _ => {
                     return Err(anyhow!(
-                        "not a valid unit `{}{}`",
+                        "not a valid unit `{}{}{}`",
+                        prefix,
                         self.lexer.slice(),
                         self.lexer.remainder()
                     ));
@@ -186,7 +256,8 @@ impl<'a> UnitParser<'a> {
             Ok(None)
         } else {
             Err(anyhow!(
-                "not a valid unit `{}{}`",
+                "not a valid unit `{}{}{}`",
+                prefix,
                 self.lexer.slice(),
                 self.lexer.remainder()
             ))
@@ -197,21 +268,21 @@ impl<'a> UnitParser<'a> {
 #[cfg(test)]
 mod tests {
     use super::UnitParser;
-    use crate::{unit::Multiple, Base, Prefix};
+    use crate::{unit::Special, Base, Prefix};
 
     #[test]
     fn test_kilo() {
         let mut p = UnitParser::new("kilominutes");
         assert_eq!(
             p.next().unwrap(),
-            Some((Prefix::Kilo, Base::Second, Multiple::Minute))
+            Some((Prefix::Kilo, Base::Second, Some(Special::Minute)))
         );
         assert!(p.next().unwrap().is_none());
 
         let mut p = UnitParser::new("kminutes");
         assert_eq!(
             p.next().unwrap(),
-            Some((Prefix::Kilo, Base::Second, Multiple::Minute))
+            Some((Prefix::Kilo, Base::Second, Some(Special::Minute)))
         );
         assert!(p.next().unwrap().is_none());
     }
@@ -221,21 +292,21 @@ mod tests {
         let mut p = UnitParser::new("minutes");
         assert_eq!(
             p.next().unwrap(),
-            Some((Prefix::None, Base::Second, Multiple::Minute))
+            Some((Prefix::None, Base::Second, Some(Special::Minute)))
         );
         assert!(p.next().unwrap().is_none());
 
         let mut p = UnitParser::new("minute");
         assert_eq!(
             p.next().unwrap(),
-            Some((Prefix::None, Base::Second, Multiple::Minute))
+            Some((Prefix::None, Base::Second, Some(Special::Minute)))
         );
         assert!(p.next().unwrap().is_none());
 
         let mut p = UnitParser::new("min");
         assert_eq!(
             p.next().unwrap(),
-            Some((Prefix::None, Base::Second, Multiple::Minute))
+            Some((Prefix::None, Base::Second, Some(Special::Minute)))
         );
         assert!(p.next().unwrap().is_none());
     }
@@ -259,7 +330,7 @@ mod tests {
 
                 assert_eq!(
                     p.next().unwrap(),
-                    Some((prefix, Base::Gram, Multiple::None)),
+                    Some((prefix, Base::Gram, None)),
                     "failed prefix test: test = {}, prefix = {}",
                     test,
                     prefix

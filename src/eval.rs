@@ -129,12 +129,12 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
                             let entry = bases.entry(base).or_insert_with(|| BaseData {
                                 prefix,
                                 power: 0,
-                                multiple,
+                                special: multiple,
                             });
 
                             entry.power += power_factor;
 
-                            if entry.prefix != prefix || entry.multiple != multiple {
+                            if entry.prefix != prefix || entry.special != multiple {
                                 bail!(
                                     "unit `{}` must have the same kind in each unit spec",
                                     p.text(t.text_range())
@@ -163,12 +163,12 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
                         let entry = bases.entry(base).or_insert_with(|| BaseData {
                             prefix,
                             power: 0,
-                            multiple,
+                            special: multiple,
                         });
 
                         entry.power += power * power_factor;
 
-                        if entry.prefix != prefix || entry.multiple != multiple {
+                        if entry.prefix != prefix || entry.special != multiple {
                             bail!(
                                 "unit `{}` must have the same kind in each unit spec",
                                 p.text(t.text_range())

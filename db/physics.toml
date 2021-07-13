@@ -18,9 +18,9 @@ unit = "m^3/kgs^2"
 value = "9.80665"
 
 [[constants]]
-names = ["AU", "distance to earth", "orbit of earth", "earth orbit"]
-unit = "m"
-value = "1.495978707e11"
+names = ["distance to earth", "orbit of earth", "earth orbit"]
+unit = "au"
+value = "1"
 
 [[constants]]
 names = ["london to new york", "new york to london"]

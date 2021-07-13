@@ -49,9 +49,11 @@ enum Token {
     #[token("J")]
     #[token("joule")]
     Joule,
-    #[token("BTU")]
-    #[token("Btu")]
+    #[token("btu")]
     Btu,
+
+    #[token("au")]
+    Au,
 
     #[token("Y")]
     YottaOrYear,
@@ -165,6 +167,9 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::Btu => {
                     return Ok(Some((prefix, Base::Joule, Some(Special::Btu))));
+                }
+                Token::Au => {
+                    return Ok(Some((prefix, Base::Meter, Some(Special::Au))));
                 }
                 Token::YottaOrYear if prefix.is_none() => {
                     if self.lexer.remainder().is_empty() || !prefix.is_none() {

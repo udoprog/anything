@@ -41,12 +41,14 @@ pub enum Special {
     Minute,
     /// A British Thermal Unit, or `1055J`.
     Btu,
+    /// An astronomical unit.
+    Au,
 }
 
 impl Special {
     /// Convert the multiple into a multiplication factor.
     pub fn factor(&self) -> bigdecimal::BigDecimal {
-        let m: u32 = match self {
+        let m: u64 = match self {
             Special::Year => {
                 return bigdecimal::BigDecimal::new(3147113076u32.into(), 2);
             }
@@ -58,6 +60,7 @@ impl Special {
             Special::Hour => 3600,
             Special::Minute => 60,
             Special::Btu => 1055,
+            Special::Au => 149597870700,
         };
 
         bigdecimal::BigDecimal::from(m)
@@ -73,7 +76,8 @@ impl fmt::Display for Special {
             Special::Day => "d".fmt(f),
             Special::Hour => "H".fmt(f),
             Special::Minute => "m".fmt(f),
-            Special::Btu => "BTU".fmt(f),
+            Special::Btu => "btu".fmt(f),
+            Special::Au => "au".fmt(f),
         }
     }
 }

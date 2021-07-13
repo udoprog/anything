@@ -9,26 +9,63 @@ pub struct BaseData {
     pub power: i32,
     /// The current prefix.
     pub prefix: Prefix,
-    /// The multiple of the value contained.
-    pub multiple: u32,
+    /// If the unit is a special multiple unit.
+    pub multiple: Multiple,
 }
 
 impl BaseData {
     pub fn big_factor(&self) -> bigdecimal::BigDecimal {
-        let prefix = self.prefix.big_factor();
+        let prefix = self.prefix.factor();
 
-        if self.multiple == 1 {
+        if let Multiple::None = self.multiple {
             return prefix;
         }
 
-        prefix * bigdecimal::BigDecimal::from(self.multiple)
+        prefix * self.multiple.factor()
     }
 
     pub fn max(self, other: Self) -> Self {
-        if self.big_factor() > other.big_factor() {
+        if self.big_factor() >= other.big_factor() {
             self
         } else {
             other
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Multiple {
+    /// `d` or `86400s`.
+    Day,
+    /// `H` or `3600s`.
+    Hour,
+    /// `m` or `60s`.
+    Minute,
+    /// No specific multiple.
+    None,
+}
+
+impl Multiple {
+    /// Convert the multiple into a multiplication factor.
+    pub fn factor(&self) -> bigdecimal::BigDecimal {
+        let m: u32 = match self {
+            Multiple::Day => 3600 * 24,
+            Multiple::Hour => 3600,
+            Multiple::Minute => 60,
+            Multiple::None => 1,
+        };
+
+        bigdecimal::BigDecimal::from(m)
+    }
+}
+
+impl fmt::Display for Multiple {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Multiple::Day => "d".fmt(f),
+            Multiple::Hour => "H".fmt(f),
+            Multiple::Minute => "m".fmt(f),
+            Multiple::None => "*".fmt(f),
         }
     }
 }
@@ -58,7 +95,7 @@ pub enum Prefix {
 
 impl Prefix {
     /// Get the factor for a given prefix.
-    pub fn factor(&self) -> i32 {
+    pub fn pow(&self) -> i32 {
         match self {
             Prefix::Peta => 15,
             Prefix::Tera => 12,
@@ -72,9 +109,14 @@ impl Prefix {
         }
     }
 
+    /// Test if prefix is none.
+    pub fn is_none(&self) -> bool {
+        matches!(self, Prefix::None)
+    }
+
     /// Get the factor as a bigdecimal.
-    pub fn big_factor(&self) -> bigdecimal::BigDecimal {
-        let mut pow = self.factor();
+    pub fn factor(&self) -> bigdecimal::BigDecimal {
+        let mut pow = self.pow();
 
         if pow == 0 {
             return bigdecimal::BigDecimal::from(1);
@@ -93,21 +135,6 @@ impl Prefix {
         }
 
         base
-    }
-
-    /// Parse a character as a prefix.
-    pub(crate) fn parse(c: char) -> Option<Prefix> {
-        Some(match c {
-            'P' => Prefix::Peta,
-            'T' => Prefix::Tera,
-            'G' => Prefix::Giga,
-            'M' => Prefix::Mega,
-            'k' => Prefix::Kilo,
-            'm' => Prefix::Milli,
-            'μ' => Prefix::Micro,
-            'n' => Prefix::Nano,
-            _ => return None,
-        })
     }
 }
 
@@ -145,18 +172,6 @@ pub enum Base {
     /// Meter base unit.
     /// Designated as `m`.
     Meter,
-}
-
-impl Base {
-    /// Parse the given character as a base unit.
-    pub fn parse(c: char) -> Option<Self> {
-        Some(match c {
-            's' => Base::Second,
-            'g' => Base::Gram,
-            'm' => Base::Meter,
-            _ => return None,
-        })
-    }
 }
 
 impl fmt::Display for Base {
@@ -197,9 +212,9 @@ impl Unit {
 
         for data in self.bases.values() {
             if data.power > 0 {
-                factor *= bigdecimal::BigDecimal::from(data.multiple);
+                factor *= data.multiple.factor();
             } else {
-                factor = factor / bigdecimal::BigDecimal::from(data.multiple);
+                factor = factor / data.multiple.factor();
             }
         }
 
@@ -243,7 +258,7 @@ impl Unit {
             let lhs = self.bases.entry(unit).or_insert_with(|| BaseData {
                 prefix: rhs.prefix,
                 power: 0,
-                multiple: 1,
+                multiple: Multiple::None,
             });
             let rhs_power = rhs.power * n;
 
@@ -311,11 +326,11 @@ impl fmt::Display for Unit {
             write!(f, "{}", data.prefix)?;
 
             match (base, data.multiple) {
-                (Base::Second, 60) => {
-                    write!(f, "{{minutes}}")?;
-                }
-                (base, _) => {
+                (base, Multiple::None) => {
                     write!(f, "{}", base)?;
+                }
+                (_, multiple) => {
+                    write!(f, "{}", multiple)?;
                 }
             }
 
@@ -355,48 +370,5 @@ fn pow_into_char(pow: u32) -> char {
         7 => '⁷',
         8 => '⁸',
         _ => '⁹',
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Base, Unit};
-
-    #[test]
-    fn display_unit() {
-        let unit = Unit::div(Unit::meter(), Unit::pow(Base::Second, 2));
-        assert_eq!("m/s²", unit.to_string());
-    }
-
-    #[test]
-    fn test_normalize_div_div() {
-        let unit = Unit::div(Unit::meter(), Unit::div(Unit::second(), Unit::second())).normalize();
-        assert_eq!("m/s²", unit.to_string());
-
-        let unit = Unit::div(
-            Unit::meter(),
-            Unit::div(Unit::second(), Unit::div(Unit::second(), Unit::second())),
-        )
-        .normalize();
-        assert_eq!("m/s³", unit.to_string());
-
-        let unit = Unit::div(
-            Unit::meter(),
-            Unit::div(Unit::div(Unit::second(), Unit::second()), Unit::second()),
-        )
-        .normalize();
-        assert_eq!("m/s³", unit.to_string());
-    }
-
-    #[test]
-    fn test_large_pow() {
-        let unit = Unit::div(Unit::meter(), Unit::pow(Base::Second, 103));
-        assert_eq!("m/s¹⁰³", unit.to_string());
-    }
-
-    #[test]
-    fn test_normalize() {
-        let unit = Unit::div(Unit::meter(), Unit::pow(Base::Second, 0)).normalize();
-        assert_eq!(Unit::meter(), unit);
     }
 }

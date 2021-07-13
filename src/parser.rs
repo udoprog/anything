@@ -50,8 +50,6 @@ pub enum SyntaxKind {
     UNIT,
     /// An escaped word which circumvents language analysis.
     UNIT_ESCAPED_WORD,
-    /// A single unit letter.
-    UNIT_LETTER,
     /// A quoted unit word.
     UNIT_WORD,
     /// A simple unit number.

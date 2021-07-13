@@ -3,7 +3,8 @@ use std::collections::BTreeMap;
 use crate::db;
 use crate::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
 use crate::unit::BaseData;
-use crate::{Base, Prefix};
+use crate::unit_parser::UnitParser;
+use crate::Base;
 use crate::{Numeric, Unit};
 use anyhow::{anyhow, bail, Result};
 use rowan::{NodeOrToken, TextRange};
@@ -113,8 +114,6 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
         power_factor: i32,
     ) -> Result<()> {
         while let Some(t) = p.next() {
-            let mut prefix = Prefix::None;
-
             match t.kind() {
                 STAR => {
                     continue;
@@ -122,63 +121,71 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
                 SLASH => {
                     break;
                 }
-                UNIT_LETTER | UNIT_ESCAPED_WORD => {
-                    let unit = parse_unit(p, t, &mut prefix)?;
-
-                    let (base, multiple) = match unit.kind() {
+                UNIT_WORD | UNIT_ESCAPED_WORD => {
+                    let mut parser = match t.kind() {
                         UNIT_ESCAPED_WORD => {
-                            let s = p.text(unit.text_range());
+                            let s = p.text(t.text_range());
                             let s = &s[1..(s.len() - 1)];
-
-                            match s {
-                                "minute" | "minutes" => (Base::Second, 60),
-                                other => {
-                                    bail!("not a supported unit `{}`", other)
-                                }
-                            }
+                            UnitParser::new(s)
                         }
-                        UNIT_LETTER => {
-                            let unit = match p.text(unit.text_range()).chars().next() {
-                                Some(c) => c,
-                                None => bail!("missing unit character"),
-                            };
-
-                            let base = match Base::parse(unit) {
-                                Some(unit) => unit,
-                                None => bail!("unsupported base unit `{}`", unit),
-                            };
-
-                            (base, 1)
-                        }
+                        UNIT_WORD => UnitParser::new(p.text(t.text_range())),
                         kind => bail!("unexpected unit kind `{:?}`", kind),
                     };
 
-                    let caret = p.peek().map(|t| t.kind()).unwrap_or(EOF);
+                    let mut last = None;
 
-                    let power = if caret == CARET {
-                        p.next();
+                    while let Some(result) = parser.next()? {
+                        if let Some((prefix, base, multiple)) =
+                            std::mem::replace(&mut last, Some(result))
+                        {
+                            let entry = bases.entry(base).or_insert_with(|| BaseData {
+                                prefix,
+                                power: 0,
+                                multiple,
+                            });
 
-                        let number = match p.next() {
-                            Some(t) if t.kind() == UNIT_NUMBER => t,
-                            _ => bail!("expected unit number"),
+                            entry.power += power_factor;
+
+                            if entry.prefix != prefix || entry.multiple != multiple {
+                                bail!(
+                                    "unit `{}` must have the same kind in each unit spec",
+                                    p.text(t.text_range())
+                                );
+                            }
+                        }
+                    }
+
+                    if let Some((prefix, base, multiple)) = last {
+                        let caret = p.peek().map(|t| t.kind()).unwrap_or(EOF);
+
+                        let power = if caret == CARET {
+                            p.next();
+
+                            let number = match p.next() {
+                                Some(t) if t.kind() == UNIT_NUMBER => t,
+                                _ => bail!("expected unit number"),
+                            };
+
+                            let text = p.text(number.text_range());
+                            str::parse::<i32>(text)?
+                        } else {
+                            1
                         };
 
-                        let text = p.text(number.text_range());
-                        str::parse::<i32>(text)?
-                    } else {
-                        1
-                    };
+                        let entry = bases.entry(base).or_insert_with(|| BaseData {
+                            prefix,
+                            power: 0,
+                            multiple,
+                        });
 
-                    let entry = bases.entry(base).or_insert_with(|| BaseData {
-                        prefix,
-                        power: 0,
-                        multiple,
-                    });
+                        entry.power += power * power_factor;
 
-                    entry.power += power * power_factor;
-
-                    if entry.prefix != prefix || entry.multiple != multiple {
-                        bail!("unit `{}` must have the same kind in each unit spec", unit);
+                        if entry.prefix != prefix || entry.multiple != multiple {
+                            bail!(
+                                "unit `{}` must have the same kind in each unit spec",
+                                p.text(t.text_range())
+                            );
+                        }
                     }
                 }
                 kind => bail!("unexpected token: {:?}", kind),
@@ -186,36 +193,6 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
         }
 
         Ok(())
-    }
-
-    fn parse_unit(
-        p: &mut Tokens<impl Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>>,
-        t: SyntaxToken,
-        prefix: &mut Prefix,
-    ) -> Result<SyntaxToken> {
-        let unit = match t.kind() {
-            UNIT_LETTER => match p.text(t.text_range()).chars().next() {
-                Some(c) => c,
-                None => bail!("missing unit character"),
-            },
-            _ => return Ok(t),
-        };
-
-        let new = match Prefix::parse(unit) {
-            Some(new) => new,
-            None => return Ok(t),
-        };
-
-        match p.peek().map(|t| t.kind()) {
-            Some(UNIT_LETTER | UNIT_ESCAPED_WORD) => {
-                *prefix = new;
-                p.next().ok_or_else(|| anyhow!("missing required token"))
-            }
-            _ => {
-                // we did not see a prefix, so "unparse" it.
-                Ok(t)
-            }
-        }
     }
 }
 

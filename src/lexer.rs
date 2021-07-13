@@ -128,16 +128,19 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn consume_unit_word(&mut self) -> bool {
+    fn consume_unit_word(&mut self) {
+        while let Some('a'..='z' | 'A'..='Z') = self.peek() {
+            self.advance();
+        }
+    }
+
+    fn consume_escaped_unit_word(&mut self) -> bool {
         if !matches!(self.peek(), Some('{')) {
             return false;
         }
 
         self.advance();
-
-        while let Some('a'..='z' | 'A'..='Z') = self.peek() {
-            self.advance();
-        }
+        self.consume_unit_word();
 
         if !matches!(self.peek(), Some('}')) {
             return false;
@@ -166,7 +169,7 @@ impl<'a> Lexer<'a> {
                 UNIT_NUMBER
             }
             '{' => {
-                if !self.consume_unit_word() {
+                if !self.consume_escaped_unit_word() {
                     ERROR
                 } else {
                     UNIT_ESCAPED_WORD
@@ -174,7 +177,8 @@ impl<'a> Lexer<'a> {
             }
             'a'..='z' | 'A'..='Z' => {
                 self.advance();
-                UNIT_LETTER
+                self.consume_unit_word();
+                UNIT_WORD
             }
             '^' => {
                 self.advance();

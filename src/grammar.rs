@@ -35,22 +35,22 @@ pub fn root(p: &mut Parser<'_>) {
     p.finish_node();
 }
 
-fn unit_component(c: &mut Parser<'_>, mut letter: bool) {
+fn unit_component(c: &mut Parser<'_>, mut word: bool) {
     loop {
         match c.nth(Skip::ZERO, 0) {
-            UNIT_LETTER => {
-                letter = true;
+            UNIT_WORD => {
+                word = true;
                 c.bump();
             }
             UNIT_ESCAPED_WORD => {
                 c.bump();
             }
-            STAR if letter => {
-                letter = false;
+            STAR if word => {
+                word = false;
                 c.bump();
             }
-            CARET if letter => {
-                letter = false;
+            CARET if word => {
+                word = false;
 
                 if !c.eat(Skip::ZERO, &[CARET, UNIT_NUMBER]) {
                     break;
@@ -68,7 +68,7 @@ pub(crate) fn unit(p: &mut Parser<'_>) -> bool {
     let skip = p.count_skip();
 
     let unit = match p.nth(skip, 0) {
-        UNIT_LETTER | UNIT_ESCAPED_WORD => {
+        UNIT_WORD | UNIT_ESCAPED_WORD => {
             p.skip(skip);
             p.set_mode(true, false);
 

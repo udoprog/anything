@@ -15,4 +15,4 @@ toml = "0.5.8"
 serde = { version = "1.0.126", features = ["derive"] }
 twox-hash = { version = "1.6.0", default-features = false }
 rowan = "0.12.6"
-bigdecimal = { version = "0.2.0", features = ["serde"] }
+bigdecimal = { version = "0.2.0", git = "https://github.com/dpbriggs/bigdecimal-rs", features = ["serde"] }

@@ -149,7 +149,41 @@ fn value(p: &mut Parser<'_>) -> bool {
     }
 }
 
-fn expr(p: &mut Parser<'_>, check: Checkpoint, mut level: Option<u32>) -> bool {
+fn expr(p: &mut Parser<'_>, check: Checkpoint, level: Option<u32>) -> bool {
+    if !expr_nested(p, check, level) {
+        return false;
+    }
+
+    let mut has_cast = false;
+
+    loop {
+        let skip = p.count_skip();
+
+        if p.nth(skip, 0) != AS {
+            break;
+        }
+
+        p.skip(skip);
+
+        p.start_node(OPERATOR);
+        p.bump();
+        p.finish_node();
+
+        if !unit(p) {
+            return false;
+        }
+
+        has_cast = true;
+    }
+
+    if has_cast {
+        p.finish_node_at(check, OPERATION);
+    }
+
+    true
+}
+
+fn expr_nested(p: &mut Parser<'_>, check: Checkpoint, mut level: Option<u32>) -> bool {
     let mut last = p.checkpoint();
 
     if !value(p) {

@@ -10,13 +10,6 @@ enum Token {
     #[token("second")]
     #[token("seconds")]
     Second,
-    #[token("metre")]
-    #[token("meter")]
-    #[token("meters")]
-    Meter,
-    #[token("g")]
-    #[token("gram")]
-    Gram,
     #[token("minute")]
     #[token("minutes")]
     #[token("min")]
@@ -29,6 +22,34 @@ enum Token {
     #[token("days")]
     #[token("D")]
     Day,
+    #[token("week")]
+    #[token("weeks")]
+    #[token("W")]
+    Week,
+    #[token("year")]
+    #[token("years")]
+    #[token("Y")]
+    Year,
+
+    #[token("metre")]
+    #[token("meter")]
+    #[token("meters")]
+    Meter,
+
+    #[token("g")]
+    #[token("gram")]
+    Gram,
+
+    #[token("B")]
+    #[token("byte")]
+    Byte,
+
+    #[token("J")]
+    #[token("joule")]
+    Joule,
+    #[token("BTU")]
+    #[token("Btu")]
+    Btu,
 
     #[token("P")]
     #[token("peta")]
@@ -45,6 +66,12 @@ enum Token {
     #[token("k")]
     #[token("kilo")]
     Kilo,
+    #[token("deci")]
+    #[token("d")]
+    Deci,
+    #[token("centi")]
+    #[token("c")]
+    Centi,
     #[token("m")]
     MilliOrMeter,
     #[token("milli")]
@@ -84,6 +111,12 @@ impl<'a> UnitParser<'a> {
                 Token::Gram => {
                     return Ok(Some((prefix, Base::Gram, Multiple::None)));
                 }
+                Token::Joule => {
+                    return Ok(Some((prefix, Base::Joule, Multiple::None)));
+                }
+                Token::Byte => {
+                    return Ok(Some((prefix, Base::Byte, Multiple::None)));
+                }
                 Token::Minute => {
                     return Ok(Some((prefix, Base::Second, Multiple::Minute)));
                 }
@@ -92,6 +125,15 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::Day => {
                     return Ok(Some((prefix, Base::Second, Multiple::Day)));
+                }
+                Token::Week => {
+                    return Ok(Some((prefix, Base::Second, Multiple::Week)));
+                }
+                Token::Year => {
+                    return Ok(Some((prefix, Base::Second, Multiple::Year)));
+                }
+                Token::Btu => {
+                    return Ok(Some((prefix, Base::Joule, Multiple::Btu)));
                 }
                 Token::Peta if prefix.is_none() => {
                     prefix = Prefix::Peta;
@@ -107,6 +149,12 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::Kilo if prefix.is_none() => {
                     prefix = Prefix::Kilo;
+                }
+                Token::Deci if prefix.is_none() => {
+                    prefix = Prefix::Deci;
+                }
+                Token::Centi if prefix.is_none() => {
+                    prefix = Prefix::Centi;
                 }
                 Token::MilliOrMeter => {
                     if self.lexer.remainder().is_empty() || !prefix.is_none() {

@@ -35,6 +35,8 @@ pub enum SyntaxKind {
     OPEN_BRACE,
     /// Close brace.
     CLOSE_BRACE,
+    /// The `as` keyword.
+    AS,
     /// A word.
     WORD,
     /// A sentence of words.

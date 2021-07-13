@@ -1,5 +1,5 @@
 use crate::parser::Parser;
-use std::collections::BTreeMap;
+use std::collections::{btree_map, BTreeMap};
 use std::fmt;
 
 /// The data for a base.
@@ -14,7 +14,7 @@ pub struct BaseData {
 }
 
 impl BaseData {
-    pub fn big_factor(&self) -> bigdecimal::BigDecimal {
+    pub fn factor(&self) -> bigdecimal::BigDecimal {
         let prefix = self.prefix.factor();
 
         if let Multiple::None = self.multiple {
@@ -23,24 +23,22 @@ impl BaseData {
 
         prefix * self.multiple.factor()
     }
-
-    pub fn max(self, other: Self) -> Self {
-        if self.big_factor() >= other.big_factor() {
-            self
-        } else {
-            other
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Multiple {
+    /// `Y` or `(3600 * 24 * 365)s`.
+    Year,
+    /// `d` or `(3600 * 24 * 7)s`.
+    Week,
     /// `d` or `86400s`.
     Day,
     /// `H` or `3600s`.
     Hour,
     /// `m` or `60s`.
     Minute,
+    /// A British Thermal Unit, or `1055J`.
+    Btu,
     /// No specific multiple.
     None,
 }
@@ -49,9 +47,12 @@ impl Multiple {
     /// Convert the multiple into a multiplication factor.
     pub fn factor(&self) -> bigdecimal::BigDecimal {
         let m: u32 = match self {
+            Multiple::Year => 3600 * 24 * 265,
+            Multiple::Week => 3600 * 24 * 7,
             Multiple::Day => 3600 * 24,
             Multiple::Hour => 3600,
             Multiple::Minute => 60,
+            Multiple::Btu => 1055,
             Multiple::None => 1,
         };
 
@@ -62,9 +63,12 @@ impl Multiple {
 impl fmt::Display for Multiple {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Multiple::Year => "Y".fmt(f),
+            Multiple::Week => "W".fmt(f),
             Multiple::Day => "d".fmt(f),
             Multiple::Hour => "H".fmt(f),
             Multiple::Minute => "m".fmt(f),
+            Multiple::Btu => "BTU".fmt(f),
             Multiple::None => "*".fmt(f),
         }
     }
@@ -85,6 +89,10 @@ pub enum Prefix {
     Kilo,
     /// Empty prefix.
     None,
+    /// `d`.
+    Deci,
+    /// `c`.
+    Centi,
     /// `m`.
     Milli,
     /// `μ`.
@@ -103,6 +111,8 @@ impl Prefix {
             Prefix::Mega => 6,
             Prefix::Kilo => 3,
             Prefix::None => 0,
+            Prefix::Deci => -1,
+            Prefix::Centi => -2,
             Prefix::Milli => -3,
             Prefix::Micro => -6,
             Prefix::Nano => -9,
@@ -122,7 +132,7 @@ impl Prefix {
             return bigdecimal::BigDecimal::from(1);
         }
 
-        let mut base = bigdecimal::BigDecimal::from(10);
+        let mut base = bigdecimal::BigDecimal::from(1);
 
         while pow > 0 {
             base = base * bigdecimal::BigDecimal::from(10);
@@ -153,6 +163,8 @@ impl fmt::Display for Prefix {
             Prefix::Mega => 'M'.fmt(f),
             Prefix::Kilo => 'k'.fmt(f),
             Prefix::None => Ok(()),
+            Prefix::Deci => 'd'.fmt(f),
+            Prefix::Centi => 'c'.fmt(f),
             Prefix::Milli => 'm'.fmt(f),
             Prefix::Micro => 'μ'.fmt(f),
             Prefix::Nano => 'n'.fmt(f),
@@ -172,6 +184,13 @@ pub enum Base {
     /// Meter base unit.
     /// Designated as `m`.
     Meter,
+    /// A joule.
+    ///
+    /// Designated as `J`.
+    Joule,
+    /// A byte.
+    /// Designated as `B`.
+    Byte,
 }
 
 impl fmt::Display for Base {
@@ -180,6 +199,8 @@ impl fmt::Display for Base {
             Base::Second => 's'.fmt(f),
             Base::Gram => 'g'.fmt(f),
             Base::Meter => 'm'.fmt(f),
+            Base::Joule => 'J'.fmt(f),
+            Base::Byte => 'B'.fmt(f),
         }
     }
 }
@@ -222,61 +243,51 @@ impl Unit {
     }
 
     /// Calculate the factor for coercing one unit to another.
-    pub fn factor(
-        &mut self,
-        other: &Self,
-    ) -> Option<(bigdecimal::BigDecimal, bigdecimal::BigDecimal)> {
-        let mut lhs_factor = bigdecimal::BigDecimal::from(1);
-        let mut rhs_factor = bigdecimal::BigDecimal::from(1);
+    pub fn factor(&self, other: &Self) -> Option<bigdecimal::BigDecimal> {
+        let mut factor = bigdecimal::BigDecimal::from(1);
 
         if self.is_empty() || other.is_empty() {
-            return Some((lhs_factor, rhs_factor));
+            return Some(factor);
         }
 
         for (unit, rhs) in &other.bases {
-            let lhs = self.bases.get_mut(unit)?;
+            let lhs = self.bases.get(unit)?;
 
             if lhs.power != rhs.power {
                 return None;
             }
 
-            let from = BaseData::max(*lhs, *rhs);
-            lhs_factor *= lhs.big_factor() / from.big_factor();
-            rhs_factor *= rhs.big_factor() / from.big_factor();
-            lhs.prefix = from.prefix;
-            lhs.multiple = from.multiple;
+            factor *= lhs.factor() / rhs.factor();
         }
 
-        Some((lhs_factor, rhs_factor))
+        Some(factor)
     }
 
-    pub fn mul(&mut self, other: Self, n: i32) -> (bigdecimal::BigDecimal, bigdecimal::BigDecimal) {
-        let mut lhs_factor = bigdecimal::BigDecimal::from(1);
-        let mut rhs_factor = bigdecimal::BigDecimal::from(1);
+    pub fn mul(&mut self, other: Self, n: i32) -> bigdecimal::BigDecimal {
+        let mut factor = bigdecimal::BigDecimal::from(1);
 
         for (unit, rhs) in other.bases {
-            let lhs = self.bases.entry(unit).or_insert_with(|| BaseData {
-                prefix: rhs.prefix,
-                power: 0,
-                multiple: Multiple::None,
-            });
-            let rhs_power = rhs.power * n;
+            match self.bases.entry(unit) {
+                btree_map::Entry::Vacant(e) => {
+                    e.insert(BaseData {
+                        prefix: rhs.prefix,
+                        power: rhs.power * n,
+                        multiple: rhs.multiple,
+                    });
+                }
+                btree_map::Entry::Occupied(mut o) => {
+                    let lhs = o.get_mut();
+                    factor *= rhs.factor() / lhs.factor();
+                    lhs.power += rhs.power * n;
 
-            let from = BaseData::max(*lhs, rhs);
-            lhs_factor *= lhs.big_factor() / from.big_factor();
-            rhs_factor *= rhs.big_factor() / from.big_factor();
-
-            lhs.power += rhs_power;
-
-            if lhs.power == 0 {
-                self.bases.remove(&unit);
-            } else {
-                lhs.prefix = from.prefix;
-                lhs.multiple = from.multiple;
+                    if lhs.power == 0 {
+                        o.remove_entry();
+                    }
+                }
             }
         }
 
-        (lhs_factor, rhs_factor)
+        factor
     }
 }
 

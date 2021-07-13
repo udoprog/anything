@@ -10,42 +10,30 @@ use anyhow::{anyhow, bail, Result};
 use rowan::{NodeOrToken, TextRange};
 use SyntaxKind::*;
 
-fn add(mut a: Numeric, b: Numeric) -> Result<Numeric> {
-    if let Some((a_factor, b_factor)) = a.unit.factor(&b.unit) {
-        Ok(Numeric::new(
-            a.value * a_factor + b.value * b_factor,
-            a.unit,
-        ))
+fn add(a: Numeric, b: Numeric) -> Result<Numeric> {
+    if let Some(factor) = a.unit.factor(&b.unit) {
+        Ok(Numeric::new(a.value + b.value / factor, a.unit))
     } else {
         bail!("cannot add the units `{} + {}`", a.unit, b.unit)
     }
 }
 
-fn sub(mut a: Numeric, b: Numeric) -> Result<Numeric> {
-    if let Some((a_factor, b_factor)) = a.unit.factor(&b.unit) {
-        Ok(Numeric::new(
-            a.value * a_factor - b.value * b_factor,
-            a.unit,
-        ))
+fn sub(a: Numeric, b: Numeric) -> Result<Numeric> {
+    if let Some(factor) = a.unit.factor(&b.unit) {
+        Ok(Numeric::new(a.value - b.value / factor, a.unit))
     } else {
         bail!("cannot subtract the units `{} - {}`", a.unit, b.unit)
     }
 }
 
 fn div(mut a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (a_factor, b_factor) = a.unit.mul(b.unit, -1);
-    Ok(Numeric::new(
-        (a.value * a_factor) / (b.value * b_factor),
-        a.unit,
-    ))
+    let factor = a.unit.mul(b.unit, -1);
+    Ok(Numeric::new(a.value / (b.value * factor), a.unit))
 }
 
 fn mul(mut a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (a_factor, b_factor) = a.unit.mul(b.unit, 1);
-    Ok(Numeric::new(
-        (a.value * a_factor) * (b.value * b_factor),
-        a.unit,
-    ))
+    let factor = a.unit.mul(b.unit, 1);
+    Ok(Numeric::new(a.value * (b.value * factor), a.unit))
 }
 
 pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
@@ -208,18 +196,30 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
                     .first_token()
                     .map(|t| t.kind())
                     .ok_or_else(|| anyhow!("missing op"))?;
-                let rhs = eval(source, rhs, db)?;
 
                 let op = match op {
                     PLUS => add,
                     DASH => sub,
                     SLASH => div,
                     STAR => mul,
+                    AS => {
+                        let rhs = unit(source, rhs)?;
+
+                        let factor = match base.unit.factor(&rhs) {
+                            Some(factor) => factor,
+                            None => bail!("{} cannot be cast to {}", base, rhs),
+                        };
+
+                        base.value *= factor;
+                        base.unit = rhs;
+                        continue;
+                    }
                     kind => {
                         bail!("unsuported op: {:?}", kind);
                     }
                 };
 
+                let rhs = eval(source, rhs, db)?;
                 base = op(base, rhs)?;
             }
 

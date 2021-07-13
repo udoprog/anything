@@ -21,3 +21,8 @@ value = "9.80665"
 names = ["AU", "distance to earth", "orbit of earth", "earth orbit"]
 unit = "m"
 value = "1.495978707e11"
+
+[[constants]]
+names = ["london to new york", "new york to london"]
+unit = "km"
+value = "5571.55"

@@ -18,7 +18,7 @@ impl fmt::Display for Numeric {
         if self.value.is_integer() {
             write!(f, "{}{}", self.value, self.unit)
         } else {
-            write!(f, "{}{}", self.value.round(8), self.unit)
+            write!(f, "{}{}", self.value.round(16), self.unit)
         }
     }
 }

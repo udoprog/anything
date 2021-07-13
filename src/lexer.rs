@@ -207,7 +207,7 @@ impl<'a> Lexer<'a> {
             return self.next_unit();
         }
 
-        let start = self.pos as u32;
+        let start = self.pos;
         let c = self.peek()?;
 
         let kind = match c {
@@ -267,12 +267,16 @@ impl<'a> Lexer<'a> {
             }
             _ => {
                 self.consume_word();
-                WORD
+
+                match &self.source[start..self.pos] {
+                    "as" => AS,
+                    _ => WORD,
+                }
             }
         };
 
         Some(Token {
-            span: Span::new(start, self.pos as u32),
+            span: Span::new(start as u32, self.pos as u32),
             kind,
         })
     }

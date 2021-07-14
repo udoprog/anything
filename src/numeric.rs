@@ -1,6 +1,6 @@
 use bigdecimal::{BigDecimal, ToPrimitive};
 
-use crate::unit::CompoundUnit;
+use crate::compound_unit::CompoundUnit;
 use std::fmt;
 
 pub struct Numeric {

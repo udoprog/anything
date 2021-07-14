@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 
+use crate::compound_unit::{CompoundUnit, State};
 use crate::db;
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
 use crate::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
-use crate::unit::{CompoundUnit, State, Unit};
+use crate::unit::Unit;
 use crate::unit_parser::{ParsedUnit, UnitParser};
 use bigdecimal::BigDecimal;
 use rowan::{NodeOrToken, TextRange};

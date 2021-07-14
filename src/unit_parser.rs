@@ -1,4 +1,5 @@
-use crate::unit::{Prefix, Unit};
+use crate::prefix::Prefix;
+use crate::unit::Unit;
 use logos::Logos;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -288,7 +289,8 @@ impl<'a> UnitParser<'a> {
 #[cfg(test)]
 mod tests {
     use super::{ParsedUnit, UnitParser};
-    use crate::unit::{Prefix, Unit};
+    use crate::prefix::Prefix;
+    use crate::unit::Unit;
 
     #[test]
     fn test_kilo() {

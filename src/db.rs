@@ -1,4 +1,4 @@
-use crate::unit::CompoundUnit;
+use crate::compound_unit::CompoundUnit;
 use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 use std::fmt;

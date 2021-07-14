@@ -1,7 +1,7 @@
 use std::num::ParseIntError;
 
+use crate::compound_unit::CompoundUnit;
 use crate::parser::SyntaxKind;
-use crate::unit::CompoundUnit;
 use bigdecimal::ParseBigDecimalError;
 use thiserror::Error;
 

@@ -1,4 +1,4 @@
-use crate::unit::Unit;
+use crate::unit::CompoundUnit;
 use anyhow::Result;
 use hashbrown::{HashMap, HashSet};
 use std::fmt;
@@ -63,7 +63,7 @@ impl Hasher {
 #[derive(Debug)]
 pub struct DbUnit {
     pub value: bigdecimal::BigDecimal,
-    pub unit: Unit,
+    pub unit: CompoundUnit,
 }
 
 /// A single constant.
@@ -71,7 +71,7 @@ pub struct DbUnit {
 pub struct DbConstant {
     names: HashSet<Box<str>>,
     pub value: bigdecimal::BigDecimal,
-    pub unit: Unit,
+    pub unit: CompoundUnit,
 }
 
 impl DbConstant {
@@ -118,7 +118,7 @@ impl Db {
                 unit: c
                     .unit
                     .as_deref()
-                    .map(str::parse::<Unit>)
+                    .map(str::parse::<CompoundUnit>)
                     .transpose()?
                     .unwrap_or_default(),
             });

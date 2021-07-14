@@ -6,35 +6,11 @@ use std::fmt;
 
 /// The data for a base.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct SimpleState {
-    /// The current power.
-    pub power: i32,
-}
-
-impl SimpleState {
-    /// Multiply the current power.
-    fn mul_power(self, n: i32) -> Self {
-        Self {
-            power: self.power * n,
-            ..self
-        }
-    }
-}
-
-/// The data for a base.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct State {
     /// The current power.
     pub power: i32,
     /// The current prefix.
     pub prefix: i32,
-}
-
-impl State {
-    /// Convert into simple state.
-    fn simple(&self) -> SimpleState {
-        SimpleState { power: self.power }
-    }
 }
 
 const PREFIXES: [(i32, Prefix); 19] = [
@@ -152,7 +128,7 @@ impl fmt::Display for Prefix {
 /// A base unit.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
-pub enum Name {
+pub enum Unit {
     /// Second base unit.
     /// Designated as `s`.
     Second,
@@ -189,78 +165,74 @@ pub enum Name {
     LightSpeed,
 }
 
-impl Name {
-    pub fn populate_bases(
-        &self,
-        bases: &mut BTreeMap<Self, SimpleState>,
-        state: SimpleState,
-    ) -> bool {
-        fn merge(bases: &mut BTreeMap<Name, SimpleState>, name: Name, state: SimpleState) {
+impl Unit {
+    pub fn populate_bases(&self, bases: &mut BTreeMap<Self, i32>, power: i32) -> bool {
+        fn merge(bases: &mut BTreeMap<Unit, i32>, name: Unit, power: i32) {
             match bases.entry(name) {
                 btree_map::Entry::Vacant(e) => {
-                    e.insert(state);
+                    e.insert(power);
                 }
                 btree_map::Entry::Occupied(mut e) => {
-                    e.get_mut().power += state.power;
+                    *e.get_mut() += power;
                 }
             }
         }
 
         match self {
-            Name::Second => {
-                merge(bases, Name::Second, state);
+            Unit::Second => {
+                merge(bases, Unit::Second, power);
                 false
             }
-            Name::KiloGram => {
-                merge(bases, Name::KiloGram, state);
+            Unit::KiloGram => {
+                merge(bases, Unit::KiloGram, power);
                 false
             }
-            Name::Meter => {
-                merge(bases, Name::Meter, state);
+            Unit::Meter => {
+                merge(bases, Unit::Meter, power);
                 false
             }
-            Name::Byte => {
-                merge(bases, Name::Byte, state);
+            Unit::Byte => {
+                merge(bases, Unit::Byte, power);
                 false
             }
-            Name::Year => {
-                merge(bases, Name::Second, state);
+            Unit::Year => {
+                merge(bases, Unit::Second, power);
                 true
             }
-            Name::Month => {
-                merge(bases, Name::Second, state);
+            Unit::Month => {
+                merge(bases, Unit::Second, power);
                 true
             }
-            Name::Week => {
-                merge(bases, Name::Second, state);
+            Unit::Week => {
+                merge(bases, Unit::Second, power);
                 true
             }
-            Name::Day => {
-                merge(bases, Name::Second, state);
+            Unit::Day => {
+                merge(bases, Unit::Second, power);
                 true
             }
-            Name::Hour => {
-                merge(bases, Name::Second, state);
+            Unit::Hour => {
+                merge(bases, Unit::Second, power);
                 true
             }
-            Name::Minute => {
-                merge(bases, Name::Second, state);
+            Unit::Minute => {
+                merge(bases, Unit::Second, power);
                 true
             }
-            Name::Btu | Name::Joule => {
+            Unit::Btu | Unit::Joule => {
                 // kg⋅m2⋅s−2
-                merge(bases, Name::KiloGram, state);
-                merge(bases, Name::Meter, state.mul_power(2));
-                merge(bases, Name::Second, state.mul_power(-2));
+                merge(bases, Unit::KiloGram, power);
+                merge(bases, Unit::Meter, power * 2);
+                merge(bases, Unit::Second, power * -2);
                 true
             }
-            Name::Au => {
-                merge(bases, Name::Meter, state);
+            Unit::Au => {
+                merge(bases, Unit::Meter, power);
                 true
             }
-            Name::LightSpeed => {
-                merge(bases, Name::Meter, state);
-                merge(bases, Name::Second, state.mul_power(-1));
+            Unit::LightSpeed => {
+                merge(bases, Unit::Meter, power);
+                merge(bases, Unit::Second, power * -1);
                 true
             }
         }
@@ -269,19 +241,19 @@ impl Name {
     /// The multiplication factor for this component.
     pub fn multiple(&self) -> Option<BigDecimal> {
         let m: u64 = match self {
-            Name::Year => {
+            Unit::Year => {
                 return Some(BigDecimal::new(3147113076u32.into(), 2));
             }
-            Name::Month => {
+            Unit::Month => {
                 return Some(BigDecimal::new(262259423u32.into(), 2));
             }
-            Name::Week => 604800,
-            Name::Day => 86400,
-            Name::Hour => 3600,
-            Name::Minute => 60,
-            Name::Btu => 1055,
-            Name::Au => 149597870700,
-            Name::LightSpeed => 299792458,
+            Unit::Week => 604800,
+            Unit::Day => 86400,
+            Unit::Hour => 3600,
+            Unit::Minute => 60,
+            Unit::Btu => 1055,
+            Unit::Au => 149597870700,
+            Unit::LightSpeed => 299792458,
             _ => return None,
         };
 
@@ -290,47 +262,99 @@ impl Name {
 
     fn prefix_bias(&self) -> i32 {
         match self {
-            Name::KiloGram => 3,
+            Unit::KiloGram => 3,
             _ => 0,
         }
     }
 }
 
-impl fmt::Display for Name {
+impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Name::Second => 's'.fmt(f),
-            Name::KiloGram => 'g'.fmt(f),
-            Name::Meter => 'm'.fmt(f),
-            Name::Byte => 'B'.fmt(f),
-            Name::Joule => 'J'.fmt(f),
-            Name::Year => "Y".fmt(f),
-            Name::Month => "M".fmt(f),
-            Name::Week => "W".fmt(f),
-            Name::Day => "d".fmt(f),
-            Name::Hour => "H".fmt(f),
-            Name::Minute => "m".fmt(f),
-            Name::Btu => "btu".fmt(f),
-            Name::Au => "au".fmt(f),
-            Name::LightSpeed => "c".fmt(f),
+            Unit::Second => 's'.fmt(f),
+            Unit::KiloGram => 'g'.fmt(f),
+            Unit::Meter => 'm'.fmt(f),
+            Unit::Byte => 'B'.fmt(f),
+            Unit::Joule => 'J'.fmt(f),
+            Unit::Year => "Y".fmt(f),
+            Unit::Month => "M".fmt(f),
+            Unit::Week => "W".fmt(f),
+            Unit::Day => "d".fmt(f),
+            Unit::Hour => "H".fmt(f),
+            Unit::Minute => "m".fmt(f),
+            Unit::Btu => "btu".fmt(f),
+            Unit::Au => "au".fmt(f),
+            Unit::LightSpeed => "c".fmt(f),
         }
     }
 }
 
+/// A complex unit which supports powers and prefixes.
+///
+/// It uses a sparse internal representation where each unit is mapped to a
+/// 32-bit signed power (which can be negative to indicate reciprocals) and
+/// their corresponding SI prefix as the power of 10 it corresponds to.
+///
+/// ```
+/// use facts::{CompoundUnit, Unit};
+///
+/// let b = CompoundUnit::from_iter([(Unit::Meter, 1, -2), (Unit::Second, -2, 0)]);
+/// assert_eq!(b.to_string(), "cm/s²");
+/// ```
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct Unit {
-    names: BTreeMap<Name, State>,
+pub struct CompoundUnit {
+    names: BTreeMap<Unit, State>,
 }
 
-impl Unit {
+impl CompoundUnit {
+    /// Construct the empty unit.
+    ///
+    /// ```
+    /// let unit = facts::CompoundUnit::empty();
+    /// assert!(unit.is_empty());
+    /// ```
     pub fn empty() -> Self {
         Self {
             names: BTreeMap::new(),
         }
     }
 
-    /// Construct a new unit.
-    pub(crate) fn new(names: BTreeMap<Name, State>) -> Self {
+    /// Construct a unit from an iterator of its constituent names and powers.
+    ///
+    /// ```
+    /// use facts::{Unit, CompoundUnit};
+    ///
+    /// let a = str::parse::<facts::CompoundUnit>("cm/s^2").unwrap();
+    /// let b = facts::CompoundUnit::from_iter([(Unit::Meter, 1, -2), (Unit::Second, -2, 0)]);
+    ///
+    /// assert_eq!(a, b);
+    /// assert_eq!(a.to_string(), "cm/s²");
+    /// ```
+    pub fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = (Unit, i32, i32)>,
+    {
+        let mut names = BTreeMap::new();
+
+        for (unit, power, prefix) in iter {
+            if power != 0 {
+                names.insert(unit, State { power, prefix });
+            }
+        }
+
+        Self { names }
+    }
+
+    /// Internal only function to construct a new unit.
+    ///
+    /// Caller must ensure that no names with a power of 0 are specified during
+    /// construction, otherwise certain internal invariants will not hold.
+    pub(crate) fn new(names: BTreeMap<Unit, State>) -> Self {
+        debug_assert!(
+            names.values().all(|s| s.power != 0),
+            "all powers of a constructed unit must be non-zero; {:?}",
+            names
+        );
         Self { names }
     }
 
@@ -353,7 +377,7 @@ impl Unit {
         for (name, rhs) in &rhs_bases {
             let lhs = lhs_bases.get(name)?;
 
-            if lhs.power != rhs.power {
+            if lhs != rhs {
                 return None;
             }
         }
@@ -380,7 +404,7 @@ impl Unit {
         Some(factor)
     }
 
-    pub fn mul(&self, other: Self, n: i32) -> (BigDecimal, BigDecimal, Self) {
+    pub fn mul(&self, other: &Self, n: i32) -> (BigDecimal, BigDecimal, Self) {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
                 other.clone()
@@ -396,26 +420,20 @@ impl Unit {
 
         let mut names = BTreeMap::new();
 
-        for (name, state) in lhs_bases {
-            names.insert(
-                name,
-                State {
-                    power: state.power,
-                    prefix: 0,
-                },
-            );
+        for (name, power) in lhs_bases {
+            names.insert(name, State { power, prefix: 0 });
         }
 
-        for (name, rhs) in rhs_bases {
+        for (name, power) in rhs_bases {
             match names.entry(name) {
                 btree_map::Entry::Vacant(e) => {
                     e.insert(State {
-                        power: rhs.power * n,
+                        power: power * n,
                         prefix: 0,
                     });
                 }
                 btree_map::Entry::Occupied(mut e) => {
-                    e.get_mut().power += rhs.power * n;
+                    e.get_mut().power += power * n;
 
                     if e.get().power == 0 {
                         e.remove_entry();
@@ -448,14 +466,14 @@ impl Unit {
         for name in lhs_der {
             let mut bases = BTreeMap::new();
 
-            if !name.populate_bases(&mut bases, SimpleState { power: 1 }) {
+            if !name.populate_bases(&mut bases, 1) {
                 continue;
             }
 
             while bases.iter().all(|e| base_match(*e.0, *e.1, &names)) {
                 for (n, s) in &bases {
                     if let btree_map::Entry::Occupied(mut e) = names.entry(*n) {
-                        e.get_mut().power -= s.power;
+                        e.get_mut().power -= s;
 
                         if e.get().power == 0 {
                             e.remove_entry();
@@ -475,29 +493,29 @@ impl Unit {
             }
         }
 
-        return (lhs_fac, rhs_fac, Unit::new(names));
+        return (lhs_fac, rhs_fac, CompoundUnit::new(names));
 
-        fn base_match(name: Name, state: SimpleState, bases: &BTreeMap<Name, State>) -> bool {
+        fn base_match(name: Unit, power: i32, bases: &BTreeMap<Unit, State>) -> bool {
             let base = match bases.get(&name) {
                 Some(base) => base,
                 None => return false,
             };
 
-            if state.power < 0 {
-                base.power < 0 && base.power <= state.power
+            if power < 0 {
+                base.power < 0 && base.power <= power
             } else {
-                base.power >= 0 && state.power <= base.power
+                base.power >= 0 && power <= base.power
             }
         }
     }
 
     /// Get all base units out of the current unit.
-    fn base_units(&self) -> (Vec<Name>, BTreeMap<Name, SimpleState>) {
+    fn base_units(&self) -> (Vec<Unit>, BTreeMap<Unit, i32>) {
         let mut bases = BTreeMap::new();
         let mut derived = Vec::new();
 
         for (name, state) in &self.names {
-            if name.populate_bases(&mut bases, state.simple()) {
+            if name.populate_bases(&mut bases, state.power) {
                 derived.push(*name);
             }
         }
@@ -506,8 +524,8 @@ impl Unit {
     }
 }
 
-impl std::str::FromStr for Unit {
-    type Err = anyhow::Error;
+impl std::str::FromStr for CompoundUnit {
+    type Err = crate::error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let node = Parser::new(s).parse_unit();
@@ -515,43 +533,30 @@ impl std::str::FromStr for Unit {
     }
 }
 
-impl fmt::Display for Unit {
+impl fmt::Display for CompoundUnit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let without_num = self.names.iter().all(|c| c.1.power == 0);
-        let without_den = self.names.iter().all(|c| c.1.power >= 0);
-
-        if without_num {
-            if without_den {
-                return Ok(());
-            }
-
-            write!(f, "1")?;
-        } else {
-            for (base, data) in self.names.iter().filter(|e| e.1.power >= 0) {
-                fmt_help(base, f, data, 1)?;
-            }
+        for (base, data) in self.names.iter().filter(|e| e.1.power >= 0) {
+            inner(base, f, data, 1)?;
         }
 
-        if without_den {
-            return Ok(());
-        }
+        if self.names.iter().any(|c| c.1.power < 0) {
+            write!(f, "/")?;
 
-        write!(f, "/")?;
-
-        for (base, data) in self.names.iter().filter(|e| e.1.power < 0) {
-            fmt_help(base, f, data, -1)?;
+            for (base, data) in self.names.iter().filter(|e| e.1.power < 0) {
+                inner(base, f, data, -1)?;
+            }
         }
 
         return Ok(());
 
-        fn fmt_help(name: &Name, f: &mut fmt::Formatter<'_>, data: &State, n: i32) -> fmt::Result {
+        fn inner(name: &Unit, f: &mut fmt::Formatter<'_>, data: &State, n: i32) -> fmt::Result {
             let (prefix, extra) = Prefix::find(data.prefix + name.prefix_bias());
 
             if extra == 0 {
                 write!(f, "{}{}", prefix, name)?;
             } else {
                 let extra = pow10(extra);
-                write!(f, "{}{}{}", extra, prefix, name)?;
+                write!(f, "{{e{}}}{}{}", extra, prefix, name)?;
             }
 
             let mut power = (data.power * n) as u32;

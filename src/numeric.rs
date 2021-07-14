@@ -1,15 +1,47 @@
-use crate::unit::Unit;
+use bigdecimal::{BigDecimal, ToPrimitive};
+
+use crate::unit::CompoundUnit;
 use std::fmt;
 
 pub struct Numeric {
-    pub value: bigdecimal::BigDecimal,
-    pub unit: Unit,
+    value: BigDecimal,
+    unit: CompoundUnit,
 }
 
 impl Numeric {
     /// Construct a new numerical value.
-    pub fn new(value: bigdecimal::BigDecimal, unit: Unit) -> Self {
+    pub(crate) fn new(value: BigDecimal, unit: CompoundUnit) -> Self {
         Self { value, unit }
+    }
+
+    /// Convert into its underlying value.
+    pub(crate) fn into_value(self) -> BigDecimal {
+        self.value
+    }
+
+    /// Interior method to split the numeric value into its components.
+    pub(crate) fn split(self) -> (BigDecimal, CompoundUnit) {
+        (self.value, self.unit)
+    }
+
+    /// Get the value as a 32-bit integer.
+    pub fn to_u32(&self) -> Option<u32> {
+        self.value.to_u32()
+    }
+
+    /// Get the value as a 32-bit float.
+    pub fn to_f32(&self) -> Option<f32> {
+        self.value.to_f32()
+    }
+
+    /// Get the value as a 64-bit float.
+    pub fn to_f64(&self) -> Option<f64> {
+        self.value.to_f64()
+    }
+
+    /// Get the unit of the numerical value.
+    pub fn unit(&self) -> &CompoundUnit {
+        &self.unit
     }
 }
 

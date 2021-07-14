@@ -26,3 +26,8 @@ value = "1"
 names = ["london to new york", "new york to london"]
 unit = "km"
 value = "5571.55"
+
+[[constants]]
+names = ["observable universe"]
+unit = "Ym"
+value = "880"

@@ -1,4 +1,5 @@
 use crate::db;
+use crate::error::Error;
 use crate::numeric::Numeric;
 use crate::parser::{FactsLang, Parser};
 
@@ -10,7 +11,7 @@ use crate::parser::{FactsLang, Parser};
 ///
 /// assert!(values.next().unwrap().is_ok());
 /// ```
-pub fn query<'a>(query: &'a str, db: &'a db::Db) -> Query<'a> {
+pub fn query<'q, 'd>(query: &'q str, db: &'d db::Db) -> Query<'q, 'd> {
     let parser = Parser::new(query);
     let node = parser.parse_root();
 
@@ -21,14 +22,14 @@ pub fn query<'a>(query: &'a str, db: &'a db::Db) -> Query<'a> {
     }
 }
 
-pub struct Query<'a> {
-    query: &'a str,
-    db: &'a db::Db,
+pub struct Query<'q, 'd> {
+    query: &'q str,
+    db: &'d db::Db,
     children: rowan::SyntaxNodeChildren<FactsLang>,
 }
 
-impl Iterator for Query<'_> {
-    type Item = anyhow::Result<Numeric>;
+impl Iterator for Query<'_, '_> {
+    type Item = Result<Numeric, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = self.children.next()?;

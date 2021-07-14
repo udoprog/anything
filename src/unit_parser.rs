@@ -1,15 +1,14 @@
-use crate::unit::{Name, Prefix};
-use anyhow::{anyhow, Result};
+use crate::unit::{Prefix, Unit};
 use logos::Logos;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ParsedUnit {
     pub prefix: i32,
-    pub name: Name,
+    pub name: Unit,
 }
 
 impl ParsedUnit {
-    pub fn new(prefix: i32, name: Name) -> Self {
+    pub fn new(prefix: i32, name: Unit) -> Self {
         Self { prefix, name }
     }
 }
@@ -142,50 +141,50 @@ impl<'a> UnitParser<'a> {
     }
 
     /// Parse the next unit and base.
-    pub fn next(&mut self) -> Result<Option<ParsedUnit>> {
+    pub fn next(&mut self) -> Result<Option<ParsedUnit>, &'a str> {
         let mut prefix = 0;
 
         while let Some(token) = self.lexer.next() {
             match token {
                 Token::Second => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Second)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Second)));
                 }
                 Token::Gram => {
-                    return Ok(Some(ParsedUnit::new(prefix - 3, Name::KiloGram)));
+                    return Ok(Some(ParsedUnit::new(prefix - 3, Unit::KiloGram)));
                 }
                 Token::Joule => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Joule)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Joule)));
                 }
                 Token::Byte => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Byte)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Byte)));
                 }
                 Token::Minute => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Minute)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Minute)));
                 }
                 Token::Hour => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Hour)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Hour)));
                 }
                 Token::Day => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Day)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Day)));
                 }
                 Token::Week => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Week)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Week)));
                 }
                 Token::Month => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Month)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Month)));
                 }
                 Token::Year => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Year)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Year)));
                 }
                 Token::Btu => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Btu)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Btu)));
                 }
                 Token::Au => {
-                    return Ok(Some(ParsedUnit::new(prefix, Name::Au)));
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Au)));
                 }
                 Token::YottaOrYear => {
                     if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Name::Year)));
+                        return Ok(Some(ParsedUnit::new(prefix, Unit::Year)));
                     }
 
                     prefix += Prefix::YOTTA;
@@ -210,7 +209,7 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::MegaOrMonth => {
                     if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Name::Month)));
+                        return Ok(Some(ParsedUnit::new(prefix, Unit::Month)));
                     }
 
                     prefix += Prefix::MEGA;
@@ -223,7 +222,7 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::DeciOrDay => {
                     if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Name::Day)));
+                        return Ok(Some(ParsedUnit::new(prefix, Unit::Day)));
                     }
 
                     prefix += Prefix::DECI;
@@ -233,7 +232,7 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::CentiOrLightSpeed => {
                     if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Name::LightSpeed)));
+                        return Ok(Some(ParsedUnit::new(prefix, Unit::LightSpeed)));
                     }
 
                     prefix += Prefix::CENTI;
@@ -243,7 +242,7 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::MilliOrMeter => {
                     if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Name::Meter)));
+                        return Ok(Some(ParsedUnit::new(prefix, Unit::Meter)));
                     }
 
                     prefix += Prefix::MILLI;
@@ -273,7 +272,7 @@ impl<'a> UnitParser<'a> {
                     prefix += Prefix::YOCTO;
                 }
                 _ => {
-                    return Err(anyhow!("not a valid unit `{}`", self.lexer.source(),));
+                    return Err(self.lexer.source());
                 }
             }
         }
@@ -281,7 +280,7 @@ impl<'a> UnitParser<'a> {
         if prefix == 0 {
             Ok(None)
         } else {
-            Err(anyhow!("not a valid unit `{}`", self.lexer.source(),))
+            Err(self.lexer.source())
         }
     }
 }
@@ -289,7 +288,7 @@ impl<'a> UnitParser<'a> {
 #[cfg(test)]
 mod tests {
     use super::{ParsedUnit, UnitParser};
-    use crate::unit::{Name, Prefix};
+    use crate::unit::{Prefix, Unit};
 
     #[test]
     fn test_kilo() {
@@ -298,7 +297,7 @@ mod tests {
             p.next().unwrap(),
             Some(ParsedUnit {
                 prefix: Prefix::KILO,
-                name: Name::Minute
+                name: Unit::Minute
             })
         );
         assert!(p.next().unwrap().is_none());
@@ -308,7 +307,7 @@ mod tests {
             p.next().unwrap(),
             Some(ParsedUnit {
                 prefix: Prefix::KILO,
-                name: Name::Minute
+                name: Unit::Minute
             })
         );
         assert!(p.next().unwrap().is_none());
@@ -321,7 +320,7 @@ mod tests {
             p.next().unwrap(),
             Some(ParsedUnit {
                 prefix: 0,
-                name: Name::Minute
+                name: Unit::Minute
             })
         );
         assert!(p.next().unwrap().is_none());
@@ -331,7 +330,7 @@ mod tests {
             p.next().unwrap(),
             Some(ParsedUnit {
                 prefix: 0,
-                name: Name::Minute
+                name: Unit::Minute
             })
         );
         assert!(p.next().unwrap().is_none());
@@ -341,7 +340,7 @@ mod tests {
             p.next().unwrap(),
             Some(ParsedUnit {
                 prefix: 0,
-                name: Name::Minute
+                name: Unit::Minute
             })
         );
         assert!(p.next().unwrap().is_none());
@@ -368,7 +367,7 @@ mod tests {
                     p.next().unwrap(),
                     Some(ParsedUnit {
                         prefix: prefix - 3,
-                        name: Name::KiloGram
+                        name: Unit::KiloGram
                     }),
                     "failed prefix test: test = {}, prefix = {}",
                     test,

@@ -1,44 +1,65 @@
 use std::collections::BTreeMap;
 
 use crate::db;
+use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
 use crate::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
-use crate::unit::{Name, State, Unit};
+use crate::unit::{CompoundUnit, State, Unit};
 use crate::unit_parser::{ParsedUnit, UnitParser};
-use anyhow::{anyhow, bail, Result};
+use bigdecimal::BigDecimal;
 use rowan::{NodeOrToken, TextRange};
+
+use ErrorKind::*;
 use SyntaxKind::*;
 
+type Result<T, E = Error> = std::result::Result<T, E>;
+
 fn add(a: Numeric, b: Numeric) -> Result<Numeric> {
-    if let Some(factor) = a.unit.factor(&b.unit) {
-        Ok(Numeric::new(a.value + b.value / factor, a.unit))
+    if let Some(factor) = a.unit().factor(b.unit()) {
+        let (value, unit) = a.split();
+        Ok(Numeric::new(value + b.into_value() / factor, unit))
     } else {
-        bail!("cannot add the units `{} + {}`", a.unit, b.unit)
+        Err(Error::new(IllegalOperation {
+            op: "+",
+            lhs: a.unit().clone(),
+            rhs: b.unit().clone(),
+        }))
     }
 }
 
 fn sub(a: Numeric, b: Numeric) -> Result<Numeric> {
-    if let Some(factor) = a.unit.factor(&b.unit) {
-        Ok(Numeric::new(a.value - b.value / factor, a.unit))
+    if let Some(factor) = a.unit().factor(b.unit()) {
+        let (value, unit) = a.split();
+        Ok(Numeric::new(value - b.into_value() / factor, unit))
     } else {
-        bail!("cannot subtract the units `{} - {}`", a.unit, b.unit)
+        Err(Error::new(IllegalOperation {
+            op: "-",
+            lhs: a.unit().clone(),
+            rhs: b.unit().clone(),
+        }))
     }
 }
 
 fn div(a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (a_fac, b_fac, unit) = a.unit.mul(b.unit, -1);
-    Ok(Numeric::new((a.value * a_fac) / (b.value * b_fac), unit))
+    let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), -1);
+    Ok(Numeric::new(
+        (a.into_value() * a_fac) / (b.into_value() * b_fac),
+        unit,
+    ))
 }
 
 fn mul(a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (a_fac, b_fac, unit) = a.unit.mul(b.unit, 1);
-    Ok(Numeric::new((a.value * a_fac) * (b.value * b_fac), unit))
+    let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), 1);
+    Ok(Numeric::new(
+        (a.into_value() * a_fac) * (b.into_value() * b_fac),
+        unit,
+    ))
 }
 
-pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
+pub fn unit(source: &str, node: SyntaxNode) -> Result<CompoundUnit> {
     match node.kind() {
         UNIT => {}
-        kind => bail!("unsupported unit node: {:?}", kind),
+        kind => return Err(Error::expected(UNIT, kind)),
     }
 
     let mut it = Tokens {
@@ -52,7 +73,7 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
     inner(&mut it, &mut bases, 1)?;
     inner(&mut it, &mut bases, -1)?;
 
-    return Ok(Unit::new(bases));
+    return Ok(CompoundUnit::new(bases));
 
     struct Tokens<'a, T> {
         source: &'a str,
@@ -97,7 +118,7 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
 
     fn inner(
         p: &mut Tokens<impl Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>>,
-        bases: &mut BTreeMap<Name, State>,
+        bases: &mut BTreeMap<Unit, State>,
         power_factor: i32,
     ) -> Result<()> {
         while let Some(t) = p.next() {
@@ -116,13 +137,13 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
                             UnitParser::new(s)
                         }
                         UNIT_WORD => UnitParser::new(p.text(t.text_range())),
-                        kind => bail!("unexpected unit kind `{:?}`", kind),
+                        kind => return Err(Error::unexpected(kind)),
                     };
 
                     let mut last = None;
                     let range = t.text_range();
 
-                    while let Some(parsed) = parser.next()? {
+                    while let Some(parsed) = parser.next().map_err(Error::illegal_unit)? {
                         if let Some(parsed) = std::mem::replace(&mut last, Some(parsed)) {
                             populate_unit(p, bases, parsed, range, power_factor)?;
                         }
@@ -136,11 +157,11 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
 
                             let number = match p.next() {
                                 Some(t) if t.kind() == UNIT_NUMBER => t,
-                                _ => bail!("expected unit number"),
+                                _ => return Err(Error::expected_only(UNIT_NUMBER)),
                             };
 
                             let text = p.text(number.text_range());
-                            str::parse::<i32>(text)?
+                            str::parse::<i32>(text).map_err(Error::int)?
                         } else {
                             1
                         };
@@ -148,7 +169,7 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
                         populate_unit(p, bases, parsed, range, power * power_factor)?;
                     }
                 }
-                kind => bail!("unexpected token: {:?}", kind),
+                kind => return Err(Error::unexpected(kind)),
             }
         }
 
@@ -157,7 +178,7 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
 
     fn populate_unit(
         p: &Tokens<impl Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>>,
-        bases: &mut BTreeMap<Name, State>,
+        bases: &mut BTreeMap<Unit, State>,
         parsed: ParsedUnit,
         range: TextRange,
         power_factor: i32,
@@ -170,10 +191,11 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
         entry.power += power_factor;
 
         if entry.prefix != parsed.prefix {
-            bail!(
-                "unit `{}` must have the same kind in each unit spec",
-                p.text(range)
-            );
+            return Err(Error::new(PrefixMismatch {
+                unit: p.text(range).into(),
+                expected: entry.prefix,
+                actual: parsed.prefix,
+            }));
         }
 
         Ok(())
@@ -188,10 +210,9 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
             let mut base = eval(source, it.next().unwrap(), db)?;
 
             while let (Some(op), Some(rhs)) = (it.next(), it.next()) {
-                let op = op
-                    .first_token()
-                    .map(|t| t.kind())
-                    .ok_or_else(|| anyhow!("missing op"))?;
+                let op = op.first_token().map(|t| t.kind()).ok_or_else(|| Internal {
+                    message: "missing operator",
+                })?;
 
                 let op = match op {
                     PLUS => add,
@@ -201,17 +222,22 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
                     AS | TO => {
                         let rhs = unit(source, rhs)?;
 
-                        let factor = match base.unit.factor(&rhs) {
+                        let factor = match base.unit().factor(&rhs) {
                             Some(factor) => factor,
-                            None => bail!("{} cannot be cast to {}", base, rhs),
+                            None => {
+                                return Err(Error::new(IllegalCast {
+                                    from: base.unit().clone(),
+                                    to: rhs.clone(),
+                                }))
+                            }
                         };
 
-                        base.value *= factor;
-                        base.unit = rhs;
+                        let value = base.into_value();
+                        base = Numeric::new(value * factor, rhs);
                         continue;
                     }
                     kind => {
-                        bail!("unsuported op: {:?}", kind);
+                        return Err(Error::unexpected(kind));
                     }
                 };
 
@@ -223,15 +249,15 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
         }
         NUMBER => {
             let s = &source[node.text_range()];
-            let int = str::parse::<bigdecimal::BigDecimal>(s)?;
-            Ok(Numeric::new(int, Unit::empty()))
+            let int = str::parse::<BigDecimal>(s).map_err(Error::big_decimal)?;
+            Ok(Numeric::new(int, CompoundUnit::empty()))
         }
         NUMBER_WITH_UNIT => {
             let mut it = node.children();
 
             let number = it.next().unwrap();
             let number = &source[number.text_range()];
-            let number = str::parse::<bigdecimal::BigDecimal>(number)?;
+            let number = str::parse::<BigDecimal>(number).map_err(Error::big_decimal)?;
 
             let node = it.next().unwrap();
             let unit = unit(source, node)?;
@@ -243,7 +269,7 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
 
             let m = match db.lookup(s) {
                 Some(m) => m,
-                None => bail!("found nothing matching `{}`", s),
+                None => return Err(Error::new(Missing { query: s.into() })),
             };
 
             match m {
@@ -253,12 +279,10 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
         PERCENTAGE => {
             let number = node.first_token().expect("number of percentage");
             let number = &source[number.text_range()];
-            let number = str::parse::<bigdecimal::BigDecimal>(number)?;
-            let one_hundred = bigdecimal::BigDecimal::from(100);
-            Ok(Numeric::new(number / one_hundred, Unit::empty()))
+            let number = str::parse::<BigDecimal>(number).map_err(Error::big_decimal)?;
+            let one_hundred = BigDecimal::from(100);
+            Ok(Numeric::new(number / one_hundred, CompoundUnit::empty()))
         }
-        kind => {
-            bail!("unsupported expression: {:?}", kind)
-        }
+        kind => Err(Error::unexpected(kind)),
     }
 }

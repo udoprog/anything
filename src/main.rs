@@ -1,6 +1,4 @@
-use anyhow::Result;
-
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     let mut it = std::env::args();
     it.next();
     let query = it.collect::<Vec<_>>().join(" ");

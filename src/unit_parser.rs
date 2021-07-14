@@ -36,12 +36,26 @@ enum Token {
     #[token("weeks")]
     #[token("W")]
     Week,
+    #[token("mth")]
+    #[token("mths")]
     #[token("month")]
     #[token("months")]
     Month,
+    #[token("yr")]
+    #[token("yrs")]
     #[token("year")]
     #[token("years")]
     Year,
+    #[token("decade")]
+    #[token("decades")]
+    Decade,
+    #[token("century")]
+    #[token("centuries")]
+    Century,
+    #[token("millenium")]
+    #[token("milleniums")]
+    #[token("millenia")]
+    Millenium,
 
     #[token("metre")]
     #[token("meter")]
@@ -49,12 +63,19 @@ enum Token {
     Meter,
 
     #[token("g")]
+    GramOrGforce,
     #[token("gram")]
     Gram,
 
     #[token("B")]
     #[token("byte")]
     Byte,
+
+    #[token("tonnes")]
+    #[token("tonne")]
+    #[token("tons")]
+    #[token("ton")]
+    Ton,
 
     #[token("J")]
     #[token("joule")]
@@ -65,8 +86,14 @@ enum Token {
     #[token("au")]
     Au,
 
+    #[token("acc")]
+    #[token("acceleration")]
+    Acceleration,
+    #[token("gforce")]
+    #[token("g-force")]
+    Gforce,
+
     #[token("Y")]
-    YottaOrYear,
     #[token("yotta")]
     Yotta,
     #[token("Z")]
@@ -85,7 +112,7 @@ enum Token {
     #[token("giga")]
     Giga,
     #[token("M")]
-    MegaOrMonth,
+    MegaOrMillenium,
     #[token("mega")]
     Mega,
     #[token("k")]
@@ -116,12 +143,14 @@ enum Token {
     #[token("femto")]
     Femto,
     #[token("a")]
+    AttoOrAcceleration,
     #[token("atto")]
     Atto,
     #[token("z")]
     #[token("zepto")]
     Zepto,
     #[token("y")]
+    YoctoOrYear,
     #[token("yocto")]
     Yocto,
 
@@ -132,12 +161,22 @@ enum Token {
 /// Helper to parse collection of units from a string.
 pub struct UnitParser<'a> {
     lexer: logos::Lexer<'a, Token>,
+    acceleration_bias: bool,
 }
 
 impl<'a> UnitParser<'a> {
     pub fn new(source: &'a str) -> Self {
         Self {
             lexer: Token::lexer(source),
+            acceleration_bias: false,
+        }
+    }
+
+    /// Make the parser have acceleration bias.
+    pub fn with_acceleration_bias(self, acceleration_bias: bool) -> Self {
+        Self {
+            acceleration_bias,
+            ..self
         }
     }
 
@@ -150,8 +189,18 @@ impl<'a> UnitParser<'a> {
                 Token::Second => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Second)));
                 }
+                Token::GramOrGforce => {
+                    if self.acceleration_bias {
+                        return Ok(Some(ParsedUnit::new(prefix, Unit::Gforce)));
+                    } else {
+                        return Ok(Some(ParsedUnit::new(prefix - 3, Unit::KiloGram)));
+                    }
+                }
                 Token::Gram => {
                     return Ok(Some(ParsedUnit::new(prefix - 3, Unit::KiloGram)));
+                }
+                Token::Ton => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Ton)));
                 }
                 Token::Joule => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Joule)));
@@ -177,18 +226,26 @@ impl<'a> UnitParser<'a> {
                 Token::Year => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Year)));
                 }
+                Token::Decade => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Decade)));
+                }
+                Token::Century => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Century)));
+                }
+                Token::Millenium => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Millenium)));
+                }
                 Token::Btu => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Btu)));
                 }
                 Token::Au => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Au)));
                 }
-                Token::YottaOrYear => {
-                    if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Unit::Year)));
-                    }
-
-                    prefix += Prefix::YOTTA;
+                Token::Acceleration => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Acceleration)));
+                }
+                Token::Gforce => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Gforce)));
                 }
                 Token::Yotta => {
                     prefix += Prefix::YOTTA;
@@ -208,9 +265,9 @@ impl<'a> UnitParser<'a> {
                 Token::Giga => {
                     prefix += Prefix::GIGA;
                 }
-                Token::MegaOrMonth => {
+                Token::MegaOrMillenium => {
                     if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Unit::Month)));
+                        return Ok(Some(ParsedUnit::new(prefix, Unit::Millenium)));
                     }
 
                     prefix += Prefix::MEGA;
@@ -263,11 +320,25 @@ impl<'a> UnitParser<'a> {
                 Token::Femto => {
                     prefix += Prefix::FEMTO;
                 }
+                Token::AttoOrAcceleration => {
+                    if self.lexer.remainder().is_empty() {
+                        return Ok(Some(ParsedUnit::new(prefix, Unit::Acceleration)));
+                    }
+
+                    prefix += Prefix::ATTO;
+                }
                 Token::Atto => {
                     prefix += Prefix::ATTO;
                 }
                 Token::Zepto => {
                     prefix += Prefix::ZEPTO;
+                }
+                Token::YoctoOrYear => {
+                    if self.lexer.remainder().is_empty() {
+                        return Ok(Some(ParsedUnit::new(prefix, Unit::Year)));
+                    }
+
+                    prefix += Prefix::YOCTO;
                 }
                 Token::Yocto => {
                     prefix += Prefix::YOCTO;

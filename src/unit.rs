@@ -20,11 +20,23 @@ pub enum Unit {
     /// Designated as `B`.
     Byte,
 
+    /// Acceleration or `m/s^2`.
+    Acceleration,
+    /// A g or ~ `9.8a`.
+    Gforce,
+    /// A ton or `1000kg`.
+    Ton,
     // Derived units
     /// A Joule `kg*m^2*s^-2`.
     Joule,
     /// `Y` or `(3600 * 24 * 365)s`.
     Year,
+    /// A decade, or 10 years.
+    Decade,
+    /// A century, or 100 years.
+    Century,
+    /// A milennium, or 1000 years.
+    Millenium,
     /// `M`.
     Month,
     /// `d` or `(3600 * 24 * 7)s`.
@@ -73,7 +85,7 @@ impl Unit {
                 merge(bases, Unit::Byte, power);
                 false
             }
-            Unit::Year => {
+            Unit::Year | Unit::Decade | Unit::Century | Unit::Millenium => {
                 merge(bases, Unit::Second, power);
                 true
             }
@@ -95,6 +107,15 @@ impl Unit {
             }
             Unit::Minute => {
                 merge(bases, Unit::Second, power);
+                true
+            }
+            Unit::Acceleration | Unit::Gforce => {
+                merge(bases, Unit::Meter, power);
+                merge(bases, Unit::Second, power * -2);
+                true
+            }
+            Unit::Ton => {
+                merge(bases, Unit::KiloGram, power);
                 true
             }
             Unit::Btu | Unit::Joule => {
@@ -122,6 +143,15 @@ impl Unit {
             Unit::Year => {
                 return Some(BigDecimal::new(3147113076u32.into(), 2));
             }
+            Unit::Decade => {
+                return Some(BigDecimal::new(3147113076u32.into(), 1));
+            }
+            Unit::Century => {
+                return Some(BigDecimal::new(3147113076u32.into(), 0));
+            }
+            Unit::Millenium => {
+                return Some(BigDecimal::new(3147113076u32.into(), -1));
+            }
             Unit::Month => {
                 return Some(BigDecimal::new(262259423u32.into(), 2));
             }
@@ -129,6 +159,10 @@ impl Unit {
             Unit::Day => 86400,
             Unit::Hour => 3600,
             Unit::Minute => 60,
+            Unit::Gforce => {
+                return Some(BigDecimal::new(980665u32.into(), 5));
+            }
+            Unit::Ton => 1000,
             Unit::Btu => 1055,
             Unit::Au => 149597870700,
             Unit::LightSpeed => 299792458,
@@ -144,25 +178,36 @@ impl Unit {
             _ => 0,
         }
     }
-}
 
-impl fmt::Display for Unit {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Unit::Second => 's'.fmt(f),
-            Unit::KiloGram => 'g'.fmt(f),
-            Unit::Meter => 'm'.fmt(f),
-            Unit::Byte => 'B'.fmt(f),
-            Unit::Joule => 'J'.fmt(f),
-            Unit::Year => "Y".fmt(f),
-            Unit::Month => "M".fmt(f),
-            Unit::Week => "W".fmt(f),
-            Unit::Day => "d".fmt(f),
-            Unit::Hour => "H".fmt(f),
-            Unit::Minute => "m".fmt(f),
-            Unit::Btu => "btu".fmt(f),
-            Unit::Au => "au".fmt(f),
-            Unit::LightSpeed => "c".fmt(f),
+    pub(crate) fn format(&self, f: &mut fmt::Formatter<'_>, pluralize: bool) -> fmt::Result {
+        use std::fmt::Display as _;
+
+        match (self, pluralize) {
+            (Unit::Second, _) => 's'.fmt(f),
+            (Unit::KiloGram, _) => 'g'.fmt(f),
+            (Unit::Meter, _) => 'm'.fmt(f),
+            (Unit::Byte, _) => 'B'.fmt(f),
+            (Unit::Acceleration, _) => 'a'.fmt(f),
+            (Unit::Gforce, _) => 'g'.fmt(f),
+            (Unit::Ton, false) => "ton".fmt(f),
+            (Unit::Ton, true) => "Tons".fmt(f),
+            (Unit::Joule, _) => 'J'.fmt(f),
+            (Unit::Year, _) => "yr".fmt(f),
+            (Unit::Decade, false) => "decade".fmt(f),
+            (Unit::Decade, true) => "decades".fmt(f),
+            (Unit::Century, false) => "century".fmt(f),
+            (Unit::Century, true) => "centuries".fmt(f),
+            (Unit::Millenium, false) => "millenium".fmt(f),
+            (Unit::Millenium, true) => "millenia".fmt(f),
+            (Unit::Month, _) => "mth".fmt(f),
+            (Unit::Week, _) => "W".fmt(f),
+            (Unit::Day, _) => "d".fmt(f),
+            (Unit::Hour, _) => "H".fmt(f),
+            (Unit::Minute, _) => "m".fmt(f),
+            (Unit::Btu, false) => "btu".fmt(f),
+            (Unit::Btu, true) => "btus".fmt(f),
+            (Unit::Au, _) => "au".fmt(f),
+            (Unit::LightSpeed, _) => "c".fmt(f),
         }
     }
 }

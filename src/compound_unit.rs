@@ -88,6 +88,19 @@ impl CompoundUnit {
         self.names.is_empty()
     }
 
+    /// Test if this unit is an acceleration unit.
+    pub fn is_acceleration(&self) -> bool {
+        let (_, bases) = self.base_units();
+
+        if bases.len() != 2 {
+            return false;
+        }
+
+        let meter = bases.get(&Unit::Meter).copied();
+        let second = bases.get(&Unit::Second).copied();
+        meter == Some(1) && second == Some(-2)
+    }
+
     /// Calculate the factor for coercing one unit to another.
     pub fn factor(&self, other: &Self) -> Option<BigDecimal> {
         let mut factor = BigDecimal::from(1);
@@ -132,7 +145,12 @@ impl CompoundUnit {
     pub fn mul(&self, other: &Self, n: i32) -> (BigDecimal, BigDecimal, Self) {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
-                other.clone()
+                Self::from_iter(
+                    other
+                        .names
+                        .iter()
+                        .map(|(unit, state)| (*unit, state.power * n, state.prefix)),
+                )
             } else {
                 self.clone()
             };
@@ -247,42 +265,49 @@ impl CompoundUnit {
 
         (derived, bases)
     }
-}
 
-impl std::str::FromStr for CompoundUnit {
-    type Err = crate::error::Error;
+    /// Helper to format a compound unit. This allows for pluralization in the
+    /// scenario that this compound unit is composed of a single unit.
+    pub(crate) fn format(&self, f: &mut fmt::Formatter<'_>, pluralize: bool) -> fmt::Result {
+        let mut pluralize = if self.names.iter().filter(|e| e.1.power >= 0).count() == 1 {
+            pluralize
+        } else {
+            false
+        };
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let node = Parser::new(s).parse_unit();
-        crate::eval::unit(s, node)
-    }
-}
-
-impl fmt::Display for CompoundUnit {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (base, data) in self.names.iter().filter(|e| e.1.power >= 0) {
-            inner(base, f, data, 1)?;
+            inner(base, f, data, std::mem::take(&mut pluralize), 1)?;
         }
 
         if self.names.iter().any(|c| c.1.power < 0) {
             write!(f, "/")?;
 
             for (base, data) in self.names.iter().filter(|e| e.1.power < 0) {
-                inner(base, f, data, -1)?;
+                inner(base, f, data, false, -1)?;
             }
         }
 
         return Ok(());
 
-        fn inner(name: &Unit, f: &mut fmt::Formatter<'_>, data: &State, n: i32) -> fmt::Result {
+        fn inner(
+            name: &Unit,
+            f: &mut fmt::Formatter<'_>,
+            data: &State,
+            pluralize: bool,
+            n: i32,
+        ) -> fmt::Result {
+            use std::fmt::Display as _;
+
             let (prefix, extra) = Prefix::find(data.prefix + name.prefix_bias());
 
             if extra == 0 {
-                write!(f, "{}{}", prefix, name)?;
+                write!(f, "{}", prefix)?;
             } else {
                 let extra = pow10(extra);
-                write!(f, "{{e{}}}{}{}", extra, prefix, name)?;
+                write!(f, "{{e{}}}{}", extra, prefix)?;
             }
+
+            name.format(f, pluralize)?;
 
             let mut power = (data.power * n) as u32;
 
@@ -305,6 +330,21 @@ impl fmt::Display for CompoundUnit {
 
             Ok(())
         }
+    }
+}
+
+impl std::str::FromStr for CompoundUnit {
+    type Err = crate::error::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let node = Parser::new(s).parse_unit();
+        crate::eval::unit(s, node, Default::default())
+    }
+}
+
+impl fmt::Display for CompoundUnit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        CompoundUnit::format(self, f, false)
     }
 }
 

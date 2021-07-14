@@ -1,10 +1,19 @@
 use crate::compound_unit::CompoundUnit;
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 use hashbrown::{HashMap, HashSet};
 use std::fmt;
 use std::sync::Arc;
 
+const MATH: &[u8] = include_bytes!("../db/math.toml");
 const PHYSICS: &[u8] = include_bytes!("../db/physics.toml");
+const DISTANCES: &[u8] = include_bytes!("../db/distances.toml");
+
+const SOURCES: [(&str, &[u8]); 3] = [
+    ("math", MATH),
+    ("physics", PHYSICS),
+    ("distances", DISTANCES),
+];
+
 const SEED: u64 = 0x681da70f3e1e3494;
 
 /// A matched thing from the database.
@@ -22,7 +31,11 @@ pub fn open() -> Result<Db> {
         constants: HashMap::new(),
     };
 
-    db.load_bytes(PHYSICS)?;
+    for (name, source) in SOURCES.iter().copied() {
+        db.load_bytes(source)
+            .with_context(|| anyhow!("loading: {}", name))?;
+    }
+
     Ok(db)
 }
 

@@ -15,6 +15,21 @@ use SyntaxKind::*;
 
 type Result<T, E = Error> = std::result::Result<T, E>;
 
+#[derive(Default, Debug, Clone, Copy)]
+pub struct Bias {
+    acceleration_bias: bool,
+}
+
+impl Bias {
+    /// Coerce the current bias to work with acceleration bias.
+    fn with_acceleration_bias(self, acceleration_bias: bool) -> Self {
+        Self {
+            acceleration_bias,
+            ..self
+        }
+    }
+}
+
 fn add(a: Numeric, b: Numeric) -> Result<Numeric> {
     if let Some(factor) = a.unit().factor(b.unit()) {
         let (value, unit) = a.split();
@@ -57,7 +72,7 @@ fn mul(a: Numeric, b: Numeric) -> Result<Numeric> {
     ))
 }
 
-pub fn unit(source: &str, node: SyntaxNode) -> Result<CompoundUnit> {
+pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<CompoundUnit> {
     match node.kind() {
         UNIT => {}
         kind => return Err(Error::expected(UNIT, kind)),
@@ -71,8 +86,8 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<CompoundUnit> {
 
     let mut bases = BTreeMap::new();
 
-    inner(&mut it, &mut bases, 1)?;
-    inner(&mut it, &mut bases, -1)?;
+    inner(&mut it, &mut bases, 1, bias)?;
+    inner(&mut it, &mut bases, -1, bias)?;
 
     return Ok(CompoundUnit::new(bases));
 
@@ -121,6 +136,7 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<CompoundUnit> {
         p: &mut Tokens<impl Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>>,
         bases: &mut BTreeMap<Unit, State>,
         power_factor: i32,
+        bias: Bias,
     ) -> Result<()> {
         while let Some(t) = p.next() {
             match t.kind() {
@@ -131,7 +147,7 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<CompoundUnit> {
                     break;
                 }
                 UNIT_WORD | UNIT_ESCAPED_WORD => {
-                    let mut parser = match t.kind() {
+                    let parser = match t.kind() {
                         UNIT_ESCAPED_WORD => {
                             let s = p.text(t.text_range());
                             let s = &s[1..(s.len() - 1)];
@@ -140,6 +156,8 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<CompoundUnit> {
                         UNIT_WORD => UnitParser::new(p.text(t.text_range())),
                         kind => return Err(Error::unexpected(kind)),
                     };
+
+                    let mut parser = parser.with_acceleration_bias(bias.acceleration_bias);
 
                     let mut last = None;
                     let range = t.text_range();
@@ -203,12 +221,27 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<CompoundUnit> {
     }
 }
 
+/// Helper to delay evaluation of a syntax node so that we can modify its bias.
+enum DelayedEval {
+    Node(SyntaxNode),
+    Numeric(Numeric),
+}
+
+impl DelayedEval {
+    fn eval(self, source: &str, db: &db::Db, bias: Bias) -> Result<Numeric> {
+        match self {
+            DelayedEval::Node(node) => eval(node, source, db, bias),
+            DelayedEval::Numeric(numeric) => Ok(numeric),
+        }
+    }
+}
+
 /// Evaluate the syntax node.
-pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
+pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<Numeric> {
     match node.kind() {
         OPERATION => {
             let mut it = node.children();
-            let mut base = eval(source, it.next().unwrap(), db)?;
+            let mut base = DelayedEval::Node(it.next().unwrap());
 
             while let (Some(op), Some(rhs)) = (it.next(), it.next()) {
                 let op = op.first_token().map(|t| t.kind()).ok_or_else(|| Internal {
@@ -221,20 +254,25 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
                     SLASH => div,
                     STAR => mul,
                     AS | TO => {
-                        let rhs = unit(source, rhs)?;
+                        let rhs = unit(source, rhs, bias)?;
+                        let b = base.eval(
+                            source,
+                            db,
+                            bias.with_acceleration_bias(rhs.is_acceleration()),
+                        )?;
 
-                        let factor = match base.unit().factor(&rhs) {
+                        let factor = match b.unit().factor(&rhs) {
                             Some(factor) => factor,
                             None => {
                                 return Err(Error::new(IllegalCast {
-                                    from: base.unit().clone(),
+                                    from: b.unit().clone(),
                                     to: rhs.clone(),
                                 }))
                             }
                         };
 
-                        let value = base.into_value();
-                        base = Numeric::new(value * factor, rhs);
+                        let value = b.into_value();
+                        base = DelayedEval::Numeric(Numeric::new(value * factor, rhs));
                         continue;
                     }
                     kind => {
@@ -242,11 +280,12 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
                     }
                 };
 
-                let rhs = eval(source, rhs, db)?;
-                base = op(base, rhs)?;
+                let rhs = eval(rhs, source, db, bias)?;
+                let b = base.eval(source, db, bias)?;
+                base = DelayedEval::Numeric(op(b, rhs)?);
             }
 
-            Ok(base)
+            Ok(base.eval(source, db, bias)?)
         }
         NUMBER => {
             let s = &source[node.text_range()];
@@ -261,7 +300,7 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
             let number = str::parse::<BigDecimal>(number).map_err(Error::big_decimal)?;
 
             let node = it.next().unwrap();
-            let unit = unit(source, node)?;
+            let unit = unit(source, node, bias)?;
 
             Ok(Numeric::new(number, unit))
         }

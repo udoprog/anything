@@ -1,8 +1,4 @@
 [[constants]]
-names = ["pi"]
-value = "3.1415926535"
-
-[[constants]]
 names = ["c", "speed of light", "lightspeed"]
 unit = "c"
 value = "1"
@@ -16,18 +12,3 @@ value = "9.80665"
 names = ["G", "gravitational constant"]
 unit = "m^3/kgs^2"
 value = "9.80665"
-
-[[constants]]
-names = ["au", "distance to earth", "orbit of earth", "earth orbit"]
-unit = "au"
-value = "1"
-
-[[constants]]
-names = ["london to new york", "new york to london"]
-unit = "km"
-value = "5571.55"
-
-[[constants]]
-names = ["observable universe"]
-unit = "Ym"
-value = "880"

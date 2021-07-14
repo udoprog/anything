@@ -1,0 +1,14 @@
+[[constants]]
+names = ["au", "distance to earth", "orbit of earth", "earth orbit"]
+unit = "au"
+value = "1"
+
+[[constants]]
+names = ["london to new york", "new york to london"]
+unit = "km"
+value = "5571.55"
+
+[[constants]]
+names = ["observable universe"]
+unit = "Ym"
+value = "880"

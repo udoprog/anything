@@ -1,0 +1,7 @@
+[[constants]]
+names = ["pi", "π"]
+value = "3.1415926535"
+
+[[constants]]
+names = ["tau", "τ"]
+value = "6.283185307"

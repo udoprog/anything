@@ -47,10 +47,15 @@ impl Numeric {
 
 impl fmt::Display for Numeric {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use bigdecimal::One as _;
+
         if self.value.is_integer() {
-            write!(f, "{}{}", self.value, self.unit)
+            write!(f, "{}", self.value)?;
         } else {
-            write!(f, "{}{}", self.value.round(16), self.unit)
+            write!(f, "{}", self.value.round(16))?;
         }
+
+        self.unit.format(f, !self.value.is_one())?;
+        Ok(())
     }
 }

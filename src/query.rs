@@ -33,6 +33,11 @@ impl Iterator for Query<'_, '_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = self.children.next()?;
-        Some(crate::eval::eval(&self.query, node, self.db))
+        Some(crate::eval::eval(
+            node,
+            &self.query,
+            self.db,
+            Default::default(),
+        ))
     }
 }

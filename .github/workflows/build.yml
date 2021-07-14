@@ -1,0 +1,23 @@
+name: Build
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Linux Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        id: rust_toolchain
+        with:
+          toolchain: stable
+          override: true
+      - name: Formatting Check
+        run: cargo fmt --all -- --check
+      - name: Run tests
+        run: cargo test --all

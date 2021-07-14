@@ -1,4 +1,4 @@
-use super::{ParsedUnit, UnitParser};
+use super::UnitParser;
 use crate::prefix::Prefix;
 use crate::unit::Unit;
 
@@ -18,26 +18,26 @@ macro_rules! parse {
 
 #[test]
 fn test_prefixes() {
-    const PREFIXES: [([&str; 2], i32); 19] = [
-        (["y", "yocto"], Prefix::YOCTO),
-        (["z", "zepto"], Prefix::ZEPTO),
-        (["a", "atto"], Prefix::ATTO),
-        (["f", "femto"], Prefix::FEMTO),
-        (["p", "pico"], Prefix::PICO),
-        (["n", "nano"], Prefix::NANO),
-        (["μ", "micro"], Prefix::MICRO),
-        (["m", "milli"], Prefix::MILLI),
-        (["c", "centi"], Prefix::CENTI),
-        (["d", "deci"], Prefix::DECI),
-        (["", ""], Prefix::NONE),
-        (["k", "kilo"], Prefix::KILO),
-        (["M", "mega"], Prefix::MEGA),
-        (["G", "giga"], Prefix::GIGA),
-        (["T", "tera"], Prefix::TERA),
-        (["P", "peta"], Prefix::PETA),
-        (["E", "exa"], Prefix::EXA),
-        (["Z", "zetta"], Prefix::ZETTA),
-        (["Y", "yotta"], Prefix::YOTTA),
+    const PREFIXES: [(&[&str], i32); 19] = [
+        (&["y", "yocto"], Prefix::YOCTO),
+        (&["z", "zepto"], Prefix::ZEPTO),
+        (&["a", "atto"], Prefix::ATTO),
+        (&["f", "femto"], Prefix::FEMTO),
+        (&["p", "pico"], Prefix::PICO),
+        (&["n", "nano"], Prefix::NANO),
+        (&["μ", "micro"], Prefix::MICRO),
+        (&["m", "milli"], Prefix::MILLI),
+        (&["c", "centi"], Prefix::CENTI),
+        (&["d", "deci"], Prefix::DECI),
+        (&[""], Prefix::NONE),
+        (&["k", "kilo"], Prefix::KILO),
+        (&["M", "mega"], Prefix::MEGA),
+        (&["G", "giga"], Prefix::GIGA),
+        (&["T", "tera"], Prefix::TERA),
+        (&["P", "peta"], Prefix::PETA),
+        (&["E", "exa"], Prefix::EXA),
+        (&["Z", "zetta"], Prefix::ZETTA),
+        (&["Y", "yotta"], Prefix::YOTTA),
     ];
 
     const UNITS: [(Unit, &[&str]); 20] = [
@@ -70,10 +70,8 @@ fn test_prefixes() {
                     continue;
                 }
 
-                for v in variants {
-                    let mut s = format!("{}{}", string, v);
-
-                    println!("{} {:?}", s, unit);
+                for v in variants.iter().copied() {
+                    let s = format!("{}{}", string, v);
 
                     let result = parse!(&s);
                     assert_eq! {

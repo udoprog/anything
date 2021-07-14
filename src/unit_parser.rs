@@ -228,212 +228,199 @@ impl<'a> UnitParser<'a> {
         }
     }
 
-    /// Parse the next unit and base.
-    pub fn next(&mut self) -> Result<Option<ParsedUnit>, &'a str> {
+    fn inner_next(&mut self) -> Result<Option<(i32, Unit)>, ()> {
         let mut prefix = 0;
 
-        while let Some(token) = self.lexer.next() {
-            match token {
-                Token::Second => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Second)));
-                }
+        loop {
+            let token = match self.lexer.next() {
+                Some(token) => token,
+                None => return Ok(None),
+            };
+
+            let unit = match token {
+                Token::Second => Unit::Second,
                 Token::GramOrGforce => {
                     if self.acceleration_bias {
-                        return Ok(Some(ParsedUnit::new(prefix, Unit::Gforce)));
+                        Unit::Gforce
                     } else {
-                        return Ok(Some(ParsedUnit::new(prefix - 3, Unit::KiloGram)));
+                        prefix -= 3;
+                        Unit::KiloGram
                     }
                 }
                 Token::Gram => {
-                    return Ok(Some(ParsedUnit::new(prefix - 3, Unit::KiloGram)));
+                    prefix -= 3;
+                    Unit::KiloGram
                 }
-                Token::Ampere => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Ampere)));
-                }
-                Token::Kelvin => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Kelvin)));
-                }
-                Token::Mole => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Mole)));
-                }
-                Token::Candela => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Candela)));
-                }
-                Token::Ton => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Ton)));
-                }
-                Token::Byte => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Byte)));
-                }
-                Token::Minute => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Minute)));
-                }
-                Token::Hour => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Hour)));
-                }
-                Token::Day => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Day)));
-                }
-                Token::Week => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Week)));
-                }
-                Token::Month => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Month)));
-                }
-                Token::Year => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Year)));
-                }
-                Token::Decade => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Decade)));
-                }
-                Token::Century => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Century)));
-                }
-                Token::Millenium => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Millenium)));
-                }
-                Token::Meter => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Meter)));
-                }
-                Token::Btu => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Btu)));
-                }
-                Token::Au => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Au)));
-                }
-                Token::Acceleration => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Acceleration)));
-                }
-                Token::Gforce => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Gforce)));
-                }
-                Token::Newton => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Newton)));
-                }
-                Token::Pascal => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Pascal)));
-                }
-                Token::Joule => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Joule)));
-                }
-                Token::Watt => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Watt)));
-                }
+                Token::Ampere => Unit::Ampere,
+                Token::Kelvin => Unit::Kelvin,
+                Token::Mole => Unit::Mole,
+                Token::Candela => Unit::Candela,
+                Token::Ton => Unit::Ton,
+                Token::Byte => Unit::Byte,
+                Token::Minute => Unit::Minute,
+                Token::Hour => Unit::Hour,
+                Token::Day => Unit::Day,
+                Token::Week => Unit::Week,
+                Token::Month => Unit::Month,
+                Token::Year => Unit::Year,
+                Token::Decade => Unit::Decade,
+                Token::Century => Unit::Century,
+                Token::Millenium => Unit::Millenium,
+                Token::Meter => Unit::Meter,
+                Token::Btu => Unit::Btu,
+                Token::Au => Unit::Au,
+                Token::Acceleration => Unit::Acceleration,
+                Token::Gforce => Unit::Gforce,
+                Token::Newton => Unit::Newton,
+                Token::Pascal => Unit::Pascal,
+                Token::Joule => Unit::Joule,
+                Token::Watt => Unit::Watt,
                 Token::Yotta => {
                     prefix += Prefix::YOTTA;
+                    continue;
                 }
                 Token::Zetta => {
                     prefix += Prefix::ZETTA;
+                    continue;
                 }
                 Token::Exa => {
                     prefix += Prefix::EXA;
+                    continue;
                 }
                 Token::Peta => {
                     prefix += Prefix::PETA;
+                    continue;
                 }
                 Token::Tera => {
                     prefix += Prefix::TERA;
+                    continue;
                 }
                 Token::Giga => {
                     prefix += Prefix::GIGA;
+                    continue;
                 }
                 Token::MegaOrMillenium => {
-                    if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Unit::Millenium)));
+                    if !self.lexer.remainder().is_empty() {
+                        prefix += Prefix::MEGA;
+                        continue;
                     }
 
-                    prefix += Prefix::MEGA;
+                    Unit::Millenium
                 }
                 Token::Mega => {
                     prefix += Prefix::MEGA;
+                    continue;
                 }
                 Token::Kilo => {
                     prefix += Prefix::KILO;
+                    continue;
                 }
                 Token::Hecto => {
                     prefix += Prefix::HECTO;
+                    continue;
                 }
                 Token::Deca => {
                     prefix += Prefix::DECA;
+                    continue;
                 }
                 Token::DeciOrDay => {
-                    if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Unit::Day)));
+                    if !self.lexer.remainder().is_empty() {
+                        prefix += Prefix::DECI;
+                        continue;
                     }
 
-                    prefix += Prefix::DECI;
+                    Unit::Day
                 }
                 Token::Deci => {
                     prefix += Prefix::DECI;
+                    continue;
                 }
                 Token::CentiOrLightSpeed => {
-                    if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Unit::LightSpeed)));
+                    if !self.lexer.remainder().is_empty() {
+                        prefix += Prefix::CENTI;
+                        continue;
                     }
 
-                    prefix += Prefix::CENTI;
+                    Unit::LightSpeed
                 }
                 Token::Centi => {
                     prefix += Prefix::CENTI;
+                    continue;
                 }
                 Token::MilliOrMeter => {
-                    if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Unit::Meter)));
+                    if !self.lexer.remainder().is_empty() {
+                        prefix += Prefix::MILLI;
+                        continue;
                     }
 
-                    prefix += Prefix::MILLI;
+                    Unit::Meter
                 }
                 Token::Milli => {
                     prefix += Prefix::MILLI;
+                    continue;
                 }
                 Token::Micro => {
                     prefix += Prefix::MICRO;
+                    continue;
                 }
                 Token::Nano => {
                     prefix += Prefix::NANO;
+                    continue;
                 }
                 Token::Pico => {
                     prefix += Prefix::PICO;
+                    continue;
                 }
                 Token::Femto => {
                     prefix += Prefix::FEMTO;
+                    continue;
                 }
                 Token::AttoOrAcceleration => {
-                    if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Unit::Acceleration)));
+                    if !self.lexer.remainder().is_empty() {
+                        prefix += Prefix::ATTO;
+                        continue;
                     }
 
-                    prefix += Prefix::ATTO;
+                    Unit::Acceleration
                 }
                 Token::Atto => {
                     prefix += Prefix::ATTO;
+                    continue;
                 }
                 Token::Zepto => {
                     prefix += Prefix::ZEPTO;
+                    continue;
                 }
                 Token::YoctoOrYear => {
-                    if self.lexer.remainder().is_empty() {
-                        return Ok(Some(ParsedUnit::new(prefix, Unit::Year)));
+                    if !self.lexer.remainder().is_empty() {
+                        prefix += Prefix::YOCTO;
+                        continue;
                     }
 
-                    prefix += Prefix::YOCTO;
+                    Unit::Year
                 }
                 Token::Yocto => {
                     prefix += Prefix::YOCTO;
+                    continue;
                 }
                 Token::Separator => {
                     continue;
                 }
-                _ => {
-                    return Err(self.lexer.source());
+                Token::Error => {
+                    return Err(());
                 }
-            }
+            };
+
+            return Ok(Some((prefix, unit)));
+        }
+    }
+
+    /// Parse the next unit and base.
+    pub fn next(&mut self) -> Result<Option<ParsedUnit>, &'a str> {
+        if let Some((prefix, unit)) = self.inner_next().map_err(|()| self.lexer.source())? {
+            return Ok(Some(ParsedUnit::new(prefix, unit)));
         }
 
-        if prefix == 0 {
-            Ok(None)
-        } else {
-            Err(self.lexer.source())
-        }
+        Ok(None)
     }
 }

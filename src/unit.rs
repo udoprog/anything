@@ -38,9 +38,6 @@ pub enum Unit {
     Gforce,
     /// A ton or `1000kg`.
     Ton,
-    // Derived units
-    /// A Joule `kg*m^2*s^-2`.
-    Joule,
     /// `Y` or `(3600 * 24 * 365)s`.
     Year,
     /// A decade, or 10 years.
@@ -65,6 +62,18 @@ pub enum Unit {
     Au,
     /// The speed of light.
     LightSpeed,
+
+    /// Newton.
+    /// Designates as `kh*m*s^-2`.
+    Newton,
+    /// Pressure as `kg*m^-1*s^-2`.
+    Pascal,
+    // Derived units
+    /// A Joule `kg*m^2*s^-2`.
+    Joule,
+    /// Watts.
+    /// Designates as `kg*m^2*s−3`.
+    Watt,
 }
 
 impl Unit {
@@ -162,6 +171,24 @@ impl Unit {
                 merge(bases, Unit::Second, power * -1);
                 true
             }
+            Unit::Newton => {
+                merge(bases, Unit::KiloGram, power);
+                merge(bases, Unit::Meter, power);
+                merge(bases, Unit::Second, power * -2);
+                true
+            }
+            Unit::Pascal => {
+                merge(bases, Unit::KiloGram, power);
+                merge(bases, Unit::Meter, power * -1);
+                merge(bases, Unit::Second, power * -2);
+                true
+            }
+            Unit::Watt => {
+                merge(bases, Unit::KiloGram, power);
+                merge(bases, Unit::Meter, power * 2);
+                merge(bases, Unit::Second, power * -3);
+                true
+            }
         }
     }
 
@@ -232,7 +259,7 @@ impl Unit {
             (Unit::Millenium, false) => "millenium".fmt(f),
             (Unit::Millenium, true) => "millenia".fmt(f),
             (Unit::Month, _) => "mth".fmt(f),
-            (Unit::Week, _) => "W".fmt(f),
+            (Unit::Week, _) => "w".fmt(f),
             (Unit::Day, _) => "d".fmt(f),
             (Unit::Hour, _) => "H".fmt(f),
             (Unit::Minute, _) => "m".fmt(f),
@@ -240,6 +267,9 @@ impl Unit {
             (Unit::Btu, true) => "btus".fmt(f),
             (Unit::Au, _) => "au".fmt(f),
             (Unit::LightSpeed, _) => "c".fmt(f),
+            (Unit::Newton, _) => "N".fmt(f),
+            (Unit::Pascal, _) => "Pa".fmt(f),
+            (Unit::Watt, _) => "W".fmt(f),
         }
     }
 }

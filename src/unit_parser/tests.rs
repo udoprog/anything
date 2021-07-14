@@ -4,15 +4,17 @@ use crate::unit::Unit;
 
 macro_rules! parse {
     ($expr:expr) => {{
-        let mut parser = UnitParser::new($expr);
+        (|| {
+            let mut parser = UnitParser::new($expr);
 
-        let mut out = Vec::new();
+            let mut out = Vec::new();
 
-        while let Some(parsed) = parser.next().unwrap() {
-            out.push((parsed.prefix, parsed.name));
-        }
+            while let Some(parsed) = parser.next()? {
+                out.push((parsed.prefix, parsed.name));
+            }
 
-        out
+            Ok::<_, &str>(out)
+        })()
     }};
 }
 
@@ -29,6 +31,8 @@ fn test_prefixes() {
         (Prefix::MILLI, &["m", "milli"]),
         (Prefix::CENTI, &["c", "centi"]),
         (Prefix::DECI, &["d", "deci"]),
+        (Prefix::DECA, &["da", "deca"]),
+        (Prefix::HECTO, &["h", "hecto"]),
         (Prefix::KILO, &["k", "kilo"]),
         (Prefix::MEGA, &["M", "mega"]),
         (Prefix::GIGA, &["G", "giga"]),
@@ -51,7 +55,6 @@ fn test_prefixes() {
         (Unit::Acceleration, &["a", "acc", "acceleration"]),
         (Unit::Gforce, &["gforce", "g-force"]),
         (Unit::Ton, &["ton", "tons"]),
-        (Unit::Joule, &["J", "joule"]),
         (Unit::Year, &["y", "year", "years"]),
         (Unit::Decade, &["decade", "decades"]),
         (Unit::Century, &["century", "centuries"]),
@@ -64,13 +67,17 @@ fn test_prefixes() {
         (Unit::Btu, &["btu"]),
         (Unit::Au, &["au"]),
         (Unit::LightSpeed, &["c"]),
+        (Unit::Newton, &["N", "newton", "newtons"]),
+        (Unit::Pascal, &["Pa", "pascal", "pascals"]),
+        (Unit::Joule, &["J", "joule"]),
+        (Unit::Watt, &["W", "watt", "watts"]),
     ];
 
     for (unit, variants) in UNITS.iter().copied() {
         for v in variants.iter().copied() {
             assert_eq! {
-                parse!(v),
-                &[(Prefix::NONE, unit)],
+                parse!(v).as_deref(),
+                Ok(&[(Prefix::NONE, unit)][..]),
                 "`{}`",
                 v
             };
@@ -79,20 +86,43 @@ fn test_prefixes() {
         for (prefix, strings) in PREFIXES.iter().copied() {
             for string in strings.iter().copied() {
                 for v in variants.iter().copied() {
+                    // NB: dash to separate is always guaranteed to work, while
+                    // others might be ambiguous.
+                    let s = format!("{}-{}", string, v);
+
+                    assert_eq! {
+                        parse!(&s).as_deref(),
+                        Ok(&[(prefix, unit)][..]),
+                        "`{}`; prefix=`{prefix}`, variant=`{variant}`",
+                        s,
+                        prefix = string,
+                        variant = v,
+                    };
+
+                    // NB: parsing ambiguity with `cd` (candela).
+                    // Use requires long prefix instead, like `centidays`.
                     match (string, v) {
-                        // NB: parsing ambiguity with `cd` (candela).
-                        // Use requires long prefix instead, like `centidays`.
                         ("c", "decade" | "decades" | "day" | "days") => continue,
+                        ("deca", "decade" | "decades") => continue,
+                        ("d", "ampere" | "amperes" | "au" | "a" | "acc" | "acceleration") => {
+                            continue
+                        }
+                        ("P", "ampere" | "amperes" | "au" | "a" | "acc" | "acceleration") => {
+                            continue
+                        }
+                        ("da", "y" | "year" | "years") => continue,
                         _ => {}
                     }
 
                     let s = format!("{}{}", string, v);
 
                     assert_eq! {
-                        parse!(&s),
-                        &[(prefix, unit)],
-                        "`{}`",
-                        s
+                        parse!(&s).as_deref(),
+                        Ok(&[(prefix, unit)][..]),
+                        "`{}`; prefix=`{prefix}`, variant=`{variant}`",
+                        s,
+                        prefix = string,
+                        variant = v,
                     };
                 }
             }

@@ -122,14 +122,19 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn consume_unit_number(&mut self) {
+    fn consume_unit_number(&mut self) -> usize {
+        let mut count = 0;
+
         while let Some('0'..='9') = self.peek() {
+            count += 1;
             self.advance();
         }
+
+        count
     }
 
     fn consume_unit_word(&mut self) {
-        while let Some('a'..='z' | 'A'..='Z') = self.peek() {
+        while let Some('a'..='z' | 'A'..='Z' | '-') = self.peek() {
             self.advance();
         }
     }
@@ -165,8 +170,12 @@ impl<'a> Lexer<'a> {
             }
             '-' => {
                 self.advance();
-                self.consume_unit_number();
-                UNIT_NUMBER
+
+                if self.consume_unit_number() == 0 {
+                    ERROR
+                } else {
+                    UNIT_NUMBER
+                }
             }
             '{' => {
                 if !self.consume_escaped_unit_word() {

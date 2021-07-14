@@ -1,6 +1,6 @@
 use std::fmt;
 
-const PREFIXES: [(i32, Prefix); 19] = [
+const PREFIXES: [(i32, Prefix); 21] = [
     (Prefix::YOCTO, Prefix::Yocto),
     (Prefix::ZEPTO, Prefix::Zepto),
     (Prefix::ATTO, Prefix::Atto),
@@ -12,6 +12,8 @@ const PREFIXES: [(i32, Prefix); 19] = [
     (Prefix::CENTI, Prefix::Centi),
     (Prefix::DECI, Prefix::Deci),
     (Prefix::NONE, Prefix::None),
+    (Prefix::DECA, Prefix::Deca),
+    (Prefix::HECTO, Prefix::Hecto),
     (Prefix::KILO, Prefix::Kilo),
     (Prefix::MEGA, Prefix::Mega),
     (Prefix::GIGA, Prefix::Giga),
@@ -33,6 +35,8 @@ pub enum Prefix {
     Giga,
     Mega,
     Kilo,
+    Hecto,
+    Deca,
     /// Empty prefix.
     None,
     Deci,
@@ -59,6 +63,8 @@ impl Prefix {
     pub const CENTI: i32 = -2;
     pub const DECI: i32 = -1;
     pub const NONE: i32 = 0;
+    pub const DECA: i32 = 1;
+    pub const HECTO: i32 = 2;
     pub const KILO: i32 = 3;
     pub const MEGA: i32 = 6;
     pub const GIGA: i32 = 9;
@@ -97,6 +103,8 @@ impl fmt::Display for Prefix {
             Prefix::Giga => 'G'.fmt(f),
             Prefix::Mega => 'M'.fmt(f),
             Prefix::Kilo => 'k'.fmt(f),
+            Prefix::Hecto => 'h'.fmt(f),
+            Prefix::Deca => "da".fmt(f),
             Prefix::None => Ok(()),
             Prefix::Deci => 'd'.fmt(f),
             Prefix::Centi => 'c'.fmt(f),

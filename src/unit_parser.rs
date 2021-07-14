@@ -70,6 +70,11 @@ enum Token {
     GramOrGforce,
     #[token("gram")]
     Gram,
+    #[token("tonnes")]
+    #[token("tonne")]
+    #[token("tons")]
+    #[token("ton")]
+    Ton,
 
     #[token("A")]
     #[token("ampere")]
@@ -96,18 +101,6 @@ enum Token {
     #[token("byte")]
     Byte,
 
-    #[token("tonnes")]
-    #[token("tonne")]
-    #[token("tons")]
-    #[token("ton")]
-    Ton,
-
-    #[token("J")]
-    #[token("joule")]
-    Joule,
-    #[token("btu")]
-    Btu,
-
     #[token("au")]
     Au,
 
@@ -117,6 +110,27 @@ enum Token {
     #[token("gforce")]
     #[token("g-force")]
     Gforce,
+
+    #[token("N")]
+    #[token("newton")]
+    #[token("newtons")]
+    Newton,
+
+    #[token("Pa")]
+    #[token("pascal")]
+    #[token("pascals")]
+    Pascal,
+
+    #[token("J")]
+    #[token("joule")]
+    Joule,
+    #[token("btu")]
+    Btu,
+
+    #[token("W")]
+    #[token("watt")]
+    #[token("watts")]
+    Watt,
 
     #[token("Y")]
     #[token("yotta")]
@@ -143,6 +157,12 @@ enum Token {
     #[token("k")]
     #[token("kilo")]
     Kilo,
+    #[token("h")]
+    #[token("hecto")]
+    Hecto,
+    #[token("da")]
+    #[token("deca")]
+    Deca,
     #[token("d")]
     DeciOrDay,
     #[token("deci")]
@@ -178,6 +198,9 @@ enum Token {
     YoctoOrYear,
     #[token("yocto")]
     Yocto,
+
+    #[token("-")]
+    Separator,
 
     #[error]
     Error,
@@ -239,9 +262,6 @@ impl<'a> UnitParser<'a> {
                 Token::Ton => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Ton)));
                 }
-                Token::Joule => {
-                    return Ok(Some(ParsedUnit::new(prefix, Unit::Joule)));
-                }
                 Token::Byte => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Byte)));
                 }
@@ -287,6 +307,18 @@ impl<'a> UnitParser<'a> {
                 Token::Gforce => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Gforce)));
                 }
+                Token::Newton => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Newton)));
+                }
+                Token::Pascal => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Pascal)));
+                }
+                Token::Joule => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Joule)));
+                }
+                Token::Watt => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Watt)));
+                }
                 Token::Yotta => {
                     prefix += Prefix::YOTTA;
                 }
@@ -317,6 +349,12 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::Kilo => {
                     prefix += Prefix::KILO;
+                }
+                Token::Hecto => {
+                    prefix += Prefix::HECTO;
+                }
+                Token::Deca => {
+                    prefix += Prefix::DECA;
                 }
                 Token::DeciOrDay => {
                     if self.lexer.remainder().is_empty() {
@@ -382,6 +420,9 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::Yocto => {
                     prefix += Prefix::YOCTO;
+                }
+                Token::Separator => {
+                    continue;
                 }
                 _ => {
                     return Err(self.lexer.source());

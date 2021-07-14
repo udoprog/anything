@@ -21,21 +21,21 @@ pub struct State {
 /// their corresponding SI prefix as the power of 10 it corresponds to.
 ///
 /// ```
-/// use facts::{CompoundUnit, Unit};
+/// use facts::{Compound, Unit};
 ///
-/// let b = CompoundUnit::from_iter([(Unit::Meter, 1, -2), (Unit::Second, -2, 0)]);
+/// let b = Compound::from_iter([(Unit::Meter, 1, -2), (Unit::Second, -2, 0)]);
 /// assert_eq!(b.to_string(), "cm/s²");
 /// ```
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct CompoundUnit {
+pub struct Compound {
     names: BTreeMap<Unit, State>,
 }
 
-impl CompoundUnit {
+impl Compound {
     /// Construct the empty unit.
     ///
     /// ```
-    /// let unit = facts::CompoundUnit::empty();
+    /// let unit = facts::Compound::empty();
     /// assert!(unit.is_empty());
     /// ```
     pub fn empty() -> Self {
@@ -47,10 +47,10 @@ impl CompoundUnit {
     /// Construct a unit from an iterator of its constituent names and powers.
     ///
     /// ```
-    /// use facts::{Unit, CompoundUnit};
+    /// use facts::{Unit, Compound};
     ///
-    /// let a = str::parse::<facts::CompoundUnit>("cm/s^2").unwrap();
-    /// let b = facts::CompoundUnit::from_iter([(Unit::Meter, 1, -2), (Unit::Second, -2, 0)]);
+    /// let a = str::parse::<facts::Compound>("cm/s^2").unwrap();
+    /// let b = facts::Compound::from_iter([(Unit::Meter, 1, -2), (Unit::Second, -2, 0)]);
     ///
     /// assert_eq!(a, b);
     /// assert_eq!(a.to_string(), "cm/s²");
@@ -236,7 +236,7 @@ impl CompoundUnit {
             }
         }
 
-        return (lhs_fac, rhs_fac, CompoundUnit::new(names));
+        return (lhs_fac, rhs_fac, Compound::new(names));
 
         fn base_match(name: Unit, power: i32, bases: &BTreeMap<Unit, State>) -> bool {
             let base = match bases.get(&name) {
@@ -303,8 +303,7 @@ impl CompoundUnit {
             if extra == 0 {
                 write!(f, "{}", prefix)?;
             } else {
-                let extra = pow10(extra);
-                write!(f, "{{e{}}}{}", extra, prefix)?;
+                write!(f, "e{}{}", extra, prefix)?;
             }
 
             name.format(f, pluralize)?;
@@ -333,7 +332,7 @@ impl CompoundUnit {
     }
 }
 
-impl std::str::FromStr for CompoundUnit {
+impl std::str::FromStr for Compound {
     type Err = crate::error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -342,9 +341,9 @@ impl std::str::FromStr for CompoundUnit {
     }
 }
 
-impl fmt::Display for CompoundUnit {
+impl fmt::Display for Compound {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        CompoundUnit::format(self, f, false)
+        Compound::format(self, f, false)
     }
 }
 

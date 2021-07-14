@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::compound_unit::{CompoundUnit, State};
+use crate::compound::{Compound, State};
 use crate::db;
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
@@ -72,7 +72,7 @@ fn mul(a: Numeric, b: Numeric) -> Result<Numeric> {
     ))
 }
 
-pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<CompoundUnit> {
+pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
     match node.kind() {
         UNIT => {}
         kind => return Err(Error::expected(UNIT, kind)),
@@ -89,7 +89,7 @@ pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<CompoundUnit> 
     inner(&mut it, &mut bases, 1, bias)?;
     inner(&mut it, &mut bases, -1, bias)?;
 
-    return Ok(CompoundUnit::new(bases));
+    return Ok(Compound::new(bases));
 
     struct Tokens<'a, T> {
         source: &'a str,
@@ -290,7 +290,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
         NUMBER => {
             let s = &source[node.text_range()];
             let int = str::parse::<BigDecimal>(s).map_err(Error::big_decimal)?;
-            Ok(Numeric::new(int, CompoundUnit::empty()))
+            Ok(Numeric::new(int, Compound::empty()))
         }
         NUMBER_WITH_UNIT => {
             let mut it = node.children();
@@ -321,7 +321,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
             let number = &source[number.text_range()];
             let number = str::parse::<BigDecimal>(number).map_err(Error::big_decimal)?;
             let one_hundred = BigDecimal::from(100);
-            Ok(Numeric::new(number / one_hundred, CompoundUnit::empty()))
+            Ok(Numeric::new(number / one_hundred, Compound::empty()))
         }
         kind => Err(Error::unexpected(kind)),
     }

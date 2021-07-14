@@ -1,6 +1,6 @@
 use std::num::ParseIntError;
 
-use crate::compound_unit::CompoundUnit;
+use crate::compound::Compound;
 use crate::parser::SyntaxKind;
 use bigdecimal::ParseBigDecimalError;
 use thiserror::Error;
@@ -53,14 +53,11 @@ pub(crate) enum ErrorKind {
     #[error("illegal operation: {lhs} {op} {rhs}")]
     IllegalOperation {
         op: &'static str,
-        lhs: CompoundUnit,
-        rhs: CompoundUnit,
+        lhs: Compound,
+        rhs: Compound,
     },
     #[error("cannot cast `{from}` to `{to}`")]
-    IllegalCast {
-        from: CompoundUnit,
-        to: CompoundUnit,
-    },
+    IllegalCast { from: Compound, to: Compound },
     #[error("bad decimal number: {error}")]
     ParseBigDecimalError { error: ParseBigDecimalError },
     #[error("bad number: {error}")]

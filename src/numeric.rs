@@ -1,16 +1,16 @@
 use bigdecimal::{BigDecimal, ToPrimitive};
 
-use crate::compound_unit::CompoundUnit;
+use crate::compound::Compound;
 use std::fmt;
 
 pub struct Numeric {
     value: BigDecimal,
-    unit: CompoundUnit,
+    unit: Compound,
 }
 
 impl Numeric {
     /// Construct a new numerical value.
-    pub(crate) fn new(value: BigDecimal, unit: CompoundUnit) -> Self {
+    pub(crate) fn new(value: BigDecimal, unit: Compound) -> Self {
         Self { value, unit }
     }
 
@@ -20,7 +20,7 @@ impl Numeric {
     }
 
     /// Interior method to split the numeric value into its components.
-    pub(crate) fn split(self) -> (BigDecimal, CompoundUnit) {
+    pub(crate) fn split(self) -> (BigDecimal, Compound) {
         (self.value, self.unit)
     }
 
@@ -40,7 +40,7 @@ impl Numeric {
     }
 
     /// Get the unit of the numerical value.
-    pub fn unit(&self) -> &CompoundUnit {
+    pub fn unit(&self) -> &Compound {
         &self.unit
     }
 }

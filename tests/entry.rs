@@ -1,4 +1,4 @@
-use facts::{CompoundUnit, Unit};
+use facts::{Compound, Unit};
 
 macro_rules! query {
     ($expr:expr) => {{
@@ -12,7 +12,7 @@ macro_rules! query {
 
 #[test]
 fn test_queries() {
-    let c = CompoundUnit::from_iter([(Unit::LightSpeed, 1, 0)]);
+    let c = Compound::from_iter([(Unit::LightSpeed, 1, 0)]);
 
     let n = query!("12c");
 

@@ -1,6 +1,6 @@
 //! Facts is a flexible unit-aware arbitrary precision calculator.
 
-mod compound_unit;
+mod compound;
 pub mod db;
 mod error;
 mod eval;
@@ -15,7 +15,7 @@ mod span;
 mod unit;
 mod unit_parser;
 
-pub use self::compound_unit::CompoundUnit;
+pub use self::compound::Compound;
 pub use self::error::Error;
 pub use self::numeric::Numeric;
 pub use self::query::{query, Query};

@@ -77,8 +77,6 @@ use SyntaxKind::*;
 pub type SyntaxNode = rowan::SyntaxNode<FactsLang>;
 /// A Facts syntax token.
 pub type SyntaxToken = rowan::SyntaxToken<FactsLang>;
-/// A Facts syntax element.
-pub type SyntaxElement = rowan::NodeOrToken<SyntaxNode, SyntaxToken>;
 
 impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {

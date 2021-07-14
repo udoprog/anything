@@ -1,19 +1,16 @@
+//! Facts is a flexible unit-aware arbitrary precision calculator.
+
 pub mod db;
-
-mod unit;
-pub use self::unit::Unit;
-
-pub mod parser;
-
+mod eval;
 mod grammar;
-
-mod span;
-
 mod lexer;
-
 mod numeric;
-pub use self::numeric::Numeric;
-
-pub mod eval;
-
+#[doc(hidden)]
+pub mod parser;
+mod query;
+mod span;
+mod unit;
 mod unit_parser;
+
+pub use self::numeric::Numeric;
+pub use self::query::{query, Query};

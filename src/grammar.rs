@@ -6,7 +6,10 @@ use SyntaxKind::*;
 
 /// Parse the root of an expression.
 pub fn root(p: &mut Parser<'_>) {
+    let mut error = false;
+
     p.start_node(ROOT);
+    let c = p.checkpoint();
 
     loop {
         let skip = p.count_skip();
@@ -28,8 +31,13 @@ pub fn root(p: &mut Parser<'_>) {
             _ => {
                 p.skip(skip);
                 p.bump();
+                error = true;
             }
         }
+    }
+
+    if error {
+        p.finish_node_at(c, ERROR);
     }
 
     p.finish_node();

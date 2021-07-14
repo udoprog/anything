@@ -1,10 +1,9 @@
 use anyhow::Result;
 use facts::parser;
-use facts::parser::SyntaxNode;
 use rowan::NodeOrToken;
 use std::collections::VecDeque;
 
-fn print(node: SyntaxNode) {
+fn print(node: parser::SyntaxNode) {
     let mut queue = VecDeque::new();
     queue.push_back((0, NodeOrToken::Node(node)));
 

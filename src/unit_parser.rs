@@ -367,8 +367,8 @@ mod tests {
                 assert_eq!(
                     p.next().unwrap(),
                     Some(ParsedUnit {
-                        prefix,
-                        name: Name::Gram
+                        prefix: prefix - 3,
+                        name: Name::KiloGram
                     }),
                     "failed prefix test: test = {}, prefix = {}",
                     test,

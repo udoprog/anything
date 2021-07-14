@@ -4,8 +4,8 @@ value = "3.1415926535"
 
 [[constants]]
 names = ["c", "speed of light", "lightspeed"]
-unit = "m/s"
-value = "299792458"
+unit = "c"
+value = "1"
 
 [[constants]]
 names = ["standard gravity", "g0", "gravity"]
@@ -18,7 +18,7 @@ unit = "m^3/kgs^2"
 value = "9.80665"
 
 [[constants]]
-names = ["distance to earth", "orbit of earth", "earth orbit"]
+names = ["au", "distance to earth", "orbit of earth", "earth orbit"]
 unit = "au"
 value = "1"
 

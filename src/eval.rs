@@ -1,10 +1,10 @@
 use std::collections::BTreeMap;
 
 use crate::db;
+use crate::numeric::Numeric;
 use crate::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
-use crate::unit::{Name, State};
+use crate::unit::{Name, State, Unit};
 use crate::unit_parser::{ParsedUnit, UnitParser};
-use crate::{Numeric, Unit};
 use anyhow::{anyhow, bail, Result};
 use rowan::{NodeOrToken, TextRange};
 use SyntaxKind::*;

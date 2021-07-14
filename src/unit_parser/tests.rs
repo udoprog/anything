@@ -18,35 +18,34 @@ macro_rules! parse {
 
 #[test]
 fn test_prefixes() {
-    const PREFIXES: [(&[&str], i32); 19] = [
-        (&["y", "yocto"], Prefix::YOCTO),
-        (&["z", "zepto"], Prefix::ZEPTO),
-        (&["a", "atto"], Prefix::ATTO),
-        (&["f", "femto"], Prefix::FEMTO),
-        (&["p", "pico"], Prefix::PICO),
-        (&["n", "nano"], Prefix::NANO),
-        (&["μ", "micro"], Prefix::MICRO),
-        (&["m", "milli"], Prefix::MILLI),
-        (&["c", "centi"], Prefix::CENTI),
-        (&["d", "deci"], Prefix::DECI),
-        (&[""], Prefix::NONE),
-        (&["k", "kilo"], Prefix::KILO),
-        (&["M", "mega"], Prefix::MEGA),
-        (&["G", "giga"], Prefix::GIGA),
-        (&["T", "tera"], Prefix::TERA),
-        (&["P", "peta"], Prefix::PETA),
-        (&["E", "exa"], Prefix::EXA),
-        (&["Z", "zetta"], Prefix::ZETTA),
-        (&["Y", "yotta"], Prefix::YOTTA),
+    const PREFIXES: &[(i32, &[&str])] = &[
+        (Prefix::YOCTO, &["y", "yocto"]),
+        (Prefix::ZEPTO, &["z", "zepto"]),
+        (Prefix::ATTO, &["a", "atto"]),
+        (Prefix::FEMTO, &["f", "femto"]),
+        (Prefix::PICO, &["p", "pico"]),
+        (Prefix::NANO, &["n", "nano"]),
+        (Prefix::MICRO, &["μ", "micro"]),
+        (Prefix::MILLI, &["m", "milli"]),
+        (Prefix::CENTI, &["c", "centi"]),
+        (Prefix::DECI, &["d", "deci"]),
+        (Prefix::KILO, &["k", "kilo"]),
+        (Prefix::MEGA, &["M", "mega"]),
+        (Prefix::GIGA, &["G", "giga"]),
+        (Prefix::TERA, &["T", "tera"]),
+        (Prefix::PETA, &["P", "peta"]),
+        (Prefix::EXA, &["E", "exa"]),
+        (Prefix::ZETTA, &["Z", "zetta"]),
+        (Prefix::YOTTA, &["Y", "yotta"]),
     ];
 
-    const UNITS: [(Unit, &[&str]); 20] = [
+    const UNITS: &[(Unit, &[&str])] = &[
         (Unit::Second, &["s"]),
         (Unit::KiloGram, &["kg"]),
         (Unit::Meter, &["m", "meter", "meters"]),
         (Unit::Byte, &["B", "byte"]),
-        (Unit::Acceleration, &["a"]),
-        (Unit::Gforce, &["gforce"]),
+        (Unit::Acceleration, &["a", "acc", "acceleration"]),
+        (Unit::Gforce, &["gforce", "g-force"]),
         (Unit::Ton, &["ton", "tons"]),
         (Unit::Joule, &["J", "joule"]),
         (Unit::Year, &["y", "year", "years"]),
@@ -63,19 +62,23 @@ fn test_prefixes() {
         (Unit::LightSpeed, &["c"]),
     ];
 
-    for (strings, prefix) in PREFIXES {
-        for string in strings {
-            for (unit, variants) in UNITS {
-                if unit != Unit::KiloGram {
-                    continue;
-                }
+    for (unit, variants) in UNITS.iter().copied() {
+        for v in variants.iter().copied() {
+            assert_eq! {
+                parse!(v),
+                &[(Prefix::NONE, unit)],
+                "`{}`",
+                v
+            };
+        }
 
+        for (prefix, strings) in PREFIXES.iter().copied() {
+            for string in strings.iter().copied() {
                 for v in variants.iter().copied() {
                     let s = format!("{}{}", string, v);
 
-                    let result = parse!(&s);
                     assert_eq! {
-                        result,
+                        parse!(&s),
                         &[(prefix, unit)],
                         "`{}`",
                         s

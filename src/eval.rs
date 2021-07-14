@@ -198,7 +198,7 @@ pub fn eval(source: &str, node: SyntaxNode, db: &db::Db) -> Result<Numeric> {
                     DASH => sub,
                     SLASH => div,
                     STAR => mul,
-                    AS => {
+                    AS | TO => {
                         let rhs = unit(source, rhs)?;
 
                         let factor = match base.unit.factor(&rhs) {

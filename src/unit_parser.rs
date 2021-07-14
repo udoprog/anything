@@ -95,8 +95,9 @@ enum Token {
     DeciOrDay,
     #[token("deci")]
     Deci,
-    #[token("centi")]
     #[token("c")]
+    CentiOrLightSpeed,
+    #[token("centi")]
     Centi,
     #[token("m")]
     MilliOrMeter,
@@ -187,82 +188,89 @@ impl<'a> UnitParser<'a> {
                         return Ok(Some(ParsedUnit::new(prefix, Name::Year)));
                     }
 
-                    prefix += Prefix::Yotta.pow();
+                    prefix += Prefix::YOTTA;
                 }
                 Token::Yotta => {
-                    prefix += Prefix::Yotta.pow();
+                    prefix += Prefix::YOTTA;
                 }
                 Token::Zetta => {
-                    prefix += Prefix::Zetta.pow();
+                    prefix += Prefix::ZETTA;
                 }
                 Token::Exa => {
-                    prefix += Prefix::Exa.pow();
+                    prefix += Prefix::EXA;
                 }
                 Token::Peta => {
-                    prefix += Prefix::Peta.pow();
+                    prefix += Prefix::PETA;
                 }
                 Token::Tera => {
-                    prefix += Prefix::Tera.pow();
+                    prefix += Prefix::TERA;
                 }
                 Token::Giga => {
-                    prefix += Prefix::Giga.pow();
+                    prefix += Prefix::GIGA;
                 }
                 Token::MegaOrMonth => {
                     if self.lexer.remainder().is_empty() {
                         return Ok(Some(ParsedUnit::new(prefix, Name::Month)));
                     }
 
-                    prefix += Prefix::Mega.pow();
+                    prefix += Prefix::MEGA;
                 }
                 Token::Mega => {
-                    prefix += Prefix::Mega.pow();
+                    prefix += Prefix::MEGA;
                 }
                 Token::Kilo => {
-                    prefix += Prefix::Kilo.pow();
+                    prefix += Prefix::KILO;
                 }
                 Token::DeciOrDay => {
                     if self.lexer.remainder().is_empty() {
                         return Ok(Some(ParsedUnit::new(prefix, Name::Day)));
                     }
 
-                    prefix += Prefix::Deci.pow();
+                    prefix += Prefix::DECI;
                 }
                 Token::Deci => {
-                    prefix += Prefix::Deci.pow();
+                    prefix += Prefix::DECI;
+                }
+                Token::CentiOrLightSpeed => {
+                    if self.lexer.remainder().is_empty() {
+                        return Ok(Some(ParsedUnit::new(prefix, Name::LightSpeed)));
+                    }
+
+                    prefix += Prefix::CENTI;
                 }
                 Token::Centi => {
-                    prefix += Prefix::Centi.pow();
+                    prefix += Prefix::CENTI;
                 }
                 Token::MilliOrMeter => {
                     if self.lexer.remainder().is_empty() {
                         return Ok(Some(ParsedUnit::new(prefix, Name::Meter)));
                     }
 
-                    prefix += Prefix::Milli.pow();
+                    prefix += Prefix::MILLI;
                 }
                 Token::Milli => {
-                    prefix += Prefix::Milli.pow();
+                    prefix += Prefix::MILLI;
                 }
                 Token::Micro => {
-                    prefix += Prefix::Micro.pow();
+                    prefix += Prefix::MICRO;
                 }
                 Token::Nano => {
-                    prefix += Prefix::Nano.pow();
+                    prefix += Prefix::NANO;
                 }
                 Token::Pico => {
-                    prefix += Prefix::Pico.pow();
+                    prefix += Prefix::PICO;
                 }
                 Token::Femto => {
-                    prefix += Prefix::Femto.pow();
+                    prefix += Prefix::FEMTO;
                 }
                 Token::Atto => {
-                    prefix += Prefix::Atto.pow();
+                    prefix += Prefix::ATTO;
                 }
                 Token::Zepto => {
-                    prefix += Prefix::Zepto.pow();
+                    prefix += Prefix::ZEPTO;
                 }
                 Token::Yocto => {
-                    prefix += Prefix::Yocto.pow();
+                    prefix += Prefix::YOCTO;
                 }
                 _ => {
                     return Err(anyhow!("not a valid unit `{}`", self.lexer.source(),));
@@ -289,7 +297,7 @@ mod tests {
         assert_eq!(
             p.next().unwrap(),
             Some(ParsedUnit {
-                prefix: Prefix::Kilo.pow(),
+                prefix: Prefix::KILO,
                 name: Name::Minute
             })
         );
@@ -299,7 +307,7 @@ mod tests {
         assert_eq!(
             p.next().unwrap(),
             Some(ParsedUnit {
-                prefix: Prefix::Kilo.pow(),
+                prefix: Prefix::KILO,
                 name: Name::Minute
             })
         );
@@ -342,14 +350,14 @@ mod tests {
     #[test]
     fn test_prefixes() {
         let tests = [
-            (&["Pg", "petagram"][..], Prefix::Peta.pow()),
-            (&["Tg", "teragram"][..], Prefix::Tera.pow()),
-            (&["Gg", "gigagram"][..], Prefix::Giga.pow()),
-            (&["Mg", "megagram"][..], Prefix::Mega.pow()),
-            (&["kg", "kilogram"][..], Prefix::Kilo.pow()),
-            (&["mg", "milligram"][..], Prefix::Milli.pow()),
-            (&["μg", "microgram"][..], Prefix::Micro.pow()),
-            (&["ng", "nanogram"][..], Prefix::Nano.pow()),
+            (&["Pg", "petagram"][..], Prefix::PETA),
+            (&["Tg", "teragram"][..], Prefix::TERA),
+            (&["Gg", "gigagram"][..], Prefix::GIGA),
+            (&["Mg", "megagram"][..], Prefix::MEGA),
+            (&["kg", "kilogram"][..], Prefix::KILO),
+            (&["mg", "milligram"][..], Prefix::MILLI),
+            (&["μg", "microgram"][..], Prefix::MICRO),
+            (&["ng", "nanogram"][..], Prefix::NANO),
         ];
 
         for (tests, prefix) in tests {

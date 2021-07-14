@@ -270,6 +270,7 @@ impl<'a> Lexer<'a> {
 
                 match &self.source[start..self.pos] {
                     "as" => AS,
+                    "to" => TO,
                     _ => WORD,
                 }
             }

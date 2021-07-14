@@ -101,7 +101,7 @@ fn value(p: &mut Parser<'_>) -> bool {
 
             let mut skip = p.count_skip();
 
-            while let WORD = p.nth(skip, 0) {
+            while let (WORD, _) | (AS | TO, WORD) = (p.nth(skip, 0), p.nth(skip, 1)) {
                 p.skip(skip);
                 p.bump();
                 skip = p.count_skip();
@@ -159,7 +159,7 @@ fn expr(p: &mut Parser<'_>, check: Checkpoint, level: Option<u32>) -> bool {
     loop {
         let skip = p.count_skip();
 
-        if p.nth(skip, 0) != AS {
+        if !matches!(p.nth(skip, 0), AS | TO) {
             break;
         }
 

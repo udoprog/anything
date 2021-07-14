@@ -38,25 +38,25 @@ impl State {
 }
 
 const PREFIXES: [(i32, Prefix); 19] = [
-    (-24, Prefix::Yocto),
-    (-21, Prefix::Zepto),
-    (-18, Prefix::Atto),
-    (-15, Prefix::Femto),
-    (-12, Prefix::Pico),
-    (-9, Prefix::Nano),
-    (-6, Prefix::Micro),
-    (-3, Prefix::Milli),
-    (-2, Prefix::Centi),
-    (-1, Prefix::Deci),
-    (0, Prefix::None),
-    (3, Prefix::Kilo),
-    (6, Prefix::Mega),
-    (9, Prefix::Giga),
-    (12, Prefix::Tera),
-    (15, Prefix::Peta),
-    (18, Prefix::Exa),
-    (21, Prefix::Zetta),
-    (24, Prefix::Yotta),
+    (Prefix::YOCTO, Prefix::Yocto),
+    (Prefix::ZEPTO, Prefix::Zepto),
+    (Prefix::ATTO, Prefix::Atto),
+    (Prefix::FEMTO, Prefix::Femto),
+    (Prefix::PICO, Prefix::Pico),
+    (Prefix::NANO, Prefix::Nano),
+    (Prefix::MICRO, Prefix::Micro),
+    (Prefix::MILLI, Prefix::Milli),
+    (Prefix::CENTI, Prefix::Centi),
+    (Prefix::DECI, Prefix::Deci),
+    (Prefix::NONE, Prefix::None),
+    (Prefix::KILO, Prefix::Kilo),
+    (Prefix::MEGA, Prefix::Mega),
+    (Prefix::GIGA, Prefix::Giga),
+    (Prefix::TERA, Prefix::Tera),
+    (Prefix::PETA, Prefix::Peta),
+    (Prefix::EXA, Prefix::Exa),
+    (Prefix::ZETTA, Prefix::Zetta),
+    (Prefix::YOTTA, Prefix::Yotta),
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -85,30 +85,25 @@ pub enum Prefix {
 }
 
 impl Prefix {
-    /// Get the factor for a given prefix.
-    pub fn pow(&self) -> i32 {
-        match self {
-            Prefix::Yotta => 24,
-            Prefix::Zetta => 21,
-            Prefix::Exa => 18,
-            Prefix::Peta => 15,
-            Prefix::Tera => 12,
-            Prefix::Giga => 9,
-            Prefix::Mega => 6,
-            Prefix::Kilo => 3,
-            Prefix::None => 0,
-            Prefix::Deci => -1,
-            Prefix::Centi => -2,
-            Prefix::Milli => -3,
-            Prefix::Micro => -6,
-            Prefix::Nano => -9,
-            Prefix::Pico => -12,
-            Prefix::Femto => -15,
-            Prefix::Atto => -18,
-            Prefix::Zepto => -21,
-            Prefix::Yocto => -24,
-        }
-    }
+    pub const YOTTA: i32 = 24;
+    pub const ZETTA: i32 = 21;
+    pub const EXA: i32 = 18;
+    pub const PETA: i32 = 15;
+    pub const TERA: i32 = 12;
+    pub const GIGA: i32 = 9;
+    pub const MEGA: i32 = 6;
+    pub const KILO: i32 = 3;
+    pub const NONE: i32 = 0;
+    pub const DECI: i32 = -1;
+    pub const CENTI: i32 = -2;
+    pub const MILLI: i32 = -3;
+    pub const MICRO: i32 = -6;
+    pub const NANO: i32 = -9;
+    pub const PICO: i32 = -12;
+    pub const FEMTO: i32 = -15;
+    pub const ATTO: i32 = -18;
+    pub const ZEPTO: i32 = -21;
+    pub const YOCTO: i32 = -24;
 
     /// Find the prefix matching the given power and return any extra that comes
     /// along.
@@ -190,6 +185,8 @@ pub enum Name {
     Btu,
     /// An astronomical unit.
     Au,
+    /// The speed of light.
+    LightSpeed,
 }
 
 impl Name {
@@ -261,6 +258,11 @@ impl Name {
                 merge(bases, Name::Meter, state);
                 true
             }
+            Name::LightSpeed => {
+                merge(bases, Name::Meter, state);
+                merge(bases, Name::Second, state.mul_power(-1));
+                true
+            }
         }
     }
 
@@ -279,6 +281,7 @@ impl Name {
             Name::Minute => 60,
             Name::Btu => 1055,
             Name::Au => 149597870700,
+            Name::LightSpeed => 299792458,
             _ => return None,
         };
 
@@ -309,6 +312,7 @@ impl fmt::Display for Name {
             Name::Minute => "m".fmt(f),
             Name::Btu => "btu".fmt(f),
             Name::Au => "au".fmt(f),
+            Name::LightSpeed => "c".fmt(f),
         }
     }
 }
@@ -387,7 +391,7 @@ impl Unit {
             return (BigDecimal::from(1), BigDecimal::from(1), unit);
         }
 
-        let (_, lhs_bases) = self.base_units();
+        let (lhs_der, lhs_bases) = self.base_units();
         let (_, rhs_bases) = other.base_units();
 
         let mut names = BTreeMap::new();
@@ -439,17 +443,62 @@ impl Unit {
             }
         }
 
-        (lhs_fac, rhs_fac, Unit::new(names))
+        // Step where we try to reconstruct some of the deconstructed names.
+        // We use the left-hand side to guide us on possible alternatives.
+        for name in lhs_der {
+            let mut bases = BTreeMap::new();
+
+            if !name.populate_bases(&mut bases, SimpleState { power: 1 }) {
+                continue;
+            }
+
+            while bases.iter().all(|e| base_match(*e.0, *e.1, &names)) {
+                for (n, s) in &bases {
+                    if let btree_map::Entry::Occupied(mut e) = names.entry(*n) {
+                        e.get_mut().power -= s.power;
+
+                        if e.get().power == 0 {
+                            e.remove_entry();
+                        }
+                    }
+                }
+
+                let entry = names.entry(name).or_insert_with(|| State {
+                    power: 0,
+                    prefix: 0,
+                });
+                entry.power += 1;
+
+                if let Some(multiple) = name.multiple() {
+                    lhs_fac = lhs_fac / multiple;
+                }
+            }
+        }
+
+        return (lhs_fac, rhs_fac, Unit::new(names));
+
+        fn base_match(name: Name, state: SimpleState, bases: &BTreeMap<Name, State>) -> bool {
+            let base = match bases.get(&name) {
+                Some(base) => base,
+                None => return false,
+            };
+
+            if state.power < 0 {
+                base.power < 0 && base.power <= state.power
+            } else {
+                base.power >= 0 && state.power <= base.power
+            }
+        }
     }
 
     /// Get all base units out of the current unit.
-    fn base_units(&self) -> (Vec<(Name, State)>, BTreeMap<Name, SimpleState>) {
+    fn base_units(&self) -> (Vec<Name>, BTreeMap<Name, SimpleState>) {
         let mut bases = BTreeMap::new();
         let mut derived = Vec::new();
 
         for (name, state) in &self.names {
             if name.populate_bases(&mut bases, state.simple()) {
-                derived.push((*name, *state));
+                derived.push(*name);
             }
         }
 

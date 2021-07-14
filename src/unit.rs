@@ -16,6 +16,18 @@ pub enum Unit {
     /// Meter base unit.
     /// Designated as `m`.
     Meter,
+    /// Ampere.
+    /// Designated as `A`.
+    Ampere,
+    /// Kelvin.
+    /// Designated as `K`.
+    Kelvin,
+    /// Mole.
+    /// Designated as `mol`.
+    Mole,
+    /// Candela.
+    /// Designated as `cd`.
+    Candela,
     /// A byte.
     /// Designated as `B`.
     Byte,
@@ -79,6 +91,22 @@ impl Unit {
             }
             Unit::Meter => {
                 merge(bases, Unit::Meter, power);
+                false
+            }
+            Unit::Ampere => {
+                merge(bases, Unit::Ampere, power);
+                false
+            }
+            Unit::Kelvin => {
+                merge(bases, Unit::Kelvin, power);
+                false
+            }
+            Unit::Mole => {
+                merge(bases, Unit::Mole, power);
+                false
+            }
+            Unit::Candela => {
+                merge(bases, Unit::Candela, power);
                 false
             }
             Unit::Byte => {
@@ -186,6 +214,10 @@ impl Unit {
             (Unit::Second, _) => 's'.fmt(f),
             (Unit::KiloGram, _) => 'g'.fmt(f),
             (Unit::Meter, _) => 'm'.fmt(f),
+            (Unit::Ampere, _) => 'A'.fmt(f),
+            (Unit::Kelvin, _) => 'K'.fmt(f),
+            (Unit::Mole, _) => "mol".fmt(f),
+            (Unit::Candela, _) => "cd".fmt(f),
             (Unit::Byte, _) => 'B'.fmt(f),
             (Unit::Acceleration, _) => 'a'.fmt(f),
             (Unit::Gforce, _) => 'g'.fmt(f),

@@ -43,6 +43,10 @@ fn test_prefixes() {
         (Unit::Second, &["s"]),
         (Unit::KiloGram, &["kg"]),
         (Unit::Meter, &["m", "meter", "meters"]),
+        (Unit::Ampere, &["A", "ampere", "amperes"]),
+        (Unit::Kelvin, &["K", "kelvin", "kelvins"]),
+        (Unit::Mole, &["mol", "mols", "mole", "moles"]),
+        (Unit::Candela, &["cd", "candela", "candelas"]),
         (Unit::Byte, &["B", "byte"]),
         (Unit::Acceleration, &["a", "acc", "acceleration"]),
         (Unit::Gforce, &["gforce", "g-force"]),
@@ -75,6 +79,13 @@ fn test_prefixes() {
         for (prefix, strings) in PREFIXES.iter().copied() {
             for string in strings.iter().copied() {
                 for v in variants.iter().copied() {
+                    match (string, v) {
+                        // NB: parsing ambiguity with `cd` (candela).
+                        // Use requires long prefix instead, like `centidays`.
+                        ("c", "decade" | "decades" | "day" | "days") => continue,
+                        _ => {}
+                    }
+
                     let s = format!("{}{}", string, v);
 
                     assert_eq! {

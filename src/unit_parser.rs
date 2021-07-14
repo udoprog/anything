@@ -71,6 +71,27 @@ enum Token {
     #[token("gram")]
     Gram,
 
+    #[token("A")]
+    #[token("ampere")]
+    #[token("amperes")]
+    Ampere,
+
+    #[token("K")]
+    #[token("kelvin")]
+    #[token("kelvins")]
+    Kelvin,
+
+    #[token("mol")]
+    #[token("mols")]
+    #[token("mole")]
+    #[token("moles")]
+    Mole,
+
+    #[token("cd")]
+    #[token("candela")]
+    #[token("candelas")]
+    Candela,
+
     #[token("B")]
     #[token("byte")]
     Byte,
@@ -202,6 +223,18 @@ impl<'a> UnitParser<'a> {
                 }
                 Token::Gram => {
                     return Ok(Some(ParsedUnit::new(prefix - 3, Unit::KiloGram)));
+                }
+                Token::Ampere => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Ampere)));
+                }
+                Token::Kelvin => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Kelvin)));
+                }
+                Token::Mole => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Mole)));
+                }
+                Token::Candela => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Candela)));
                 }
                 Token::Ton => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Ton)));

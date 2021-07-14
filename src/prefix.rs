@@ -48,25 +48,25 @@ pub enum Prefix {
 }
 
 impl Prefix {
-    pub const YOTTA: i32 = 24;
-    pub const ZETTA: i32 = 21;
-    pub const EXA: i32 = 18;
-    pub const PETA: i32 = 15;
-    pub const TERA: i32 = 12;
-    pub const GIGA: i32 = 9;
-    pub const MEGA: i32 = 6;
-    pub const KILO: i32 = 3;
-    pub const NONE: i32 = 0;
-    pub const DECI: i32 = -1;
-    pub const CENTI: i32 = -2;
-    pub const MILLI: i32 = -3;
-    pub const MICRO: i32 = -6;
-    pub const NANO: i32 = -9;
-    pub const PICO: i32 = -12;
-    pub const FEMTO: i32 = -15;
-    pub const ATTO: i32 = -18;
-    pub const ZEPTO: i32 = -21;
     pub const YOCTO: i32 = -24;
+    pub const ZEPTO: i32 = -21;
+    pub const ATTO: i32 = -18;
+    pub const FEMTO: i32 = -15;
+    pub const PICO: i32 = -12;
+    pub const NANO: i32 = -9;
+    pub const MICRO: i32 = -6;
+    pub const MILLI: i32 = -3;
+    pub const CENTI: i32 = -2;
+    pub const DECI: i32 = -1;
+    pub const NONE: i32 = 0;
+    pub const KILO: i32 = 3;
+    pub const MEGA: i32 = 6;
+    pub const GIGA: i32 = 9;
+    pub const TERA: i32 = 12;
+    pub const PETA: i32 = 15;
+    pub const EXA: i32 = 18;
+    pub const ZETTA: i32 = 21;
+    pub const YOTTA: i32 = 24;
 
     /// Find the prefix matching the given power and return any extra that comes
     /// along.

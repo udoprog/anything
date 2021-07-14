@@ -2,6 +2,9 @@ use crate::prefix::Prefix;
 use crate::unit::Unit;
 use logos::Logos;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ParsedUnit {
     pub prefix: i32,
@@ -24,6 +27,7 @@ enum Token {
     #[token("minute")]
     #[token("minutes")]
     #[token("min")]
+    #[token("mins")]
     Minute,
     #[token("hour")]
     #[token("hours")]
@@ -34,7 +38,7 @@ enum Token {
     Day,
     #[token("week")]
     #[token("weeks")]
-    #[token("W")]
+    #[token("w")]
     Week,
     #[token("mth")]
     #[token("mths")]
@@ -235,6 +239,9 @@ impl<'a> UnitParser<'a> {
                 Token::Millenium => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Millenium)));
                 }
+                Token::Meter => {
+                    return Ok(Some(ParsedUnit::new(prefix, Unit::Meter)));
+                }
                 Token::Btu => {
                     return Ok(Some(ParsedUnit::new(prefix, Unit::Btu)));
                 }
@@ -353,107 +360,6 @@ impl<'a> UnitParser<'a> {
             Ok(None)
         } else {
             Err(self.lexer.source())
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{ParsedUnit, UnitParser};
-    use crate::prefix::Prefix;
-    use crate::unit::Unit;
-
-    #[test]
-    fn test_kilo() {
-        let mut p = UnitParser::new("kilominutes");
-        assert_eq!(
-            p.next().unwrap(),
-            Some(ParsedUnit {
-                prefix: Prefix::KILO,
-                name: Unit::Minute
-            })
-        );
-        assert!(p.next().unwrap().is_none());
-
-        let mut p = UnitParser::new("kminutes");
-        assert_eq!(
-            p.next().unwrap(),
-            Some(ParsedUnit {
-                prefix: Prefix::KILO,
-                name: Unit::Minute
-            })
-        );
-        assert!(p.next().unwrap().is_none());
-    }
-
-    #[test]
-    fn test_minutes() {
-        let mut p = UnitParser::new("minutes");
-        assert_eq!(
-            p.next().unwrap(),
-            Some(ParsedUnit {
-                prefix: 0,
-                name: Unit::Minute
-            })
-        );
-        assert!(p.next().unwrap().is_none());
-
-        let mut p = UnitParser::new("minute");
-        assert_eq!(
-            p.next().unwrap(),
-            Some(ParsedUnit {
-                prefix: 0,
-                name: Unit::Minute
-            })
-        );
-        assert!(p.next().unwrap().is_none());
-
-        let mut p = UnitParser::new("min");
-        assert_eq!(
-            p.next().unwrap(),
-            Some(ParsedUnit {
-                prefix: 0,
-                name: Unit::Minute
-            })
-        );
-        assert!(p.next().unwrap().is_none());
-    }
-
-    #[test]
-    fn test_prefixes() {
-        let tests = [
-            (&["Pg", "petagram"][..], Prefix::PETA),
-            (&["Tg", "teragram"][..], Prefix::TERA),
-            (&["Gg", "gigagram"][..], Prefix::GIGA),
-            (&["Mg", "megagram"][..], Prefix::MEGA),
-            (&["kg", "kilogram"][..], Prefix::KILO),
-            (&["mg", "milligram"][..], Prefix::MILLI),
-            (&["μg", "microgram"][..], Prefix::MICRO),
-            (&["ng", "nanogram"][..], Prefix::NANO),
-        ];
-
-        for (tests, prefix) in tests {
-            for test in tests {
-                let mut p = UnitParser::new(*test);
-
-                assert_eq!(
-                    p.next().unwrap(),
-                    Some(ParsedUnit {
-                        prefix: prefix - 3,
-                        name: Unit::KiloGram
-                    }),
-                    "failed prefix test: test = {}, prefix = {}",
-                    test,
-                    prefix
-                );
-
-                assert!(
-                    p.next().unwrap().is_none(),
-                    "failed prefix test: test = {}, prefix = {}",
-                    test,
-                    prefix
-                );
-            }
         }
     }
 }

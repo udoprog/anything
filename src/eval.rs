@@ -2,9 +2,8 @@ use std::collections::BTreeMap;
 
 use crate::db;
 use crate::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
-use crate::unit::BaseData;
-use crate::unit_parser::UnitParser;
-use crate::Base;
+use crate::unit::{Name, State};
+use crate::unit_parser::{ParsedUnit, UnitParser};
 use crate::{Numeric, Unit};
 use anyhow::{anyhow, bail, Result};
 use rowan::{NodeOrToken, TextRange};
@@ -26,14 +25,14 @@ fn sub(a: Numeric, b: Numeric) -> Result<Numeric> {
     }
 }
 
-fn div(mut a: Numeric, b: Numeric) -> Result<Numeric> {
-    let factor = a.unit.mul(b.unit, -1);
-    Ok(Numeric::new(a.value / (b.value * factor), a.unit))
+fn div(a: Numeric, b: Numeric) -> Result<Numeric> {
+    let (a_fac, b_fac, unit) = a.unit.mul(b.unit, -1);
+    Ok(Numeric::new((a.value * a_fac) / (b.value * b_fac), unit))
 }
 
-fn mul(mut a: Numeric, b: Numeric) -> Result<Numeric> {
-    let factor = a.unit.mul(b.unit, 1);
-    Ok(Numeric::new(a.value * (b.value * factor), a.unit))
+fn mul(a: Numeric, b: Numeric) -> Result<Numeric> {
+    let (a_fac, b_fac, unit) = a.unit.mul(b.unit, 1);
+    Ok(Numeric::new((a.value * a_fac) * (b.value * b_fac), unit))
 }
 
 pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
@@ -98,7 +97,7 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
 
     fn inner(
         p: &mut Tokens<impl Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>>,
-        bases: &mut BTreeMap<Base, BaseData>,
+        bases: &mut BTreeMap<Name, State>,
         power_factor: i32,
     ) -> Result<()> {
         while let Some(t) = p.next() {
@@ -121,29 +120,15 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
                     };
 
                     let mut last = None;
+                    let range = t.text_range();
 
-                    while let Some(result) = parser.next()? {
-                        if let Some((prefix, base, multiple)) =
-                            std::mem::replace(&mut last, Some(result))
-                        {
-                            let entry = bases.entry(base).or_insert_with(|| BaseData {
-                                prefix,
-                                power: 0,
-                                special: multiple,
-                            });
-
-                            entry.power += power_factor;
-
-                            if entry.prefix != prefix || entry.special != multiple {
-                                bail!(
-                                    "unit `{}` must have the same kind in each unit spec",
-                                    p.text(t.text_range())
-                                );
-                            }
+                    while let Some(parsed) = parser.next()? {
+                        if let Some(parsed) = std::mem::replace(&mut last, Some(parsed)) {
+                            populate_unit(p, bases, parsed, range, power_factor)?;
                         }
                     }
 
-                    if let Some((prefix, base, multiple)) = last {
+                    if let Some(parsed) = last {
                         let caret = p.peek().map(|t| t.kind()).unwrap_or(EOF);
 
                         let power = if caret == CARET {
@@ -160,24 +145,35 @@ pub fn unit(source: &str, node: SyntaxNode) -> Result<Unit> {
                             1
                         };
 
-                        let entry = bases.entry(base).or_insert_with(|| BaseData {
-                            prefix,
-                            power: 0,
-                            special: multiple,
-                        });
-
-                        entry.power += power * power_factor;
-
-                        if entry.prefix != prefix || entry.special != multiple {
-                            bail!(
-                                "unit `{}` must have the same kind in each unit spec",
-                                p.text(t.text_range())
-                            );
-                        }
+                        populate_unit(p, bases, parsed, range, power * power_factor)?;
                     }
                 }
                 kind => bail!("unexpected token: {:?}", kind),
             }
+        }
+
+        Ok(())
+    }
+
+    fn populate_unit(
+        p: &Tokens<impl Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>>,
+        bases: &mut BTreeMap<Name, State>,
+        parsed: ParsedUnit,
+        range: TextRange,
+        power_factor: i32,
+    ) -> Result<()> {
+        let entry = bases.entry(parsed.name).or_insert_with(|| State {
+            prefix: parsed.prefix,
+            power: 0,
+        });
+
+        entry.power += power_factor;
+
+        if entry.prefix != parsed.prefix {
+            bail!(
+                "unit `{}` must have the same kind in each unit spec",
+                p.text(range)
+            );
         }
 
         Ok(())

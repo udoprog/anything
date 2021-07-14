@@ -1,86 +1,63 @@
+use bigdecimal::BigDecimal;
+
 use crate::parser::Parser;
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
 
 /// The data for a base.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct BaseData {
+pub struct SimpleState {
+    /// The current power.
+    pub power: i32,
+}
+
+impl SimpleState {
+    /// Multiply the current power.
+    fn mul_power(self, n: i32) -> Self {
+        Self {
+            power: self.power * n,
+            ..self
+        }
+    }
+}
+
+/// The data for a base.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct State {
     /// The current power.
     pub power: i32,
     /// The current prefix.
-    pub prefix: Prefix,
-    /// If the unit is a special multiple unit.
-    pub special: Option<Special>,
+    pub prefix: i32,
 }
 
-impl BaseData {
-    pub fn factor(&self) -> bigdecimal::BigDecimal {
-        let prefix = self.prefix.factor();
-
-        if let Some(special) = &self.special {
-            return prefix * special.factor();
-        }
-
-        prefix
+impl State {
+    /// Convert into simple state.
+    fn simple(&self) -> SimpleState {
+        SimpleState { power: self.power }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Special {
-    /// `Y` or `(3600 * 24 * 365)s`.
-    Year,
-    /// `M`.
-    Month,
-    /// `d` or `(3600 * 24 * 7)s`.
-    Week,
-    /// `d` or `86400s`.
-    Day,
-    /// `H` or `3600s`.
-    Hour,
-    /// `m` or `60s`.
-    Minute,
-    /// A British Thermal Unit, or `1055J`.
-    Btu,
-    /// An astronomical unit.
-    Au,
-}
-
-impl Special {
-    /// Convert the multiple into a multiplication factor.
-    pub fn factor(&self) -> bigdecimal::BigDecimal {
-        let m: u64 = match self {
-            Special::Year => {
-                return bigdecimal::BigDecimal::new(3147113076u32.into(), 2);
-            }
-            Special::Month => {
-                return bigdecimal::BigDecimal::new(262259423u32.into(), 2);
-            }
-            Special::Week => 3600 * 24 * 7,
-            Special::Day => 3600 * 24,
-            Special::Hour => 3600,
-            Special::Minute => 60,
-            Special::Btu => 1055,
-            Special::Au => 149597870700,
-        };
-
-        bigdecimal::BigDecimal::from(m)
-    }
-}
-
-impl fmt::Display for Special {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Special::Year => "Y".fmt(f),
-            Special::Month => "M".fmt(f),
-            Special::Week => "W".fmt(f),
-            Special::Day => "d".fmt(f),
-            Special::Hour => "H".fmt(f),
-            Special::Minute => "m".fmt(f),
-            Special::Btu => "btu".fmt(f),
-            Special::Au => "au".fmt(f),
-        }
-    }
-}
+const PREFIXES: [(i32, Prefix); 19] = [
+    (-24, Prefix::Yocto),
+    (-21, Prefix::Zepto),
+    (-18, Prefix::Atto),
+    (-15, Prefix::Femto),
+    (-12, Prefix::Pico),
+    (-9, Prefix::Nano),
+    (-6, Prefix::Micro),
+    (-3, Prefix::Milli),
+    (-2, Prefix::Centi),
+    (-1, Prefix::Deci),
+    (0, Prefix::None),
+    (3, Prefix::Kilo),
+    (6, Prefix::Mega),
+    (9, Prefix::Giga),
+    (12, Prefix::Tera),
+    (15, Prefix::Peta),
+    (18, Prefix::Exa),
+    (21, Prefix::Zetta),
+    (24, Prefix::Yotta),
+];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
@@ -133,32 +110,15 @@ impl Prefix {
         }
     }
 
-    /// Test if prefix is none.
-    pub fn is_none(&self) -> bool {
-        matches!(self, Prefix::None)
-    }
+    /// Find the prefix matching the given power and return any extra that comes
+    /// along.
+    pub fn find(pow: i32) -> (Self, i32) {
+        let (p, prefix) = match PREFIXES.binary_search_by(|e| e.0.cmp(&pow)) {
+            Ok(n) => PREFIXES[n],
+            Err(n) => PREFIXES[n.saturating_sub(1)],
+        };
 
-    /// Get the factor as a bigdecimal.
-    pub fn factor(&self) -> bigdecimal::BigDecimal {
-        let mut pow = self.pow();
-
-        if pow == 0 {
-            return bigdecimal::BigDecimal::from(1);
-        }
-
-        let mut base = bigdecimal::BigDecimal::from(1);
-
-        while pow > 0 {
-            base = base * bigdecimal::BigDecimal::from(10);
-            pow -= 1;
-        }
-
-        while pow < 0 {
-            base = base / bigdecimal::BigDecimal::from(10);
-            pow += 1;
-        }
-
-        base
+        (prefix, p - pow)
     }
 }
 
@@ -194,122 +154,306 @@ impl fmt::Display for Prefix {
     }
 }
 
+/// A base unit.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
-pub enum Base {
+pub enum Name {
     /// Second base unit.
     /// Designated as `s`.
     Second,
     /// Gram base unit.
-    /// Designated by default as `g`.
-    Gram,
+    /// Designated by default as `kg`.
+    KiloGram,
     /// Meter base unit.
     /// Designated as `m`.
     Meter,
     /// A byte.
     /// Designated as `B`.
     Byte,
-    /// A Joule.
+
+    // Derived units
+    /// A Joule `kg*m^2*s^-2`.
     Joule,
+    /// `Y` or `(3600 * 24 * 365)s`.
+    Year,
+    /// `M`.
+    Month,
+    /// `d` or `(3600 * 24 * 7)s`.
+    Week,
+    /// `d` or `86400s`.
+    Day,
+    /// `H` or `3600s`.
+    Hour,
+    /// `m` or `60s`.
+    Minute,
+    /// A British Thermal Unit, or `1055J`.
+    Btu,
+    /// An astronomical unit.
+    Au,
 }
 
-impl fmt::Display for Base {
+impl Name {
+    pub fn populate_bases(
+        &self,
+        bases: &mut BTreeMap<Self, SimpleState>,
+        state: SimpleState,
+    ) -> bool {
+        fn merge(bases: &mut BTreeMap<Name, SimpleState>, name: Name, state: SimpleState) {
+            match bases.entry(name) {
+                btree_map::Entry::Vacant(e) => {
+                    e.insert(state);
+                }
+                btree_map::Entry::Occupied(mut e) => {
+                    e.get_mut().power += state.power;
+                }
+            }
+        }
+
+        match self {
+            Name::Second => {
+                merge(bases, Name::Second, state);
+                false
+            }
+            Name::KiloGram => {
+                merge(bases, Name::KiloGram, state);
+                false
+            }
+            Name::Meter => {
+                merge(bases, Name::Meter, state);
+                false
+            }
+            Name::Byte => {
+                merge(bases, Name::Byte, state);
+                false
+            }
+            Name::Year => {
+                merge(bases, Name::Second, state);
+                true
+            }
+            Name::Month => {
+                merge(bases, Name::Second, state);
+                true
+            }
+            Name::Week => {
+                merge(bases, Name::Second, state);
+                true
+            }
+            Name::Day => {
+                merge(bases, Name::Second, state);
+                true
+            }
+            Name::Hour => {
+                merge(bases, Name::Second, state);
+                true
+            }
+            Name::Minute => {
+                merge(bases, Name::Second, state);
+                true
+            }
+            Name::Btu | Name::Joule => {
+                // kg⋅m2⋅s−2
+                merge(bases, Name::KiloGram, state);
+                merge(bases, Name::Meter, state.mul_power(2));
+                merge(bases, Name::Second, state.mul_power(-2));
+                true
+            }
+            Name::Au => {
+                merge(bases, Name::Meter, state);
+                true
+            }
+        }
+    }
+
+    /// The multiplication factor for this component.
+    pub fn multiple(&self) -> Option<BigDecimal> {
+        let m: u64 = match self {
+            Name::Year => {
+                return Some(BigDecimal::new(3147113076u32.into(), 2));
+            }
+            Name::Month => {
+                return Some(BigDecimal::new(262259423u32.into(), 2));
+            }
+            Name::Week => 604800,
+            Name::Day => 86400,
+            Name::Hour => 3600,
+            Name::Minute => 60,
+            Name::Btu => 1055,
+            Name::Au => 149597870700,
+            _ => return None,
+        };
+
+        Some(BigDecimal::from(m))
+    }
+
+    fn prefix_bias(&self) -> i32 {
+        match self {
+            Name::KiloGram => 3,
+            _ => 0,
+        }
+    }
+}
+
+impl fmt::Display for Name {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Base::Second => 's'.fmt(f),
-            Base::Gram => 'g'.fmt(f),
-            Base::Meter => 'm'.fmt(f),
-            Base::Byte => 'B'.fmt(f),
-            Base::Joule => 'J'.fmt(f),
+            Name::Second => 's'.fmt(f),
+            Name::KiloGram => 'g'.fmt(f),
+            Name::Meter => 'm'.fmt(f),
+            Name::Byte => 'B'.fmt(f),
+            Name::Joule => 'J'.fmt(f),
+            Name::Year => "Y".fmt(f),
+            Name::Month => "M".fmt(f),
+            Name::Week => "W".fmt(f),
+            Name::Day => "d".fmt(f),
+            Name::Hour => "H".fmt(f),
+            Name::Minute => "m".fmt(f),
+            Name::Btu => "btu".fmt(f),
+            Name::Au => "au".fmt(f),
         }
     }
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Unit {
-    bases: BTreeMap<Base, BaseData>,
+    names: BTreeMap<Name, State>,
 }
 
 impl Unit {
     pub fn empty() -> Self {
         Self {
-            bases: BTreeMap::new(),
+            names: BTreeMap::new(),
         }
     }
 
     /// Construct a new unit.
-    pub(crate) fn new(bases: BTreeMap<Base, BaseData>) -> Self {
-        Self { bases }
+    pub(crate) fn new(names: BTreeMap<Name, State>) -> Self {
+        Self { names }
     }
 
     /// Test if the unit is the special empty unit.
     pub fn is_empty(&self) -> bool {
-        self.bases.is_empty()
-    }
-
-    /// Get the value factor.
-    pub fn value_factor(&self) -> bigdecimal::BigDecimal {
-        let mut factor = bigdecimal::BigDecimal::from(1);
-
-        for data in self.bases.values() {
-            if let Some(special) = &data.special {
-                if data.power > 0 {
-                    factor *= special.factor();
-                } else {
-                    factor = factor / special.factor();
-                }
-            }
-        }
-
-        factor
+        self.names.is_empty()
     }
 
     /// Calculate the factor for coercing one unit to another.
-    pub fn factor(&self, other: &Self) -> Option<bigdecimal::BigDecimal> {
-        let mut factor = bigdecimal::BigDecimal::from(1);
+    pub fn factor(&self, other: &Self) -> Option<BigDecimal> {
+        let mut factor = BigDecimal::from(1);
 
         if self.is_empty() || other.is_empty() {
             return Some(factor);
         }
 
-        for (unit, rhs) in &other.bases {
-            let lhs = self.bases.get(unit)?;
+        let (_, lhs_bases) = self.base_units();
+        let (_, rhs_bases) = other.base_units();
+
+        for (name, rhs) in &rhs_bases {
+            let lhs = lhs_bases.get(name)?;
 
             if lhs.power != rhs.power {
                 return None;
             }
-
-            factor *= lhs.factor() / rhs.factor();
         }
 
+        let mut prefix = 0;
+
+        for (name, state) in &self.names {
+            prefix += state.prefix;
+
+            if let Some(multiple) = name.multiple() {
+                multiply(state.power, &mut factor, multiple);
+            }
+        }
+
+        for (name, state) in &other.names {
+            prefix -= state.prefix;
+
+            if let Some(multiple) = name.multiple() {
+                multiply(state.power * -1, &mut factor, multiple);
+            }
+        }
+
+        factor = factor * pow10(prefix);
         Some(factor)
     }
 
-    pub fn mul(&mut self, other: Self, n: i32) -> bigdecimal::BigDecimal {
-        let mut factor = bigdecimal::BigDecimal::from(1);
+    pub fn mul(&self, other: Self, n: i32) -> (BigDecimal, BigDecimal, Self) {
+        if self.is_empty() || other.is_empty() {
+            let unit = if self.is_empty() {
+                other.clone()
+            } else {
+                self.clone()
+            };
 
-        for (unit, rhs) in other.bases {
-            match self.bases.entry(unit) {
+            return (BigDecimal::from(1), BigDecimal::from(1), unit);
+        }
+
+        let (_, lhs_bases) = self.base_units();
+        let (_, rhs_bases) = other.base_units();
+
+        let mut names = BTreeMap::new();
+
+        for (name, state) in lhs_bases {
+            names.insert(
+                name,
+                State {
+                    power: state.power,
+                    prefix: 0,
+                },
+            );
+        }
+
+        for (name, rhs) in rhs_bases {
+            match names.entry(name) {
                 btree_map::Entry::Vacant(e) => {
-                    e.insert(BaseData {
-                        prefix: rhs.prefix,
+                    e.insert(State {
                         power: rhs.power * n,
-                        special: rhs.special,
+                        prefix: 0,
                     });
                 }
-                btree_map::Entry::Occupied(mut o) => {
-                    let lhs = o.get_mut();
-                    factor *= rhs.factor() / lhs.factor();
-                    lhs.power += rhs.power * n;
+                btree_map::Entry::Occupied(mut e) => {
+                    e.get_mut().power += rhs.power * n;
 
-                    if lhs.power == 0 {
-                        o.remove_entry();
+                    if e.get().power == 0 {
+                        e.remove_entry();
                     }
                 }
             }
         }
 
-        factor
+        let mut lhs_fac = BigDecimal::from(1);
+        let mut rhs_fac = BigDecimal::from(1);
+
+        for (name, state) in &self.names {
+            lhs_fac = lhs_fac * pow10(state.prefix);
+
+            if let Some(multiple) = name.multiple() {
+                multiply(state.power, &mut lhs_fac, multiple);
+            }
+        }
+
+        for (name, state) in &other.names {
+            rhs_fac = rhs_fac * pow10(state.prefix);
+
+            if let Some(multiple) = name.multiple() {
+                multiply(state.power, &mut rhs_fac, multiple);
+            }
+        }
+
+        (lhs_fac, rhs_fac, Unit::new(names))
+    }
+
+    /// Get all base units out of the current unit.
+    fn base_units(&self) -> (Vec<(Name, State)>, BTreeMap<Name, SimpleState>) {
+        let mut bases = BTreeMap::new();
+        let mut derived = Vec::new();
+
+        for (name, state) in &self.names {
+            if name.populate_bases(&mut bases, state.simple()) {
+                derived.push((*name, *state));
+            }
+        }
+
+        (derived, bases)
     }
 }
 
@@ -324,17 +468,18 @@ impl std::str::FromStr for Unit {
 
 impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let without_den = self.bases.iter().all(|c| c.1.power >= 0);
+        let without_num = self.names.iter().all(|c| c.1.power == 0);
+        let without_den = self.names.iter().all(|c| c.1.power >= 0);
 
-        if self.bases.iter().all(|c| c.1.power == 0) {
+        if without_num {
             if without_den {
                 return Ok(());
             }
 
             write!(f, "1")?;
         } else {
-            for (base, data) in self.bases.iter().filter(|e| e.1.power >= 0) {
-                fmt_base(base, f, data, 1)?;
+            for (base, data) in self.names.iter().filter(|e| e.1.power >= 0) {
+                fmt_help(base, f, data, 1)?;
             }
         }
 
@@ -344,27 +489,20 @@ impl fmt::Display for Unit {
 
         write!(f, "/")?;
 
-        for (base, data) in self.bases.iter().filter(|e| e.1.power < 0) {
-            fmt_base(base, f, data, -1)?;
+        for (base, data) in self.names.iter().filter(|e| e.1.power < 0) {
+            fmt_help(base, f, data, -1)?;
         }
 
         return Ok(());
 
-        fn fmt_base(
-            base: &Base,
-            f: &mut fmt::Formatter<'_>,
-            data: &BaseData,
-            n: i32,
-        ) -> fmt::Result {
-            write!(f, "{}", data.prefix)?;
+        fn fmt_help(name: &Name, f: &mut fmt::Formatter<'_>, data: &State, n: i32) -> fmt::Result {
+            let (prefix, extra) = Prefix::find(data.prefix + name.prefix_bias());
 
-            match data.special {
-                None => {
-                    write!(f, "{}", base)?;
-                }
-                Some(special) => {
-                    write!(f, "{}", special)?;
-                }
+            if extra == 0 {
+                write!(f, "{}{}", prefix, name)?;
+            } else {
+                let extra = pow10(extra);
+                write!(f, "{}{}{}", extra, prefix, name)?;
             }
 
             let mut power = (data.power * n) as u32;
@@ -403,5 +541,36 @@ fn pow_into_char(pow: u32) -> char {
         7 => '⁷',
         8 => '⁸',
         _ => '⁹',
+    }
+}
+
+/// Get the factor as a bigdecimal.
+#[inline]
+fn pow10(pow: i32) -> BigDecimal {
+    BigDecimal::new(1.into(), -pow as i64)
+}
+
+fn multiply(pow: i32, factor: &mut BigDecimal, multiple: BigDecimal) {
+    for _ in pow..0 {
+        let f = std::mem::take(factor);
+        *factor = f / multiple.clone();
+    }
+
+    for _ in 0..pow {
+        let f = std::mem::take(factor);
+        *factor = f * multiple.clone();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::pow10;
+    use bigdecimal::BigDecimal;
+
+    #[test]
+    fn test_pow10() {
+        assert_eq!(pow10(-1), BigDecimal::new(1.into(), 1));
+        assert_eq!(pow10(1), BigDecimal::new(1.into(), -1));
+        assert_eq!(pow10(0), BigDecimal::new(1.into(), 0));
     }
 }

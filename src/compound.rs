@@ -224,29 +224,17 @@ impl Compound {
 
             // Step where we try to reconstruct some of the deconstructed names.
             // We use the left-hand side to guide us on possible alternatives.
-            'outer: for (unit, mut power) in der {
+            for (unit, power) in der {
                 powers.clear();
 
                 if !unit.powers(&mut powers, 1) {
                     continue;
                 }
 
-                let dec = power.signum();
-
-                loop {
-                    if power == 0 {
-                        continue 'outer;
-                    }
-
-                    if powers
-                        .iter()
-                        .all(|(unit, p)| base_match(unit, p * power, &names))
-                    {
-                        break;
-                    }
-
-                    power -= dec;
-                }
+                let power = match bases_match(power, &powers, names) {
+                    Some(power) => power,
+                    None => continue,
+                };
 
                 for (u, s) in &powers {
                     if let btree_map::Entry::Occupied(mut e) = names.entry(u) {
@@ -274,7 +262,27 @@ impl Compound {
             }
         }
 
-        fn base_match(unit: Unit, power: i32, names: &BTreeMap<Unit, State>) -> bool {
+        fn bases_match(
+            mut power: i32,
+            powers: &Powers,
+            names: &BTreeMap<Unit, State>,
+        ) -> Option<i32> {
+            let dec = power.signum();
+
+            loop {
+                if power == 0 {
+                    return None;
+                }
+
+                if powers.iter().all(|(u, p)| m(u, p * power, names)) {
+                    return Some(power);
+                }
+
+                power -= dec;
+            }
+        }
+
+        fn m(unit: Unit, power: i32, names: &BTreeMap<Unit, State>) -> bool {
             let base = match names.get(&unit) {
                 Some(base) => base,
                 None => return false,

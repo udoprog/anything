@@ -51,7 +51,7 @@ impl fmt::Display for FormatRatio<'_> {
             }
 
             if !rem.is_zero() {
-                f.write_str("..")?;
+                f.write_char('…')?;
             }
 
             return Ok(());
@@ -105,7 +105,7 @@ impl fmt::Display for FormatRatio<'_> {
         }
 
         if !rem.is_zero() {
-            f.write_str("..")?;
+            f.write_char('…')?;
         }
 
         if exp != 0 {

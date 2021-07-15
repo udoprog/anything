@@ -52,3 +52,18 @@ fn test_multiple_division() {
     assert_eq!(n.unit(), &c);
     assert_eq!(n.to_u32(), Some(1000000));
 }
+
+#[test]
+fn test_multiple_identity_sheds() {
+    let expected = query!("0.05c / 500years * mass of earth as N");
+    let mut alternatives = Vec::new();
+    alternatives.push("(0.05c as m/s) / 500years * mass of earth as N");
+    alternatives.push("(0.05c as m/s) / (500years as seconds) * mass of earth as N");
+    alternatives.push("0.05c / (500years as seconds) * mass of earth as N");
+    alternatives.push("(0.05c / 500years as m/s^2) * mass of earth as N");
+
+    for alt in alternatives {
+        let actual = query!(alt);
+        assert_eq!(actual, expected, "{} != {}", actual, expected);
+    }
+}

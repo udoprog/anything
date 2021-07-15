@@ -1,4 +1,9 @@
 [[constants]]
+names = ["mass of earth", "earth mass"]
+unit = "kg"
+value = "5.972e24"
+
+[[constants]]
 names = ["c", "speed of light", "lightspeed"]
 unit = "c"
 value = "1"

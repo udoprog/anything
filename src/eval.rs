@@ -71,10 +71,11 @@ fn sub(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
 fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     use num::Zero;
 
-    let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), -1);
+    let (a_fac, b_fac, out_fac, unit) = a.unit().mul(b.unit(), -1);
 
     let a_fac = a_fac.into_big_rational();
     let b_fac = b_fac.into_big_rational();
+    let out_fac = out_fac.into_big_rational();
 
     let denom = b.into_value() * b_fac;
 
@@ -82,17 +83,21 @@ fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
         return Err(Error::message(range, "divide by zero"));
     }
 
-    Ok(Numeric::new((a.into_value() * a_fac) / denom, unit))
+    Ok(Numeric::new(
+        ((a.into_value() * a_fac) / denom) * out_fac,
+        unit,
+    ))
 }
 
 fn mul(_: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), 1);
+    let (a_fac, b_fac, out_fac, unit) = a.unit().mul(b.unit(), 1);
 
     let a_fac = a_fac.into_big_rational();
     let b_fac = b_fac.into_big_rational();
+    let out_fac = out_fac.into_big_rational();
 
     Ok(Numeric::new(
-        (a.into_value() * a_fac) * (b.into_value() * b_fac),
+        (a.into_value() * a_fac) * (b.into_value() * b_fac) * out_fac,
         unit,
     ))
 }

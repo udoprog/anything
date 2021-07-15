@@ -8,7 +8,7 @@ use thiserror::Error;
 mod parse_tests;
 
 /// A arbitrary precision numerical value with a unit.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Numeric {
     value: BigRational,
     unit: Compound,
@@ -57,6 +57,10 @@ impl fmt::Display for Numeric {
             write!(f, "{}", self.value.numer())?;
         } else {
             write!(f, "{}", FormatRatio::new(&self.value, 8, -6))?;
+        }
+
+        if self.unit.has_numerator() {
+            write!(f, " ")?;
         }
 
         self.unit.format(f, !self.value.is_one())?;

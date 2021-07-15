@@ -105,6 +105,11 @@ impl Compound {
         Self { names }
     }
 
+    /// Test if this unit has a numerator.
+    pub fn has_numerator(&self) -> bool {
+        self.names.values().any(|s| s.power > 0)
+    }
+
     /// Test if the unit is the special empty unit.
     pub fn is_empty(&self) -> bool {
         self.names.is_empty()
@@ -166,7 +171,7 @@ impl Compound {
     }
 
     /// Calculate multiplication factors for the given multiplication.
-    pub fn mul(&self, other: &Self, n: i32) -> (Factor, Factor, Self) {
+    pub fn mul(&self, other: &Self, n: i32) -> (Factor, Factor, Factor, Self) {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
                 Self::from_iter(
@@ -179,7 +184,7 @@ impl Compound {
                 self.clone()
             };
 
-            return (Factor::new(), Factor::new(), unit);
+            return (Factor::new(), Factor::new(), Factor::new(), unit);
         }
 
         let (lhs_der, lhs_bases) = self.base_units();
@@ -211,6 +216,7 @@ impl Compound {
 
         let mut lhs_fac = Factor::new();
         let mut rhs_fac = Factor::new();
+        let mut out_fac = Factor::new();
 
         for (name, state) in &self.names {
             lhs_fac.prefix += state.prefix;
@@ -224,21 +230,22 @@ impl Compound {
             rhs_fac.prefix += state.prefix;
 
             if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power, &mut rhs_fac, multiple);
+                multiply_factor(state.power * n, &mut rhs_fac, multiple);
             }
         }
 
         // NB: reconstruct units if possible.
         let der = lhs_der
             .into_iter()
-            .chain(rhs_der.into_iter().map(|(u, p)| (u, p * n)));
-        reconstruct(der, &mut lhs_fac, &mut names);
+            .map(|(u, p)| (u, p, 1))
+            .chain(rhs_der.into_iter().map(|(u, p)| (u, p, n)));
+        reconstruct(der, &mut out_fac, &mut names);
 
-        return (lhs_fac, rhs_fac, Compound::new(names));
+        return (lhs_fac, rhs_fac, out_fac, Compound::new(names));
 
         /// Reconstruct names.
         fn reconstruct(
-            der: impl IntoIterator<Item = (Unit, i32)>,
+            der: impl IntoIterator<Item = (Unit, i32, i32)>,
             fac: &mut Factor,
             names: &mut BTreeMap<Unit, State>,
         ) {
@@ -246,21 +253,21 @@ impl Compound {
 
             // Step where we try to reconstruct some of the deconstructed names.
             // We use the left-hand side to guide us on possible alternatives.
-            for (unit, power) in der {
+            for (unit, power, n) in der {
                 powers.clear();
 
                 if !unit.powers(&mut powers, 1) {
                     continue;
                 }
 
-                let power = match bases_match(power, &powers, names) {
+                let mod_power = match bases_match(power * n, &powers, names) {
                     Some(power) => power,
                     None => continue,
                 };
 
                 for (u, s) in &powers {
                     if let btree_map::Entry::Occupied(mut e) = names.entry(u) {
-                        e.get_mut().power -= s * power;
+                        e.get_mut().power -= s * mod_power;
 
                         if e.get().power == 0 {
                             e.remove_entry();
@@ -270,15 +277,22 @@ impl Compound {
 
                 match names.entry(unit) {
                     btree_map::Entry::Vacant(e) => {
-                        e.insert(State { power, prefix: 0 });
+                        e.insert(State {
+                            power: mod_power,
+                            prefix: 0,
+                        });
                     }
                     btree_map::Entry::Occupied(mut e) => {
-                        e.get_mut().power += power;
+                        e.get_mut().power += mod_power;
                     }
                 };
 
                 if let Some(multiple) = unit.multiple_ratio() {
-                    fac.ratio /= multiple;
+                    // So this is kinda complicated, so bear with me. `n` is the
+                    // original factor modifier, which we apply to mod_power to
+                    // get the original power back. Then we multiply by `-1`
+                    // because we want to shed the multiples here.
+                    multiply_factor(mod_power * n * -1, fac, multiple);
                 }
             }
         }

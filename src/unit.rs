@@ -1,7 +1,6 @@
+use crate::powers::Powers;
 use bigdecimal::BigDecimal;
 use std::cmp;
-use std::collections::btree_map;
-use std::collections::BTreeMap;
 use std::fmt;
 use std::hash;
 
@@ -13,34 +12,37 @@ pub enum Unit {
     ///
     /// See [units][crate::units] for definitions.
     Derived(Derived),
-
-    /// Second base unit.
-    /// Designated as `s`.
-    Second,
-    /// Gram base unit.
-    /// Designated by default as `kg`.
+    /// KiloGram base unit as `kg`.
     KiloGram,
-    /// Meter base unit.
-    /// Designated as `m`.
+    /// Meter base unit as `m`.
     Meter,
-    /// Ampere.
-    /// Designated as `A`.
+    /// Ampere base unit as `A`.
     Ampere,
-    /// Kelvin.
-    /// Designated as `K`.
+    /// Kelvin base unit as `K`.
     Kelvin,
-    /// Mole.
-    /// Designated as `mol`.
+    /// Mole base unit as `mol`.
     Mole,
-    /// Candela.
-    /// Designated as `cd`.
+    /// Candela base unit as `cd`.
     Candela,
-    /// A byte.
-    /// Designated as `B`.
+    /// Second base unit as `s`.
+    Second,
+    /// A byte base unit as `B`.
     Byte,
 }
 
 impl Unit {
+    /// Populate powers for the current unit.
+    ///
+    /// ```
+    /// use facts::Unit;
+    ///
+    /// let second = Unit::Second;
+    /// let mut powers = Default::default();
+    ///
+    /// second.powers(&mut powers, -1);
+    ///
+    /// assert_eq!(powers.get(Unit::Second), Some(-1));
+    /// ```
     pub fn powers(self, powers: &mut Powers, power: i32) -> bool {
         match self {
             Unit::Derived(derived) => {
@@ -48,7 +50,7 @@ impl Unit {
                 true
             }
             unit => {
-                powers.add(unit, power);
+                powers.insert(unit, power);
                 false
             }
         }
@@ -86,44 +88,8 @@ impl Unit {
     }
 }
 
-/// Helpers struct to build bases.
-#[derive(Default)]
-pub struct Powers {
-    powers: BTreeMap<Unit, i32>,
-}
-
-impl Powers {
-    /// Iterate over all populated powers.
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = (&'a Unit, &'a i32)> {
-        self.powers.iter()
-    }
-
-    /// Clear the current collection of powers.
-    pub fn clear(&mut self) {
-        self.powers.clear();
-    }
-
-    /// Add the given unit to the collection of powers.
-    ///
-    /// This will accumulate the specified unit onto the existing powers.
-    pub fn add(&mut self, unit: Unit, power: i32) {
-        match self.powers.entry(unit) {
-            btree_map::Entry::Vacant(e) => {
-                e.insert(power);
-            }
-            btree_map::Entry::Occupied(mut e) => {
-                *e.get_mut() += power;
-            }
-        }
-    }
-
-    pub(crate) fn into_inner(self) -> BTreeMap<Unit, i32> {
-        self.powers
-    }
-}
-
-/// The vtable for a custom unit.
-pub struct UnitVtable {
+/// The vtable for a derived unit.
+pub struct DerivedVtable {
     /// Populate base powers.
     pub powers: fn(&mut Powers, i32),
     /// Format the unit.
@@ -135,8 +101,10 @@ pub struct UnitVtable {
 /// Wrapper arounda derived unit.
 #[derive(Clone, Copy)]
 pub struct Derived {
-    pub(crate) id: u32,
-    pub(crate) vtable: &'static UnitVtable,
+    /// The unique identifier for this derived unit.
+    pub id: u32,
+    /// The implementation of the unit.
+    pub vtable: &'static DerivedVtable,
 }
 
 impl fmt::Debug for Derived {

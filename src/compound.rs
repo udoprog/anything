@@ -1,6 +1,7 @@
 use crate::parser::Parser;
+use crate::powers::Powers;
 use crate::prefix::Prefix;
-use crate::unit::{Powers, Unit};
+use crate::unit::Unit;
 use bigdecimal::BigDecimal;
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
@@ -96,8 +97,8 @@ impl Compound {
             return false;
         }
 
-        let meter = bases.get(&Unit::Meter).copied();
-        let second = bases.get(&Unit::Second).copied();
+        let meter = bases.get(Unit::Meter);
+        let second = bases.get(Unit::Second);
         meter == Some(1) && second == Some(-2)
     }
 
@@ -142,6 +143,7 @@ impl Compound {
         Some(factor)
     }
 
+    /// Calculate multiplication factors for the given multiplication.
     pub fn mul(&self, other: &Self, n: i32) -> (BigDecimal, BigDecimal, Self) {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
@@ -215,9 +217,12 @@ impl Compound {
                 continue;
             }
 
-            while powers.iter().all(|e| base_match(*e.0, *e.1, &names)) {
+            while powers
+                .iter()
+                .all(|(unit, power)| base_match(unit, power, &names))
+            {
                 for (n, s) in powers.iter() {
-                    if let btree_map::Entry::Occupied(mut e) = names.entry(*n) {
+                    if let btree_map::Entry::Occupied(mut e) = names.entry(n) {
                         e.get_mut().power -= s;
 
                         if e.get().power == 0 {
@@ -240,8 +245,8 @@ impl Compound {
 
         return (lhs_fac, rhs_fac, Compound::new(names));
 
-        fn base_match(name: Unit, power: i32, bases: &BTreeMap<Unit, State>) -> bool {
-            let base = match bases.get(&name) {
+        fn base_match(unit: Unit, power: i32, names: &BTreeMap<Unit, State>) -> bool {
+            let base = match names.get(&unit) {
                 Some(base) => base,
                 None => return false,
             };
@@ -255,7 +260,7 @@ impl Compound {
     }
 
     /// Get all base units out of the current unit.
-    fn base_units(&self) -> (Vec<Unit>, BTreeMap<Unit, i32>) {
+    fn base_units(&self) -> (Vec<Unit>, Powers) {
         let mut powers = Powers::default();
         let mut derived = Vec::new();
 
@@ -265,7 +270,7 @@ impl Compound {
             }
         }
 
-        (derived, powers.into_inner())
+        (derived, powers)
     }
 
     /// Helper to format a compound unit. This allows for pluralization in the

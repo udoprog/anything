@@ -16,33 +16,16 @@ const SOURCES: [(&str, &[u8]); 3] = [
 
 const SEED: u64 = 0x681da70f3e1e3494;
 
-/// A matched thing from the database.
-pub enum Match<'a> {
+/// A match from the database.
+pub(crate) enum Match<'a> {
     /// A constant was matched.
     Constant(&'a DbConstant),
-}
-
-/// Open the database.
-pub fn open() -> Result<Db> {
-    let hasher = Hasher(());
-
-    let mut db = Db {
-        hasher,
-        constants: HashMap::new(),
-    };
-
-    for (name, source) in SOURCES.iter().copied() {
-        db.load_bytes(source)
-            .with_context(|| anyhow!("loading: {}", name))?;
-    }
-
-    Ok(db)
 }
 
 /// The hash of the constant.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
-pub struct Hash(u64);
+pub(crate) struct Hash(u64);
 
 impl fmt::Debug for Hash {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -50,10 +33,10 @@ impl fmt::Debug for Hash {
     }
 }
 
-pub struct Hasher(());
+pub(crate) struct Hasher(());
 
 impl Hasher {
-    pub fn hash(&self, s: &str) -> Hash {
+    pub(crate) fn hash(&self, s: &str) -> Hash {
         use std::hash::{Hash as _, Hasher};
 
         let mut hash = twox_hash::xxh3::Hash64::with_seed(SEED);
@@ -74,17 +57,17 @@ impl Hasher {
 
 /// A special unit.
 #[derive(Debug)]
-pub struct DbUnit {
-    pub value: bigdecimal::BigDecimal,
-    pub unit: Compound,
+pub(crate) struct DbUnit {
+    pub(crate) value: bigdecimal::BigDecimal,
+    pub(crate) unit: Compound,
 }
 
 /// A single constant.
 #[derive(Debug)]
-pub struct DbConstant {
+pub(crate) struct DbConstant {
     names: HashSet<Box<str>>,
-    pub value: bigdecimal::BigDecimal,
-    pub unit: Compound,
+    pub(crate) value: bigdecimal::BigDecimal,
+    pub(crate) unit: Compound,
 }
 
 impl DbConstant {
@@ -101,12 +84,25 @@ pub struct Db {
 }
 
 impl Db {
-    /// Construct a hash.
-    pub fn hash(&self, s: &str) -> Hash {
-        self.hasher.hash(s)
+    /// Open the default database.
+    pub fn open() -> Result<Self> {
+        let hasher = Hasher(());
+
+        let mut db = Self {
+            hasher,
+            constants: HashMap::new(),
+        };
+
+        for (name, source) in SOURCES.iter().copied() {
+            db.load_bytes(source)
+                .with_context(|| anyhow!("loading: {}", name))?;
+        }
+
+        Ok(db)
     }
 
-    pub fn lookup<'a>(&'a self, s: &str) -> Option<Match<'a>> {
+    /// Perform a lookup over the given string.
+    pub(crate) fn lookup<'a>(&'a self, s: &str) -> Option<Match<'a>> {
         let hash = self.hasher.hash(s);
 
         if let Some(matches) = self.constants.get(&hash) {
@@ -121,7 +117,7 @@ impl Db {
     }
 
     /// Load a document from the given bytes.
-    pub fn load_bytes(&mut self, bytes: &[u8]) -> Result<()> {
+    pub(crate) fn load_bytes(&mut self, bytes: &[u8]) -> Result<()> {
         let doc: self::serde::Doc = toml::de::from_slice(bytes)?;
 
         for c in doc.constants {

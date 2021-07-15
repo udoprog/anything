@@ -108,6 +108,10 @@ enum Token {
     #[token("acc")]
     #[token("acceleration")]
     Acceleration,
+    #[token("v")]
+    #[token("vel")]
+    #[token("velocity")]
+    Velocity,
     #[token("gforce")]
     #[token("g-force")]
     Gforce,
@@ -271,6 +275,7 @@ impl<'a> UnitParser<'a> {
                 Token::Btu => Unit::Derived(units::BTU),
                 Token::Au => Unit::Derived(units::AU),
                 Token::Acceleration => Unit::Derived(units::ACCELERATION),
+                Token::Velocity => Unit::Derived(units::VELOCITY),
                 Token::Gforce => Unit::Derived(units::GFORCE),
                 Token::Newton => Unit::Derived(units::NEWTON),
                 Token::Pascal => Unit::Derived(units::PASCAL),

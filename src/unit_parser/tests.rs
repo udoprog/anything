@@ -57,6 +57,7 @@ fn test_prefixes() {
             Unit::Derived(units::ACCELERATION),
             &["a", "acc", "acceleration"],
         ),
+        (Unit::Derived(units::VELOCITY), &["v", "vel", "velocity"]),
         (Unit::Derived(units::BTU), &["btu"][..]),
         (Unit::Derived(units::AU), &["au"][..]),
         (Unit::Derived(units::LIGHTSPEED), &["c"][..]),

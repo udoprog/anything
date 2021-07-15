@@ -3,7 +3,7 @@ fn main() -> anyhow::Result<()> {
     it.next();
     let query = it.collect::<Vec<_>>().join(" ");
 
-    let db = facts::db::open()?;
+    let db = facts::Db::open()?;
 
     for value in facts::query(&query, &db) {
         match value {

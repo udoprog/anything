@@ -6,7 +6,7 @@ use crate::parser::{FactsLang, Parser};
 /// Perform a query over the given string and database.
 ///
 /// ```rust
-/// let db = facts::db::open().unwrap();
+/// let db = facts::Db::open().unwrap();
 /// let mut values = facts::query("0.99c", &db);
 ///
 /// assert!(values.next().unwrap().is_ok());
@@ -22,6 +22,11 @@ pub fn query<'q, 'd>(query: &'q str, db: &'d db::Db) -> Query<'q, 'd> {
     }
 }
 
+/// The result of a query.
+///
+/// This can be iterator over to get results.
+///
+/// See [query].
 pub struct Query<'q, 'd> {
     query: &'q str,
     db: &'d db::Db,

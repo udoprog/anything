@@ -3,7 +3,7 @@ use facts::{Compound, Unit};
 
 macro_rules! query {
     ($expr:expr) => {{
-        let db = facts::db::open().unwrap();
+        let db = facts::Db::open().unwrap();
         let mut values = facts::query($expr, &db);
         let value = values.next().unwrap().unwrap();
         assert!(values.next().is_none());

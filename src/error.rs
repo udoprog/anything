@@ -5,6 +5,7 @@ use crate::parser::SyntaxKind;
 use bigdecimal::ParseBigDecimalError;
 use thiserror::Error;
 
+/// A facts error.
 #[derive(Debug, Error)]
 #[error("{kind}")]
 pub struct Error {

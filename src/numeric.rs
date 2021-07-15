@@ -3,6 +3,7 @@ use bigdecimal::{BigDecimal, ToPrimitive};
 use crate::compound::Compound;
 use std::fmt;
 
+/// A arbitrary precision numerical value with a unit.
 pub struct Numeric {
     value: BigDecimal,
     unit: Compound,

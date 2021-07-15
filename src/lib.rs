@@ -6,6 +6,7 @@ mod compound;
 mod db;
 mod error;
 mod eval;
+mod format;
 mod numeric;
 mod powers;
 mod prefix;

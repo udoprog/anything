@@ -1,4 +1,5 @@
 use crate::compound::Compound;
+use crate::format::FormatRatio;
 use num::{BigInt, BigRational, One, ToPrimitive};
 use std::fmt;
 use thiserror::Error;
@@ -55,11 +56,7 @@ impl fmt::Display for Numeric {
         if self.value.is_integer() {
             write!(f, "{}", self.value.numer())?;
         } else {
-            if let Some(v) = self.value.to_f64() {
-                write!(f, "{}", v)?;
-            } else {
-                write!(f, "{{{}}}", self.value)?;
-            }
+            write!(f, "{}", FormatRatio::new(&self.value, 8, -6))?;
         }
 
         self.unit.format(f, !self.value.is_one())?;

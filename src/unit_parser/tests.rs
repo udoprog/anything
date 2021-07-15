@@ -74,7 +74,7 @@ fn test_prefixes() {
         ),
         (Unit::Derived(units::WEEK), &["w", "week", "weeks"][..]),
         (Unit::Derived(units::DAY), &["day", "days"][..]),
-        (Unit::Derived(units::HOUR), &["hour", "hours"][..]),
+        (Unit::Derived(units::HOUR), &["hr", "hour", "hours"][..]),
         (
             Unit::Derived(units::MINUTE),
             &["min", "mins", "minute", "minutes"][..],
@@ -88,6 +88,32 @@ fn test_prefixes() {
             &["Pa", "pascal", "pascals"][..],
         ),
         (Unit::Derived(units::WATT), &["W", "watt", "watts"][..]),
+        (
+            Unit::Derived(units::COULOMB),
+            &["C", "coulomb", "coulombs"][..],
+        ),
+        (Unit::Derived(units::VOLT), &["V", "volt", "volts"][..]),
+        (Unit::Derived(units::FARAD), &["F", "farad", "farads"][..]),
+        (Unit::Derived(units::OHM), &["Ω", "ohm", "ohms"][..]),
+        (Unit::Derived(units::SIEMENS), &["S", "siemens"][..]),
+        (Unit::Derived(units::WEBER), &["Wb", "weber", "webers"][..]),
+        (Unit::Derived(units::TESLA), &["T", "tesla", "teslas"][..]),
+        (
+            Unit::Derived(units::HENRY),
+            &["H", "henry", "henrys", "henries"][..],
+        ),
+        (Unit::Derived(units::LUMEN), &["lm", "lumen", "lumens"][..]),
+        (Unit::Derived(units::LUX), &["lx", "lux"][..]),
+        (
+            Unit::Derived(units::BECQUEREL),
+            &["Bq", "becquerel", "becquerels"][..],
+        ),
+        (Unit::Derived(units::GRAY), &["Gy", "gray", "grays"][..]),
+        (
+            Unit::Derived(units::SIEVERT),
+            &["Sv", "sievert", "sieverts"][..],
+        ),
+        (Unit::Derived(units::KATAL), &["kat", "katal", "katals"][..]),
     ];
 
     for (unit, variants) in units.iter().copied() {
@@ -128,6 +154,7 @@ fn test_prefixes() {
                             continue
                         }
                         ("da", "y" | "year" | "years") => continue,
+                        ("G", "y" | "year" | "years") => continue,
                         _ => {}
                     }
 

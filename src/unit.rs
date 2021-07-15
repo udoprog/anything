@@ -14,18 +14,18 @@ pub enum Unit {
     Derived(Derived),
     /// KiloGram base unit as `kg`.
     KiloGram,
+    /// Candela base unit as `cd`.
+    Candela,
     /// Meter base unit as `m`.
     Meter,
+    /// Second base unit as `s`.
+    Second,
     /// Ampere base unit as `A`.
     Ampere,
     /// Kelvin base unit as `K`.
     Kelvin,
     /// Mole base unit as `mol`.
     Mole,
-    /// Candela base unit as `cd`.
-    Candela,
-    /// Second base unit as `s`.
-    Second,
     /// A byte base unit as `B`.
     Byte,
 }

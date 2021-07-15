@@ -161,7 +161,7 @@ impl Compound {
         }
 
         let (lhs_der, lhs_bases) = self.base_units();
-        let (_, rhs_bases) = other.base_units();
+        let (rhs_der, rhs_bases) = other.base_units();
 
         let mut names = BTreeMap::new();
 
@@ -206,24 +206,51 @@ impl Compound {
             }
         }
 
-        let mut powers = Powers::default();
+        // NB: reconstruct units if possible.
+        let der = lhs_der
+            .into_iter()
+            .chain(rhs_der.into_iter().map(|(u, p)| (u, p * n)));
+        reconstruct(der, &mut lhs_fac, &mut names);
 
-        // Step where we try to reconstruct some of the deconstructed names.
-        // We use the left-hand side to guide us on possible alternatives.
-        for name in lhs_der {
-            powers.clear();
+        return (lhs_fac, rhs_fac, Compound::new(names));
 
-            if !name.powers(&mut powers, 1) {
-                continue;
-            }
+        /// Reconstruct names.
+        fn reconstruct(
+            der: impl IntoIterator<Item = (Unit, i32)>,
+            fac: &mut BigDecimal,
+            names: &mut BTreeMap<Unit, State>,
+        ) {
+            let mut powers = Powers::default();
 
-            while powers
-                .iter()
-                .all(|(unit, power)| base_match(unit, power, &names))
-            {
-                for (n, s) in powers.iter() {
-                    if let btree_map::Entry::Occupied(mut e) = names.entry(n) {
-                        e.get_mut().power -= s;
+            // Step where we try to reconstruct some of the deconstructed names.
+            // We use the left-hand side to guide us on possible alternatives.
+            'outer: for (unit, mut power) in der {
+                powers.clear();
+
+                if !unit.powers(&mut powers, 1) {
+                    continue;
+                }
+
+                let dec = power.signum();
+
+                loop {
+                    if power == 0 {
+                        continue 'outer;
+                    }
+
+                    if powers
+                        .iter()
+                        .all(|(unit, p)| base_match(unit, p * power, &names))
+                    {
+                        break;
+                    }
+
+                    power -= dec;
+                }
+
+                for (u, s) in &powers {
+                    if let btree_map::Entry::Occupied(mut e) = names.entry(u) {
+                        e.get_mut().power -= s * power;
 
                         if e.get().power == 0 {
                             e.remove_entry();
@@ -231,19 +258,21 @@ impl Compound {
                     }
                 }
 
-                let entry = names.entry(name).or_insert_with(|| State {
-                    power: 0,
-                    prefix: 0,
-                });
-                entry.power += 1;
+                match names.entry(unit) {
+                    btree_map::Entry::Vacant(e) => {
+                        e.insert(State { power, prefix: 0 });
+                    }
+                    btree_map::Entry::Occupied(mut e) => {
+                        e.get_mut().power += power;
+                    }
+                };
 
-                if let Some(multiple) = name.multiple() {
-                    lhs_fac = lhs_fac / multiple;
+                if let Some(multiple) = unit.multiple() {
+                    let f = std::mem::take(fac);
+                    *fac = f / multiple;
                 }
             }
         }
-
-        return (lhs_fac, rhs_fac, Compound::new(names));
 
         fn base_match(unit: Unit, power: i32, names: &BTreeMap<Unit, State>) -> bool {
             let base = match names.get(&unit) {
@@ -260,13 +289,13 @@ impl Compound {
     }
 
     /// Get all base units out of the current unit.
-    fn base_units(&self) -> (Vec<Unit>, Powers) {
+    fn base_units(&self) -> (Vec<(Unit, i32)>, Powers) {
         let mut powers = Powers::default();
         let mut derived = Vec::new();
 
         for (name, state) in &self.names {
             if name.powers(&mut powers, state.power) {
-                derived.push(*name);
+                derived.push((*name, state.power));
             }
         }
 
@@ -276,28 +305,42 @@ impl Compound {
     /// Helper to format a compound unit. This allows for pluralization in the
     /// scenario that this compound unit is composed of a single unit.
     pub(crate) fn format(&self, f: &mut fmt::Formatter<'_>, pluralize: bool) -> fmt::Result {
+        use std::fmt::Write;
+
         let mut pluralize = if self.names.iter().filter(|e| e.1.power >= 0).count() == 1 {
             pluralize
         } else {
             false
         };
 
-        for (base, data) in self.names.iter().filter(|e| e.1.power >= 0) {
+        let mut it = self.names.iter().filter(|e| e.1.power >= 0).peekable();
+
+        while let Some((base, data)) = it.next() {
             inner(base, f, data, std::mem::take(&mut pluralize), 1)?;
+
+            if it.peek().is_some() {
+                f.write_char('⋅')?;
+            }
         }
 
         if self.names.iter().any(|c| c.1.power < 0) {
             write!(f, "/")?;
 
-            for (base, data) in self.names.iter().filter(|e| e.1.power < 0) {
+            let mut it = self.names.iter().filter(|e| e.1.power < 0).peekable();
+
+            while let Some((base, data)) = it.next() {
                 inner(base, f, data, false, -1)?;
+
+                if it.peek().is_some() {
+                    f.write_char('⋅')?;
+                }
             }
         }
 
         return Ok(());
 
         fn inner(
-            name: &Unit,
+            unit: &Unit,
             f: &mut fmt::Formatter<'_>,
             data: &State,
             pluralize: bool,
@@ -305,7 +348,7 @@ impl Compound {
         ) -> fmt::Result {
             use std::fmt::Display as _;
 
-            let (prefix, extra) = Prefix::find(data.prefix + name.prefix_bias());
+            let (prefix, extra) = Prefix::find(data.prefix + unit.prefix_bias());
 
             if extra == 0 {
                 write!(f, "{}", prefix)?;
@@ -313,7 +356,7 @@ impl Compound {
                 write!(f, "e{}{}", extra, prefix)?;
             }
 
-            name.format(f, pluralize)?;
+            unit.format(f, pluralize)?;
 
             let mut power = (data.power * n) as u32;
 

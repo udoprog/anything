@@ -30,9 +30,9 @@ enum Token {
     #[token("min")]
     #[token("mins")]
     Minute,
+    #[token("hr")]
     #[token("hour")]
     #[token("hours")]
-    #[token("H")]
     Hour,
     #[token("day")]
     #[token("days")]
@@ -137,6 +137,74 @@ enum Token {
     #[token("watts")]
     Watt,
 
+    #[token("C")]
+    #[token("coulomb")]
+    #[token("coulombs")]
+    Coulomb,
+
+    #[token("V")]
+    #[token("volt")]
+    #[token("volts")]
+    Volt,
+
+    #[token("F")]
+    #[token("farad")]
+    #[token("farads")]
+    Farad,
+
+    #[token("Ω")]
+    #[token("ohm")]
+    #[token("ohms")]
+    Ohm,
+
+    #[token("S")]
+    #[token("siemens")]
+    Siemens,
+
+    #[token("Wb")]
+    #[token("weber")]
+    #[token("webers")]
+    Weber,
+
+    #[token("tesla")]
+    #[token("teslas")]
+    Tesla,
+
+    #[token("H")]
+    #[token("henry")]
+    #[token("henrys")]
+    #[token("henries")]
+    Henry,
+
+    #[token("lm")]
+    #[token("lumen")]
+    #[token("lumens")]
+    Lumen,
+
+    #[token("lx")]
+    #[token("lux")]
+    Lux,
+
+    #[token("Bq")]
+    #[token("becquerel")]
+    #[token("becquerels")]
+    Becquerel,
+
+    #[token("Gy")]
+    #[token("gray")]
+    #[token("grays")]
+    Gray,
+
+    #[token("Sv")]
+    #[token("sievert")]
+    #[token("sieverts")]
+    Sievert,
+
+    #[token("kat")]
+    #[token("katal")]
+    #[token("katals")]
+    Katal,
+
     #[token("Y")]
     #[token("yotta")]
     Yotta,
@@ -150,6 +218,7 @@ enum Token {
     #[token("peta")]
     Peta,
     #[token("T")]
+    TeraOrTesla,
     #[token("tera")]
     Tera,
     #[token("G")]
@@ -281,6 +350,20 @@ impl<'a> UnitParser<'a> {
                 Token::Pascal => Unit::Derived(units::PASCAL),
                 Token::Joule => Unit::Derived(units::JOULE),
                 Token::Watt => Unit::Derived(units::WATT),
+                Token::Coulomb => Unit::Derived(units::COULOMB),
+                Token::Volt => Unit::Derived(units::VOLT),
+                Token::Farad => Unit::Derived(units::FARAD),
+                Token::Ohm => Unit::Derived(units::OHM),
+                Token::Siemens => Unit::Derived(units::SIEMENS),
+                Token::Weber => Unit::Derived(units::WEBER),
+                Token::Tesla => Unit::Derived(units::TESLA),
+                Token::Henry => Unit::Derived(units::HENRY),
+                Token::Lumen => Unit::Derived(units::LUMEN),
+                Token::Lux => Unit::Derived(units::LUX),
+                Token::Becquerel => Unit::Derived(units::BECQUEREL),
+                Token::Gray => Unit::Derived(units::GRAY),
+                Token::Sievert => Unit::Derived(units::SIEVERT),
+                Token::Katal => Unit::Derived(units::KATAL),
                 Token::Yotta => {
                     prefix += Prefix::YOTTA;
                     continue;
@@ -296,6 +379,14 @@ impl<'a> UnitParser<'a> {
                 Token::Peta => {
                     prefix += Prefix::PETA;
                     continue;
+                }
+                Token::TeraOrTesla => {
+                    if !self.lexer.remainder().is_empty() {
+                        prefix += Prefix::TERA;
+                        continue;
+                    }
+
+                    Unit::Derived(units::TESLA)
                 }
                 Token::Tera => {
                     prefix += Prefix::TERA;

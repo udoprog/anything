@@ -1,5 +1,5 @@
-use crate::parser::SyntaxKind;
-use crate::span::Span;
+use crate::syntax::parser::SyntaxKind;
+use crate::syntax::span::Span;
 use SyntaxKind::*;
 
 /// A lexed token.
@@ -52,7 +52,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Advance to the next character.
-    fn advance(&mut self) {
+    fn step(&mut self) {
         let mut it = self.source[self.pos..].chars();
 
         self.pos = match it.next() {
@@ -61,32 +61,31 @@ impl<'a> Lexer<'a> {
         };
     }
 
-    fn consume_number(&mut self) -> usize {
+    fn consume_number(&mut self, mut dot: bool) -> usize {
         let mut count = 0;
-        let mut dot = false;
 
         while let Some(c) = self.peek() {
             match c {
                 '0'..='9' => {
-                    self.advance();
+                    self.step();
                     count += 1;
                 }
                 '.' if !dot => {
-                    self.advance();
+                    self.step();
                     dot = true;
                     count += 1;
                 }
                 'e' | 'E' => {
-                    self.advance();
+                    self.step();
                     count += 1;
 
                     if let Some('-' | '+') = self.peek() {
-                        self.advance();
+                        self.step();
                         count += 1;
                     }
 
                     while let Some('0'..='9') = self.peek() {
-                        self.advance();
+                        self.step();
                         count += 1;
                     }
                 }
@@ -99,7 +98,9 @@ impl<'a> Lexer<'a> {
         count
     }
 
-    fn consume_word(&mut self) {
+    fn consume_word(&mut self) -> usize {
+        let mut count = 0;
+
         while let Some(c) = self.peek() {
             match c {
                 c if c.is_alphanumeric() => {}
@@ -107,8 +108,11 @@ impl<'a> Lexer<'a> {
                 _ => break,
             }
 
-            self.advance();
+            count += 1;
+            self.step();
         }
+
+        count
     }
 
     /// Consume until ws.
@@ -118,7 +122,7 @@ impl<'a> Lexer<'a> {
                 break;
             }
 
-            self.advance();
+            self.step();
         }
     }
 
@@ -127,7 +131,7 @@ impl<'a> Lexer<'a> {
 
         while let Some('0'..='9') = self.peek() {
             count += 1;
-            self.advance();
+            self.step();
         }
 
         count
@@ -135,23 +139,18 @@ impl<'a> Lexer<'a> {
 
     fn consume_unit_word(&mut self) {
         while let Some('a'..='z' | 'A'..='Z' | '-') = self.peek() {
-            self.advance();
+            self.step();
         }
     }
 
     fn consume_escaped_unit_word(&mut self) -> bool {
-        if !matches!(self.peek(), Some('{')) {
-            return false;
-        }
-
-        self.advance();
         self.consume_unit_word();
 
         if !matches!(self.peek(), Some('}')) {
             return false;
         }
 
-        self.advance();
+        self.step();
         true
     }
 
@@ -169,7 +168,7 @@ impl<'a> Lexer<'a> {
                 UNIT_NUMBER
             }
             '-' => {
-                self.advance();
+                self.step();
 
                 if self.consume_unit_number() == 0 {
                     ERROR
@@ -178,30 +177,34 @@ impl<'a> Lexer<'a> {
                 }
             }
             '{' => {
-                if !self.consume_escaped_unit_word() {
-                    ERROR
-                } else {
+                self.step();
+
+                if self.consume_escaped_unit_word() {
                     UNIT_ESCAPED_WORD
+                } else {
+                    ERROR
                 }
             }
             'a'..='z' | 'A'..='Z' => {
-                self.advance();
+                self.step();
                 self.consume_unit_word();
                 UNIT_WORD
             }
             '^' => {
-                self.advance();
+                self.step();
                 CARET
             }
             '/' => {
-                self.advance();
+                self.step();
                 SLASH
             }
             '*' => {
-                self.advance();
+                self.step();
                 STAR
             }
-            _ => return None,
+            _ => {
+                return None;
+            }
         };
 
         Some(Token {
@@ -225,62 +228,70 @@ impl<'a> Lexer<'a> {
                 WHITESPACE
             }
             '.' => {
-                self.consume_number();
-                NUMBER
+                self.step();
+
+                if self.consume_number(true) == 0 {
+                    ERROR
+                } else {
+                    NUMBER
+                }
             }
             '0'..='9' => {
-                self.consume_number();
+                self.consume_number(false);
                 NUMBER
             }
             '*' => {
-                self.advance();
+                self.step();
                 STAR
             }
             '/' => {
-                self.advance();
+                self.step();
                 SLASH
             }
             '+' => {
-                self.advance();
+                self.step();
 
-                if self.consume_number() > 0 {
+                if self.consume_number(false) > 0 {
                     NUMBER
                 } else {
                     PLUS
                 }
             }
             '-' => {
-                self.advance();
+                self.step();
 
-                if self.consume_number() > 0 {
+                if self.consume_number(false) > 0 {
                     NUMBER
                 } else {
                     DASH
                 }
             }
             '^' => {
-                self.advance();
+                self.step();
                 CARET
             }
             '%' => {
-                self.advance();
+                self.step();
                 PERCENTAGE
             }
             '(' => {
-                self.advance();
+                self.step();
                 OPEN_PAREN
             }
             ')' => {
-                self.advance();
+                self.step();
                 CLOSE_PAREN
             }
             _ => {
-                self.consume_word();
-
-                match &self.source[start..self.pos] {
-                    "as" => AS,
-                    "to" => TO,
-                    _ => WORD,
+                if self.consume_word() > 0 {
+                    match &self.source[start..self.pos] {
+                        "as" => AS,
+                        "to" => TO,
+                        _ => WORD,
+                    }
+                } else {
+                    self.step();
+                    ERROR
                 }
             }
         };

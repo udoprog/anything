@@ -1,3 +1,9 @@
+use codespan_reporting::diagnostic::{Diagnostic, Label};
+use codespan_reporting::files::{Files, SimpleFiles};
+use codespan_reporting::term;
+use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
+use std::io::Write;
+
 fn main() -> anyhow::Result<()> {
     let mut it = std::env::args();
     it.next();
@@ -5,13 +11,25 @@ fn main() -> anyhow::Result<()> {
 
     let db = facts::Db::open()?;
 
-    for value in facts::query(&query, &db) {
+    let mut out = StandardStream::stdout(ColorChoice::Auto);
+
+    let mut files = SimpleFiles::new();
+    let id = files.add("<in>", query);
+
+    let config = codespan_reporting::term::Config::default();
+
+    for value in facts::query(files.source(id)?, &db) {
         match value {
             Ok(value) => {
-                println!("{}", value);
+                writeln!(out, "{}", value)?;
             }
             Err(e) => {
-                println!("error: {}", e);
+                let mut labels = Vec::new();
+                labels.push(Label::primary(id, e.range()).with_message(e.to_string()));
+                let diagnostic = Diagnostic::error()
+                    .with_message(e.to_string())
+                    .with_labels(labels);
+                term::emit(&mut out, &config, &files, &diagnostic)?;
             }
         }
     }

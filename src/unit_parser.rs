@@ -18,7 +18,7 @@ impl ParsedUnit {
     }
 }
 
-#[derive(Logos, Debug, PartialEq)]
+#[derive(Logos, Debug, Clone, Copy, PartialEq, Eq)]
 enum Token {
     #[token("s")]
     #[token("sec")]
@@ -34,12 +34,13 @@ enum Token {
     #[token("hour")]
     #[token("hours")]
     Hour,
+    #[token("dy")]
     #[token("day")]
     #[token("days")]
     Day,
+    #[token("wk")]
     #[token("week")]
     #[token("weeks")]
-    #[token("w")]
     Week,
     #[token("mth")]
     #[token("mths")]
@@ -238,7 +239,6 @@ enum Token {
     #[token("deca")]
     Deca,
     #[token("d")]
-    DeciOrDay,
     #[token("deci")]
     Deci,
     #[token("c")]
@@ -269,7 +269,6 @@ enum Token {
     #[token("zepto")]
     Zepto,
     #[token("y")]
-    YoctoOrYear,
     #[token("yocto")]
     Yocto,
 
@@ -420,14 +419,6 @@ impl<'a> UnitParser<'a> {
                     prefix += Prefix::DECA;
                     continue;
                 }
-                Token::DeciOrDay => {
-                    if !self.lexer.remainder().is_empty() {
-                        prefix += Prefix::DECI;
-                        continue;
-                    }
-
-                    Unit::Derived(units::DAY)
-                }
                 Token::Deci => {
                     prefix += Prefix::DECI;
                     continue;
@@ -487,14 +478,6 @@ impl<'a> UnitParser<'a> {
                 Token::Zepto => {
                     prefix += Prefix::ZEPTO;
                     continue;
-                }
-                Token::YoctoOrYear => {
-                    if !self.lexer.remainder().is_empty() {
-                        prefix += Prefix::YOCTO;
-                        continue;
-                    }
-
-                    Unit::Derived(units::YEAR)
                 }
                 Token::Yocto => {
                     prefix += Prefix::YOCTO;

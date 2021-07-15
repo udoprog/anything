@@ -6,15 +6,12 @@ mod compound;
 mod db;
 mod error;
 mod eval;
-mod grammar;
-mod lexer;
 mod numeric;
-#[doc(hidden)]
-pub mod parser;
 mod powers;
 mod prefix;
 mod query;
-mod span;
+#[doc(hidden)]
+pub mod syntax;
 mod unit;
 mod unit_parser;
 pub mod units;

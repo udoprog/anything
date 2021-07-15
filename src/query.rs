@@ -1,7 +1,7 @@
 use crate::db;
 use crate::error::Error;
 use crate::numeric::Numeric;
-use crate::parser::{FactsLang, Parser};
+use crate::syntax::parser::{FactsLang, Parser};
 
 /// Perform a query over the given string and database.
 ///
@@ -38,6 +38,7 @@ impl Iterator for Query<'_, '_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = self.children.next()?;
+
         Some(crate::eval::eval(
             node,
             &self.query,

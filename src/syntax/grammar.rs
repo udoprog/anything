@@ -1,7 +1,4 @@
-use crate::parser::Parser;
-use crate::parser::Skip;
-use crate::parser::SyntaxKind;
-use rowan::Checkpoint;
+use crate::syntax::parser::{Parser, Skip, SyntaxKind};
 use SyntaxKind::*;
 
 /// Parse the root of an expression.
@@ -24,9 +21,11 @@ pub fn root(p: &mut Parser<'_>) {
 
                 let c = p.checkpoint();
 
-                if !expr(p, c, None) {
+                if !expr(p, None) {
                     p.error_node_at(c);
                 }
+
+                p.finish_node_at(c, OPERATION);
             }
             _ => {
                 p.skip(skip);
@@ -142,27 +141,29 @@ fn value(p: &mut Parser<'_>) -> bool {
         }
         OPEN_PAREN => {
             p.skip(skip);
-            p.bump();
 
             let c = p.checkpoint();
+            p.bump();
 
-            if !expr(p, c, None) {
+            if !expr(p, None) {
                 return false;
             }
 
-            let skip = p.count_skip();
-            p.eat(skip, &[CLOSE_PAREN])
+            if !p.eat(skip, &[CLOSE_PAREN]) {
+                return false;
+            }
+
+            p.finish_node_at(c, OPERATION);
+            true
         }
         _ => false,
     }
 }
 
-fn expr(p: &mut Parser<'_>, check: Checkpoint, level: Option<u32>) -> bool {
-    if !expr_nested(p, check, level) {
+fn expr(p: &mut Parser<'_>, level: Option<u32>) -> bool {
+    if !expr_nested(p, level) {
         return false;
     }
-
-    let mut has_cast = false;
 
     loop {
         let skip = p.count_skip();
@@ -180,18 +181,12 @@ fn expr(p: &mut Parser<'_>, check: Checkpoint, level: Option<u32>) -> bool {
         if !unit(p) {
             return false;
         }
-
-        has_cast = true;
-    }
-
-    if has_cast {
-        p.finish_node_at(check, OPERATION);
     }
 
     true
 }
 
-fn expr_nested(p: &mut Parser<'_>, check: Checkpoint, mut level: Option<u32>) -> bool {
+fn expr_nested(p: &mut Parser<'_>, mut level: Option<u32>) -> bool {
     let mut last = p.checkpoint();
 
     if !value(p) {
@@ -203,10 +198,6 @@ fn expr_nested(p: &mut Parser<'_>, check: Checkpoint, mut level: Option<u32>) ->
 
         match op(p.nth(skip, 0)) {
             None => {
-                if level.is_some() {
-                    p.finish_node_at(check, OPERATION);
-                }
-
                 break;
             }
             Some(n) => {
@@ -219,13 +210,13 @@ fn expr_nested(p: &mut Parser<'_>, check: Checkpoint, mut level: Option<u32>) ->
                     }
                     Some(c) => {
                         if c < n {
-                            if !expr(p, last, Some(n)) {
+                            if !expr(p, Some(n)) {
                                 return false;
                             }
 
+                            p.finish_node_at(last, OPERATION);
                             continue;
                         } else if c > n {
-                            p.finish_node_at(check, OPERATION);
                             break;
                         }
                     }

@@ -64,7 +64,7 @@ fn test_prefixes() {
         (Unit::Derived(units::JOULE), &["J", "joule"][..]),
         (Unit::Derived(units::GFORCE), &["gforce", "g-force"][..]),
         (Unit::Derived(units::TON), &["ton", "tons"][..]),
-        (Unit::Derived(units::YEAR), &["y", "year", "years"][..]),
+        (Unit::Derived(units::YEAR), &["yr", "year", "years"][..]),
         (Unit::Derived(units::DECADE), &["decade", "decades"][..]),
         (Unit::Derived(units::CENTURY), &["century", "centuries"][..]),
         (Unit::Derived(units::MILLENIUM), &["M", "millenium"][..]),
@@ -72,8 +72,8 @@ fn test_prefixes() {
             Unit::Derived(units::MONTH),
             &["mth", "mths", "month", "months"][..],
         ),
-        (Unit::Derived(units::WEEK), &["w", "week", "weeks"][..]),
-        (Unit::Derived(units::DAY), &["day", "days"][..]),
+        (Unit::Derived(units::WEEK), &["wk", "week", "weeks"][..]),
+        (Unit::Derived(units::DAY), &["dy", "day", "days"][..]),
         (Unit::Derived(units::HOUR), &["hr", "hour", "hours"][..]),
         (
             Unit::Derived(units::MINUTE),
@@ -128,10 +128,10 @@ fn test_prefixes() {
 
         for (prefix, strings) in PREFIXES.iter().copied() {
             for string in strings.iter().copied() {
-                for v in variants.iter().copied() {
+                for variant in variants.iter().copied() {
                     // NB: dash to separate is always guaranteed to work, while
                     // others might be ambiguous.
-                    let s = format!("{}-{}", string, v);
+                    let s = format!("{}-{}", string, variant);
 
                     assert_eq! {
                         parse!(&s).as_deref(),
@@ -139,34 +139,7 @@ fn test_prefixes() {
                         "`{}`; prefix=`{prefix}`, variant=`{variant}`",
                         s,
                         prefix = string,
-                        variant = v,
-                    };
-
-                    // NB: parsing ambiguity with `cd` (candela).
-                    // Use requires long prefix instead, like `centidays`.
-                    match (string, v) {
-                        ("c", "decade" | "decades" | "day" | "days") => continue,
-                        ("deca", "decade" | "decades") => continue,
-                        ("d", "ampere" | "amperes" | "au" | "a" | "acc" | "acceleration") => {
-                            continue
-                        }
-                        ("P", "ampere" | "amperes" | "au" | "a" | "acc" | "acceleration") => {
-                            continue
-                        }
-                        ("da", "y" | "year" | "years") => continue,
-                        ("G", "y" | "year" | "years") => continue,
-                        _ => {}
-                    }
-
-                    let s = format!("{}{}", string, v);
-
-                    assert_eq! {
-                        parse!(&s).as_deref(),
-                        Ok(&[(prefix, unit)][..]),
-                        "`{}`; prefix=`{prefix}`, variant=`{variant}`",
-                        s,
-                        prefix = string,
-                        variant = v,
+                        variant = variant,
                     };
                 }
             }

@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use crate::compound::{Compound, State};
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
-use crate::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
+use crate::syntax::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
 use crate::unit::Unit;
 use crate::unit_parser::{ParsedUnit, UnitParser};
 use crate::{db, numeric};
@@ -30,7 +30,7 @@ impl Bias {
     }
 }
 
-fn add(a: Numeric, b: Numeric) -> Result<Numeric> {
+fn add(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     if let Some(factor) = a.unit().factor(b.unit()) {
         let (value, unit) = a.split();
         Ok(Numeric::new(
@@ -38,15 +38,18 @@ fn add(a: Numeric, b: Numeric) -> Result<Numeric> {
             unit,
         ))
     } else {
-        Err(Error::new(IllegalOperation {
-            op: "+",
-            lhs: a.unit().clone(),
-            rhs: b.unit().clone(),
-        }))
+        Err(Error::new(
+            range,
+            IllegalOperation {
+                op: "+",
+                lhs: a.unit().clone(),
+                rhs: b.unit().clone(),
+            },
+        ))
     }
 }
 
-fn sub(a: Numeric, b: Numeric) -> Result<Numeric> {
+fn sub(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     if let Some(factor) = a.unit().factor(b.unit()) {
         let (value, unit) = a.split();
         Ok(Numeric::new(
@@ -54,27 +57,35 @@ fn sub(a: Numeric, b: Numeric) -> Result<Numeric> {
             unit,
         ))
     } else {
-        Err(Error::new(IllegalOperation {
-            op: "-",
-            lhs: a.unit().clone(),
-            rhs: b.unit().clone(),
-        }))
+        Err(Error::new(
+            range,
+            IllegalOperation {
+                op: "-",
+                lhs: a.unit().clone(),
+                rhs: b.unit().clone(),
+            },
+        ))
     }
 }
 
-fn div(a: Numeric, b: Numeric) -> Result<Numeric> {
+fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
+    use num::Zero;
+
     let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), -1);
 
     let a_fac = a_fac.into_big_rational();
     let b_fac = b_fac.into_big_rational();
 
-    Ok(Numeric::new(
-        (a.into_value() * a_fac) / (b.into_value() * b_fac),
-        unit,
-    ))
+    let denom = b.into_value() * b_fac;
+
+    if denom.is_zero() {
+        return Err(Error::message(range, "divide by zero"));
+    }
+
+    Ok(Numeric::new((a.into_value() * a_fac) / denom, unit))
 }
 
-fn mul(a: Numeric, b: Numeric) -> Result<Numeric> {
+fn mul(_: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), 1);
 
     let a_fac = a_fac.into_big_rational();
@@ -89,7 +100,7 @@ fn mul(a: Numeric, b: Numeric) -> Result<Numeric> {
 pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
     match node.kind() {
         UNIT => {}
-        kind => return Err(Error::expected(UNIT, kind)),
+        kind => return Err(Error::expected(node.text_range(), UNIT, kind)),
     }
 
     let mut it = Tokens {
@@ -168,7 +179,7 @@ pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
                             UnitParser::new(s)
                         }
                         UNIT_WORD => UnitParser::new(p.text(t.text_range())),
-                        kind => return Err(Error::unexpected(kind)),
+                        kind => return Err(Error::unexpected(t.text_range(), kind)),
                     };
 
                     let mut parser = parser.with_acceleration_bias(bias.acceleration_bias);
@@ -176,7 +187,9 @@ pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
                     let mut last = None;
                     let range = t.text_range();
 
-                    while let Some(parsed) = parser.next().map_err(Error::illegal_unit)? {
+                    while let Some(parsed) =
+                        parser.next().map_err(|e| Error::illegal_unit(range, e))?
+                    {
                         if let Some(parsed) = std::mem::replace(&mut last, Some(parsed)) {
                             populate_unit(p, bases, parsed, range, power_factor)?;
                         }
@@ -189,12 +202,25 @@ pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
                             p.next();
 
                             let number = match p.next() {
-                                Some(t) if t.kind() == UNIT_NUMBER => t,
-                                _ => return Err(Error::expected_only(UNIT_NUMBER)),
+                                Some(t) => match t.kind() {
+                                    UNIT_NUMBER => t,
+                                    ERROR => {
+                                        return Err(Error::message(
+                                            t.text_range(),
+                                            "expected number",
+                                        ))
+                                    }
+                                    kind => return Err(Error::unexpected(t.text_range(), kind)),
+                                },
+                                _ => return Err(Error::expected_only(t.text_range(), UNIT_NUMBER)),
                             };
 
                             let text = p.text(number.text_range());
-                            str::parse::<i32>(text).map_err(Error::int)?
+
+                            match str::parse::<i32>(text) {
+                                Ok(n) => n,
+                                Err(e) => return Err(Error::int(number.text_range(), e)),
+                            }
                         } else {
                             1
                         };
@@ -202,7 +228,8 @@ pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
                         populate_unit(p, bases, parsed, range, power * power_factor)?;
                     }
                 }
-                kind => return Err(Error::unexpected(kind)),
+                ERROR => return Err(Error::message(t.text_range(), "expected unit component")),
+                kind => return Err(Error::unexpected(t.text_range(), kind)),
             }
         }
 
@@ -224,11 +251,14 @@ pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
         entry.power += power_factor;
 
         if entry.prefix != parsed.prefix {
-            return Err(Error::new(PrefixMismatch {
-                unit: p.text(range).into(),
-                expected: entry.prefix,
-                actual: parsed.prefix,
-            }));
+            return Err(Error::new(
+                range,
+                PrefixMismatch {
+                    unit: p.text(range).into(),
+                    expected: entry.prefix,
+                    actual: parsed.prefix,
+                },
+            ));
         }
 
         Ok(())
@@ -250,19 +280,35 @@ impl DelayedEval {
     }
 }
 
-/// Evaluate the syntax node.
+/// Evaluate the given syntax node.
 pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<Numeric> {
     match node.kind() {
         OPERATION => {
             let mut it = node.children();
-            let mut base = DelayedEval::Node(it.next().unwrap());
+
+            let base = match it.next() {
+                Some(base) => base,
+                None => return Err(Error::message(node.text_range(), "expected base node")),
+            };
+
+            let start = base.text_range();
+
+            let mut base = DelayedEval::Node(base);
 
             while let (Some(op), Some(rhs)) = (it.next(), it.next()) {
-                let op = op.first_token().map(|t| t.kind()).ok_or_else(|| Internal {
-                    message: "missing operator",
-                })?;
+                let op = match op.first_token() {
+                    Some(op) => op,
+                    None => {
+                        return Err(Error::new(
+                            op.text_range(),
+                            Internal {
+                                message: "missing operator",
+                            },
+                        ))
+                    }
+                };
 
-                let op = match op {
+                let op = match op.kind() {
                     PLUS => add,
                     DASH => sub,
                     SLASH => div,
@@ -278,10 +324,13 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
                         let factor = match b.unit().factor(&rhs) {
                             Some(factor) => factor,
                             None => {
-                                return Err(Error::new(IllegalCast {
-                                    from: b.unit().clone(),
-                                    to: rhs.clone(),
-                                }))
+                                return Err(Error::new(
+                                    op.text_range(),
+                                    IllegalCast {
+                                        from: b.unit().clone(),
+                                        to: rhs.clone(),
+                                    },
+                                ))
                             }
                         };
 
@@ -290,30 +339,40 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
                         base = DelayedEval::Numeric(Numeric::new(value * factor, rhs));
                         continue;
                     }
+                    ERROR => return Err(Error::message(op.text_range(), "expected operator")),
                     kind => {
-                        return Err(Error::unexpected(kind));
+                        return Err(Error::unexpected(op.text_range(), kind));
                     }
                 };
 
+                let range = rhs.text_range();
                 let rhs = eval(rhs, source, db, bias)?;
                 let b = base.eval(source, db, bias)?;
-                base = DelayedEval::Numeric(op(b, rhs)?);
+
+                let range = TextRange::new(start.start(), range.end());
+                base = DelayedEval::Numeric(op(range, b, rhs)?);
             }
 
             let numeric = base.eval(source, db, bias)?;
             Ok(numeric)
         }
         NUMBER => {
-            let s = &source[node.text_range()];
-            let int = numeric::parse_decimal_big_rational(s).map_err(Error::parse)?;
-            Ok(Numeric::new(int, Compound::empty()))
+            let number = &source[node.text_range()];
+            let number = match numeric::parse_decimal_big_rational(number) {
+                Ok(number) => number,
+                Err(error) => return Err(Error::parse(node.text_range(), error)),
+            };
+            Ok(Numeric::new(number, Compound::empty()))
         }
         NUMBER_WITH_UNIT => {
             let mut it = node.children();
 
             let number = it.next().unwrap();
             let number = &source[number.text_range()];
-            let number = numeric::parse_decimal_big_rational(number).map_err(Error::parse)?;
+            let number = match numeric::parse_decimal_big_rational(number) {
+                Ok(number) => number,
+                Err(error) => return Err(Error::parse(node.text_range(), error)),
+            };
 
             let node = it.next().unwrap();
             let unit = unit(source, node, bias)?;
@@ -325,7 +384,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
 
             let m = match db.lookup(s) {
                 Some(m) => m,
-                None => return Err(Error::new(Missing { query: s.into() })),
+                None => return Err(Error::new(node.text_range(), Missing { query: s.into() })),
             };
 
             match m {
@@ -335,11 +394,15 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
         PERCENTAGE => {
             let number = node.first_token().expect("number of percentage");
             let number = &source[number.text_range()];
-            let number = numeric::parse_decimal_big_rational(number).map_err(Error::parse)?;
+            let number = match numeric::parse_decimal_big_rational(number) {
+                Ok(number) => number,
+                Err(error) => return Err(Error::parse(node.text_range(), error)),
+            };
             let one_hundred = BigRational::new(100u32.into(), 1u32.into());
 
             Ok(Numeric::new(number / one_hundred, Compound::empty()))
         }
-        kind => Err(Error::unexpected(kind)),
+        ERROR => Err(Error::message(node.text_range(), "expected value")),
+        kind => Err(Error::unexpected(node.text_range(), kind)),
     }
 }

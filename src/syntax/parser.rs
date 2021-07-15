@@ -1,4 +1,5 @@
-use crate::lexer::{Lexer, Token};
+use crate::syntax::grammar;
+use crate::syntax::lexer::{Lexer, Token};
 use rowan::{Checkpoint, GreenNodeBuilder};
 use std::collections::VecDeque;
 
@@ -121,13 +122,13 @@ impl<'a> Parser<'a> {
 
     /// Consume and parse a root node.
     pub fn parse_root(mut self) -> SyntaxNode {
-        crate::grammar::root(&mut self);
+        grammar::root(&mut self);
         SyntaxNode::new_root(self.builder.finish())
     }
 
     /// Consume and parse a unit node.
     pub fn parse_unit(mut self) -> SyntaxNode {
-        if !crate::grammar::unit(&mut self) {
+        if !grammar::unit(&mut self) {
             self.builder.start_node(UNIT.into());
             self.builder.finish_node();
         }

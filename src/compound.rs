@@ -1,6 +1,6 @@
-use crate::parser::Parser;
 use crate::powers::Powers;
 use crate::prefix::Prefix;
+use crate::syntax::parser::Parser;
 use crate::unit::Unit;
 use num::BigRational;
 use std::collections::{btree_map, BTreeMap};

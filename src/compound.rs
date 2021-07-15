@@ -269,30 +269,40 @@ impl Compound {
         ) -> Option<i32> {
             let dec = power.signum();
 
-            loop {
-                if power == 0 {
-                    return None;
-                }
+            let m = |(u, p)| inner_match(u, p, &mut power, dec, names);
 
-                if powers.iter().all(|(u, p)| m(u, p * power, names)) {
-                    return Some(power);
-                }
-
-                power -= dec;
+            if powers.iter().all(m) {
+                return Some(power);
             }
+
+            None
         }
 
-        fn m(unit: Unit, power: i32, names: &BTreeMap<Unit, State>) -> bool {
-            let base = match names.get(&unit) {
-                Some(base) => base,
+        fn inner_match(
+            unit: Unit,
+            base: i32,
+            cur: &mut i32,
+            dec: i32,
+            names: &BTreeMap<Unit, State>,
+        ) -> bool {
+            let state = match names.get(&unit) {
+                Some(state) => state,
                 None => return false,
             };
 
-            if power < 0 {
-                base.power < 0 && base.power <= power
-            } else {
-                base.power >= 0 && power <= base.power
+            while *cur != 0 {
+                let power = base * *cur;
+
+                if power.signum() == state.power.signum() {
+                    if power * power.signum() <= state.power * state.power.signum() {
+                        return true;
+                    }
+                }
+
+                *cur -= dec;
             }
+
+            false
         }
     }
 

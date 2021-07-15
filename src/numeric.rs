@@ -1,31 +1,10 @@
 use crate::compound::Compound;
-use bigdecimal::{BigDecimal, ParseBigDecimalError};
-use num::{BigRational, One, ToPrimitive};
+use num::{BigInt, BigRational, One, ToPrimitive};
 use std::fmt;
 use thiserror::Error;
 
-#[derive(Debug, Error)]
-pub enum ParseNumericError {
-    #[error("failed to parse big decimal: {error}")]
-    ParseBigDecimalError {
-        #[source]
-        #[from]
-        error: ParseBigDecimalError,
-    },
-}
-
-/// Parse the given number as a big rational.
-pub fn parse(number: &str) -> Result<BigRational, ParseNumericError> {
-    Ok(big_decimal_to_big_rational(str::parse::<BigDecimal>(
-        number,
-    )?))
-}
-
-fn big_decimal_to_big_rational(decimal: BigDecimal) -> BigRational {
-    let (big, exp) = decimal.as_bigint_and_exponent();
-    let ten = BigRational::new(10u32.into(), 1u32.into()).pow(-exp as i32);
-    BigRational::new(big, 1.into()) * ten
-}
+#[cfg(test)]
+mod parse_tests;
 
 /// A arbitrary precision numerical value with a unit.
 #[derive(Debug)]
@@ -35,12 +14,6 @@ pub struct Numeric {
 }
 
 impl Numeric {
-    /// Construct a numeric from a big decimal.
-    pub(crate) fn from_big_decimal(value: BigDecimal, unit: Compound) -> Self {
-        let value = big_decimal_to_big_rational(value);
-        Self { value, unit }
-    }
-
     /// Construct a new numerical value.
     pub(crate) fn new(value: BigRational, unit: Compound) -> Self {
         Self { value, unit }
@@ -92,4 +65,94 @@ impl fmt::Display for Numeric {
         self.unit.format(f, !self.value.is_one())?;
         Ok(())
     }
+}
+
+#[derive(Debug, Error)]
+#[error("illegal numeric value")]
+pub struct ParseNumericError(());
+
+/// Parse the given number as a big rational.
+pub(crate) fn parse_decimal_big_rational(number: &str) -> Result<BigRational, ParseNumericError> {
+    let mut dot = false;
+    let mut init = false;
+    let mut dots = 0;
+
+    let mut out = BigRational::new(0u32.into(), 1u32.into());
+    let ten = BigInt::from(10u32);
+
+    let mut it = number.bytes().peekable();
+
+    let neg = if let Some(b'-' | b'+') = it.peek() {
+        matches!(it.next(), Some(b'-'))
+    } else {
+        false
+    };
+
+    while let Some(b) = it.next() {
+        match b {
+            // Ignore leading zeros.
+            b'0' if !init => {
+                continue;
+            }
+            b'0'..=b'9' => {
+                init = true;
+
+                let c = (b - b'0') as u32;
+                out *= ten.clone();
+                out += BigInt::from(c);
+
+                if dot {
+                    dots += 1;
+                }
+            }
+            b'.' if !dot => {
+                init = true;
+                dot = true;
+            }
+            b'e' | b'E' => {
+                let neg = if let Some(b'-' | b'+') = it.peek() {
+                    matches!(it.next(), Some(b'-'))
+                } else {
+                    false
+                };
+
+                let mut exp = 0u32;
+                let mut init = false;
+
+                while let Some(b) = it.next() {
+                    match b {
+                        // Ignore leading zeros.
+                        b'0' if !init => {
+                            continue;
+                        }
+                        b'0'..=b'9' => {
+                            init = true;
+                            let n = (b - b'0') as u32;
+
+                            exp = match exp.checked_mul(10).and_then(|exp| exp.checked_add(n)) {
+                                Some(exp) => exp,
+                                None => return Err(ParseNumericError(())),
+                            };
+                        }
+                        _ => {
+                            return Err(ParseNumericError(()));
+                        }
+                    }
+                }
+
+                if neg {
+                    out /= ten.pow(exp);
+                } else {
+                    out *= ten.pow(exp);
+                }
+            }
+            _ => {
+                return Err(ParseNumericError(()));
+            }
+        }
+    }
+
+    out /= ten.pow(dots);
+    let out = if neg { -out } else { out };
+    Ok(out)
 }

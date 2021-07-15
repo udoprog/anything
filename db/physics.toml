@@ -11,4 +11,4 @@ value = "9.80665"
 [[constants]]
 names = ["G", "gravitational constant"]
 unit = "m^3/kgs^2"
-value = "9.80665"
+value = "6.6743015e-11"

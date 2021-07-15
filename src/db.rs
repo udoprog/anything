@@ -1,6 +1,7 @@
 use crate::compound::Compound;
 use anyhow::{anyhow, Context, Result};
 use hashbrown::{HashMap, HashSet};
+use num::BigRational;
 use std::fmt;
 use std::sync::Arc;
 
@@ -55,18 +56,11 @@ impl Hasher {
     }
 }
 
-/// A special unit.
-#[derive(Debug)]
-pub(crate) struct DbUnit {
-    pub(crate) value: bigdecimal::BigDecimal,
-    pub(crate) unit: Compound,
-}
-
 /// A single constant.
 #[derive(Debug)]
 pub(crate) struct DbConstant {
     names: HashSet<Box<str>>,
-    pub(crate) value: bigdecimal::BigDecimal,
+    pub(crate) value: BigRational,
     pub(crate) unit: Compound,
 }
 
@@ -146,7 +140,11 @@ impl Db {
 }
 
 pub(crate) mod serde {
-    use serde::Deserialize;
+    use num::BigRational;
+    use serde::{de, Deserialize};
+    use std::borrow::Cow;
+
+    use crate::numeric::parse_decimal_big_rational;
 
     #[derive(Debug, Deserialize)]
     pub struct Doc {
@@ -157,8 +155,19 @@ pub(crate) mod serde {
     #[derive(Debug, Deserialize)]
     pub struct Constant {
         pub names: Vec<Box<str>>,
-        pub value: bigdecimal::BigDecimal,
+        #[serde(deserialize_with = "des_value")]
+        pub value: BigRational,
         #[serde(default)]
         pub unit: Option<Box<str>>,
+    }
+
+    fn des_value<'de, D>(d: D) -> Result<BigRational, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        match parse_decimal_big_rational(Cow::<str>::deserialize(d)?.as_ref()) {
+            Ok(ratio) => Ok(ratio),
+            Err(e) => Err(<D::Error as de::Error>::custom(e)),
+        }
     }
 }

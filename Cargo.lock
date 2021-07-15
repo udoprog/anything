@@ -32,17 +32,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6736e2428df2ca2848d846c43e88745121a6654696e349ce0054a420815a7409"
 
 [[package]]
-name = "bigdecimal"
-version = "0.2.0"
-source = "git+https://github.com/udoprog/bigdecimal-rs#95d1ed86fc5b450b34633138bc2cbc0628af393b"
-dependencies = [
- "num-bigint",
- "num-integer",
- "num-traits",
- "serde",
-]
-
-[[package]]
 name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -71,7 +60,6 @@ name = "facts"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bigdecimal",
  "eudex",
  "hashbrown 0.11.2",
  "logos",

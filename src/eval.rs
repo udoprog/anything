@@ -305,7 +305,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
         }
         NUMBER => {
             let s = &source[node.text_range()];
-            let int = numeric::parse(s).map_err(Error::parse)?;
+            let int = numeric::parse_decimal_big_rational(s).map_err(Error::parse)?;
             Ok(Numeric::new(int, Compound::empty()))
         }
         NUMBER_WITH_UNIT => {
@@ -313,7 +313,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
 
             let number = it.next().unwrap();
             let number = &source[number.text_range()];
-            let number = numeric::parse(number).map_err(Error::parse)?;
+            let number = numeric::parse_decimal_big_rational(number).map_err(Error::parse)?;
 
             let node = it.next().unwrap();
             let unit = unit(source, node, bias)?;
@@ -329,15 +329,13 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
             };
 
             match m {
-                db::Match::Constant(c) => {
-                    Ok(Numeric::from_big_decimal(c.value.clone(), c.unit.clone()))
-                }
+                db::Match::Constant(c) => Ok(Numeric::new(c.value.clone(), c.unit.clone())),
             }
         }
         PERCENTAGE => {
             let number = node.first_token().expect("number of percentage");
             let number = &source[number.text_range()];
-            let number = numeric::parse(number).map_err(Error::parse)?;
+            let number = numeric::parse_decimal_big_rational(number).map_err(Error::parse)?;
             let one_hundred = BigRational::new(100u32.into(), 1u32.into());
 
             Ok(Numeric::new(number / one_hundred, Compound::empty()))

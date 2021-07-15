@@ -2,7 +2,6 @@ use crate::parser::Parser;
 use crate::powers::Powers;
 use crate::prefix::Prefix;
 use crate::unit::Unit;
-use bigdecimal::BigDecimal;
 use num::BigRational;
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
@@ -25,20 +24,6 @@ impl Factor {
     pub fn into_big_rational(self) -> BigRational {
         let ten = BigRational::new(10u32.into(), 1u32.into()).pow(self.prefix);
         self.ratio * ten
-    }
-
-    /// Convert into a big decimal so it can be applied.
-    pub fn into_big_decimal(self) -> BigDecimal {
-        let factor = BigDecimal::from(1);
-        let factor = factor * BigDecimal::new(self.ratio.numer().clone(), 0);
-        let factor = factor / BigDecimal::new(self.ratio.denom().clone(), 0);
-        return factor * pow10(self.prefix);
-
-        /// Get the factor as a bigdecimal.
-        #[inline]
-        fn pow10(pow: i32) -> BigDecimal {
-            BigDecimal::new(1.into(), -pow as i64)
-        }
     }
 }
 

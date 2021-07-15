@@ -1,13 +1,13 @@
 use std::collections::BTreeMap;
 
 use crate::compound::{Compound, State};
-use crate::db;
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
 use crate::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
 use crate::unit::Unit;
 use crate::unit_parser::{ParsedUnit, UnitParser};
-use bigdecimal::BigDecimal;
+use crate::{db, numeric};
+use num::BigRational;
 use rowan::{NodeOrToken, TextRange};
 
 use ErrorKind::*;
@@ -34,7 +34,7 @@ fn add(a: Numeric, b: Numeric) -> Result<Numeric> {
     if let Some(factor) = a.unit().factor(b.unit()) {
         let (value, unit) = a.split();
         Ok(Numeric::new(
-            value + b.into_value() / factor.into_big_decimal(),
+            value + b.into_value() / factor.into_big_rational(),
             unit,
         ))
     } else {
@@ -50,7 +50,7 @@ fn sub(a: Numeric, b: Numeric) -> Result<Numeric> {
     if let Some(factor) = a.unit().factor(b.unit()) {
         let (value, unit) = a.split();
         Ok(Numeric::new(
-            value - b.into_value() / factor.into_big_decimal(),
+            value - b.into_value() / factor.into_big_rational(),
             unit,
         ))
     } else {
@@ -65,8 +65,8 @@ fn sub(a: Numeric, b: Numeric) -> Result<Numeric> {
 fn div(a: Numeric, b: Numeric) -> Result<Numeric> {
     let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), -1);
 
-    let a_fac = a_fac.into_big_decimal();
-    let b_fac = b_fac.into_big_decimal();
+    let a_fac = a_fac.into_big_rational();
+    let b_fac = b_fac.into_big_rational();
 
     Ok(Numeric::new(
         (a.into_value() * a_fac) / (b.into_value() * b_fac),
@@ -77,8 +77,8 @@ fn div(a: Numeric, b: Numeric) -> Result<Numeric> {
 fn mul(a: Numeric, b: Numeric) -> Result<Numeric> {
     let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), 1);
 
-    let a_fac = a_fac.into_big_decimal();
-    let b_fac = b_fac.into_big_decimal();
+    let a_fac = a_fac.into_big_rational();
+    let b_fac = b_fac.into_big_rational();
 
     Ok(Numeric::new(
         (a.into_value() * a_fac) * (b.into_value() * b_fac),
@@ -285,7 +285,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
                             }
                         };
 
-                        let factor = factor.into_big_decimal();
+                        let factor = factor.into_big_rational();
                         let value = b.into_value();
                         base = DelayedEval::Numeric(Numeric::new(value * factor, rhs));
                         continue;
@@ -300,11 +300,12 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
                 base = DelayedEval::Numeric(op(b, rhs)?);
             }
 
-            Ok(base.eval(source, db, bias)?)
+            let numeric = base.eval(source, db, bias)?;
+            Ok(numeric)
         }
         NUMBER => {
             let s = &source[node.text_range()];
-            let int = str::parse::<BigDecimal>(s).map_err(Error::big_decimal)?;
+            let int = numeric::parse(s).map_err(Error::parse)?;
             Ok(Numeric::new(int, Compound::empty()))
         }
         NUMBER_WITH_UNIT => {
@@ -312,7 +313,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
 
             let number = it.next().unwrap();
             let number = &source[number.text_range()];
-            let number = str::parse::<BigDecimal>(number).map_err(Error::big_decimal)?;
+            let number = numeric::parse(number).map_err(Error::parse)?;
 
             let node = it.next().unwrap();
             let unit = unit(source, node, bias)?;
@@ -328,14 +329,17 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
             };
 
             match m {
-                db::Match::Constant(c) => Ok(Numeric::new(c.value.clone(), c.unit.clone())),
+                db::Match::Constant(c) => {
+                    Ok(Numeric::from_big_decimal(c.value.clone(), c.unit.clone()))
+                }
             }
         }
         PERCENTAGE => {
             let number = node.first_token().expect("number of percentage");
             let number = &source[number.text_range()];
-            let number = str::parse::<BigDecimal>(number).map_err(Error::big_decimal)?;
-            let one_hundred = BigDecimal::from(100);
+            let number = numeric::parse(number).map_err(Error::parse)?;
+            let one_hundred = BigRational::new(100u32.into(), 1u32.into());
+
             Ok(Numeric::new(number / one_hundred, Compound::empty()))
         }
         kind => Err(Error::unexpected(kind)),

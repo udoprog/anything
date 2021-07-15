@@ -1,8 +1,8 @@
 use std::num::ParseIntError;
 
 use crate::compound::Compound;
+use crate::numeric::ParseNumericError;
 use crate::parser::SyntaxKind;
-use bigdecimal::ParseBigDecimalError;
 use thiserror::Error;
 
 /// A facts error.
@@ -33,8 +33,8 @@ impl Error {
         Self::new(ErrorKind::ParseIntError { error })
     }
 
-    pub(crate) fn big_decimal(error: ParseBigDecimalError) -> Self {
-        Self::new(ErrorKind::ParseBigDecimalError { error })
+    pub(crate) fn parse(error: ParseNumericError) -> Self {
+        Self::new(ErrorKind::ParseNumericError { error })
     }
 
     pub(crate) fn illegal_unit(unit: &str) -> Self {
@@ -60,7 +60,7 @@ pub(crate) enum ErrorKind {
     #[error("cannot cast `{from}` to `{to}`")]
     IllegalCast { from: Compound, to: Compound },
     #[error("bad decimal number: {error}")]
-    ParseBigDecimalError { error: ParseBigDecimalError },
+    ParseNumericError { error: ParseNumericError },
     #[error("bad number: {error}")]
     ParseIntError { error: ParseIntError },
     #[error("expected syntax `{kind:?}` (internal error)")]

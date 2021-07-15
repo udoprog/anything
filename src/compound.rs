@@ -21,6 +21,12 @@ impl Factor {
         }
     }
 
+    /// Convert into a big rational
+    pub fn into_big_rational(self) -> BigRational {
+        let ten = BigRational::new(10u32.into(), 1u32.into()).pow(self.prefix);
+        self.ratio * ten
+    }
+
     /// Convert into a big decimal so it can be applied.
     pub fn into_big_decimal(self) -> BigDecimal {
         let factor = BigDecimal::from(1);

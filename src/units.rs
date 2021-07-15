@@ -2,6 +2,7 @@
 
 use crate::unit::{Derived, DerivedVtable, Unit};
 use bigdecimal::BigDecimal;
+use num::BigRational;
 
 mod times;
 pub use self::times::*;
@@ -16,6 +17,7 @@ pub static VELOCITY: Derived = Derived {
         },
         format: |f, _| write!(f, "v"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -29,6 +31,7 @@ pub static ACCELERATION: Derived = Derived {
         },
         format: |f, _| write!(f, "a"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -45,6 +48,7 @@ pub static GFORCE: Derived = Derived {
         powers: ACCELERATION.vtable.powers,
         format: |f, _| write!(f, "g"),
         multiple: Some(|| BigDecimal::new(980665u32.into(), 5)),
+        multiple_ratio: Some(|| BigRational::new(980665u32.into(), 100000u32.into())),
     },
 };
 
@@ -65,6 +69,7 @@ pub static TON: Derived = Derived {
             }
         },
         multiple: Some(|| BigDecimal::from(1000)),
+        multiple_ratio: Some(|| BigRational::new(1000u32.into(), 1u32.into())),
     },
 };
 
@@ -78,7 +83,8 @@ pub static NEWTON: Derived = Derived {
             powers.insert(Unit::Second, p * -2);
         },
         format: |f, _| write!(f, "N"),
-        multiple: Some(|| BigDecimal::from(1000)),
+        multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -93,6 +99,7 @@ pub static PASCAL: Derived = Derived {
         },
         format: |f, _| write!(f, "Pa"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -105,6 +112,7 @@ pub static AU: Derived = Derived {
         },
         format: |f, _| write!(f, "au"),
         multiple: Some(|| BigDecimal::from(149597870700u64)),
+        multiple_ratio: Some(|| BigRational::new(149597870700u64.into(), 1u32.into())),
     },
 };
 
@@ -117,6 +125,7 @@ pub static LIGHTSPEED: Derived = Derived {
         powers: VELOCITY.vtable.powers,
         format: |f, _| write!(f, "c"),
         multiple: Some(|| BigDecimal::from(299792458u32)),
+        multiple_ratio: Some(|| BigRational::new(299792458u32.into(), 1u32.into())),
     },
 };
 
@@ -131,6 +140,7 @@ pub static JOULE: Derived = Derived {
         },
         format: |f, _| write!(f, "J"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -151,6 +161,7 @@ pub static BTU: Derived = Derived {
             }
         },
         multiple: Some(|| BigDecimal::from(1055u32)),
+        multiple_ratio: Some(|| BigRational::new(1055u32.into(), 1u32.into())),
     },
 };
 
@@ -165,6 +176,7 @@ pub static WATT: Derived = Derived {
         },
         format: |f, _| write!(f, "W"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -178,6 +190,7 @@ pub static COULOMB: Derived = Derived {
         },
         format: |f, _| write!(f, "C"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -193,6 +206,7 @@ pub static VOLT: Derived = Derived {
         },
         format: |f, _| write!(f, "V"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -208,6 +222,7 @@ pub static FARAD: Derived = Derived {
         },
         format: |f, _| write!(f, "F"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -223,6 +238,7 @@ pub static OHM: Derived = Derived {
         },
         format: |f, _| write!(f, "Ω"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -238,6 +254,7 @@ pub static SIEMENS: Derived = Derived {
         },
         format: |f, _| write!(f, "S"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -253,6 +270,7 @@ pub static WEBER: Derived = Derived {
         },
         format: |f, _| write!(f, "Wb"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -267,6 +285,7 @@ pub static TESLA: Derived = Derived {
         },
         format: |f, _| write!(f, "T"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -282,6 +301,7 @@ pub static HENRY: Derived = Derived {
         },
         format: |f, _| write!(f, "H"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -294,6 +314,7 @@ pub static LUMEN: Derived = Derived {
         },
         format: |f, _| write!(f, "lm"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -307,6 +328,7 @@ pub static LUX: Derived = Derived {
         },
         format: |f, _| write!(f, "lx"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -319,6 +341,7 @@ pub static BECQUEREL: Derived = Derived {
         },
         format: |f, _| write!(f, "Bq"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -332,6 +355,7 @@ pub static GRAY: Derived = Derived {
         },
         format: |f, _| write!(f, "Gy"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -345,6 +369,7 @@ pub static SIEVERT: Derived = Derived {
         },
         format: |f, _| write!(f, "Sv"),
         multiple: None,
+        multiple_ratio: None,
     },
 };
 
@@ -358,5 +383,6 @@ pub static KATAL: Derived = Derived {
         },
         format: |f, _| write!(f, "kat"),
         multiple: None,
+        multiple_ratio: None,
     },
 };

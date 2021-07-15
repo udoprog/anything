@@ -33,7 +33,10 @@ impl Bias {
 fn add(a: Numeric, b: Numeric) -> Result<Numeric> {
     if let Some(factor) = a.unit().factor(b.unit()) {
         let (value, unit) = a.split();
-        Ok(Numeric::new(value + b.into_value() / factor, unit))
+        Ok(Numeric::new(
+            value + b.into_value() / factor.into_big_decimal(),
+            unit,
+        ))
     } else {
         Err(Error::new(IllegalOperation {
             op: "+",
@@ -46,7 +49,10 @@ fn add(a: Numeric, b: Numeric) -> Result<Numeric> {
 fn sub(a: Numeric, b: Numeric) -> Result<Numeric> {
     if let Some(factor) = a.unit().factor(b.unit()) {
         let (value, unit) = a.split();
-        Ok(Numeric::new(value - b.into_value() / factor, unit))
+        Ok(Numeric::new(
+            value - b.into_value() / factor.into_big_decimal(),
+            unit,
+        ))
     } else {
         Err(Error::new(IllegalOperation {
             op: "-",
@@ -58,6 +64,10 @@ fn sub(a: Numeric, b: Numeric) -> Result<Numeric> {
 
 fn div(a: Numeric, b: Numeric) -> Result<Numeric> {
     let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), -1);
+
+    let a_fac = a_fac.into_big_decimal();
+    let b_fac = b_fac.into_big_decimal();
+
     Ok(Numeric::new(
         (a.into_value() * a_fac) / (b.into_value() * b_fac),
         unit,
@@ -66,6 +76,10 @@ fn div(a: Numeric, b: Numeric) -> Result<Numeric> {
 
 fn mul(a: Numeric, b: Numeric) -> Result<Numeric> {
     let (a_fac, b_fac, unit) = a.unit().mul(b.unit(), 1);
+
+    let a_fac = a_fac.into_big_decimal();
+    let b_fac = b_fac.into_big_decimal();
+
     Ok(Numeric::new(
         (a.into_value() * a_fac) * (b.into_value() * b_fac),
         unit,
@@ -271,6 +285,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
                             }
                         };
 
+                        let factor = factor.into_big_decimal();
                         let value = b.into_value();
                         base = DelayedEval::Numeric(Numeric::new(value * factor, rhs));
                         continue;

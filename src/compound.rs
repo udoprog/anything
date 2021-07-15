@@ -3,8 +3,38 @@ use crate::powers::Powers;
 use crate::prefix::Prefix;
 use crate::unit::Unit;
 use bigdecimal::BigDecimal;
+use num::BigRational;
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
+
+/// A calculated factor.
+pub struct Factor {
+    prefix: i32,
+    ratio: BigRational,
+}
+
+impl Factor {
+    fn new() -> Self {
+        Self {
+            prefix: 0,
+            ratio: BigRational::new(1.into(), 1.into()),
+        }
+    }
+
+    /// Convert into a big decimal so it can be applied.
+    pub fn into_big_decimal(self) -> BigDecimal {
+        let factor = BigDecimal::from(1);
+        let factor = factor * BigDecimal::new(self.ratio.numer().clone(), 0);
+        let factor = factor / BigDecimal::new(self.ratio.denom().clone(), 0);
+        return factor * pow10(self.prefix);
+
+        /// Get the factor as a bigdecimal.
+        #[inline]
+        fn pow10(pow: i32) -> BigDecimal {
+            BigDecimal::new(1.into(), -pow as i64)
+        }
+    }
+}
 
 /// The data for a base.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -103,8 +133,8 @@ impl Compound {
     }
 
     /// Calculate the factor for coercing one unit to another.
-    pub fn factor(&self, other: &Self) -> Option<BigDecimal> {
-        let mut factor = BigDecimal::from(1);
+    pub fn factor(&self, other: &Self) -> Option<Factor> {
+        let mut factor = Factor::new();
 
         if self.is_empty() || other.is_empty() {
             return Some(factor);
@@ -112,6 +142,10 @@ impl Compound {
 
         let (_, lhs_bases) = self.base_units();
         let (_, rhs_bases) = other.base_units();
+
+        if lhs_bases.len() != rhs_bases.len() {
+            return None;
+        }
 
         for (name, rhs) in &rhs_bases {
             let lhs = lhs_bases.get(name)?;
@@ -121,30 +155,27 @@ impl Compound {
             }
         }
 
-        let mut prefix = 0;
-
         for (name, state) in &self.names {
-            prefix += state.prefix;
+            factor.prefix += state.prefix;
 
-            if let Some(multiple) = name.multiple() {
-                multiply(state.power, &mut factor, multiple);
+            if let Some(multiple) = name.multiple_ratio() {
+                multiply_factor(state.power, &mut factor, multiple);
             }
         }
 
         for (name, state) in &other.names {
-            prefix -= state.prefix;
+            factor.prefix -= state.prefix;
 
-            if let Some(multiple) = name.multiple() {
-                multiply(state.power * -1, &mut factor, multiple);
+            if let Some(multiple) = name.multiple_ratio() {
+                multiply_factor(state.power * -1, &mut factor, multiple);
             }
         }
 
-        factor = factor * pow10(prefix);
         Some(factor)
     }
 
     /// Calculate multiplication factors for the given multiplication.
-    pub fn mul(&self, other: &Self, n: i32) -> (BigDecimal, BigDecimal, Self) {
+    pub fn mul(&self, other: &Self, n: i32) -> (Factor, Factor, Self) {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
                 Self::from_iter(
@@ -157,7 +188,7 @@ impl Compound {
                 self.clone()
             };
 
-            return (BigDecimal::from(1), BigDecimal::from(1), unit);
+            return (Factor::new(), Factor::new(), unit);
         }
 
         let (lhs_der, lhs_bases) = self.base_units();
@@ -187,22 +218,22 @@ impl Compound {
             }
         }
 
-        let mut lhs_fac = BigDecimal::from(1);
-        let mut rhs_fac = BigDecimal::from(1);
+        let mut lhs_fac = Factor::new();
+        let mut rhs_fac = Factor::new();
 
         for (name, state) in &self.names {
-            lhs_fac = lhs_fac * pow10(state.prefix);
+            lhs_fac.prefix += state.prefix;
 
-            if let Some(multiple) = name.multiple() {
-                multiply(state.power, &mut lhs_fac, multiple);
+            if let Some(multiple) = name.multiple_ratio() {
+                multiply_factor(state.power, &mut lhs_fac, multiple);
             }
         }
 
         for (name, state) in &other.names {
-            rhs_fac = rhs_fac * pow10(state.prefix);
+            rhs_fac.prefix += state.prefix;
 
-            if let Some(multiple) = name.multiple() {
-                multiply(state.power, &mut rhs_fac, multiple);
+            if let Some(multiple) = name.multiple_ratio() {
+                multiply_factor(state.power, &mut rhs_fac, multiple);
             }
         }
 
@@ -217,7 +248,7 @@ impl Compound {
         /// Reconstruct names.
         fn reconstruct(
             der: impl IntoIterator<Item = (Unit, i32)>,
-            fac: &mut BigDecimal,
+            fac: &mut Factor,
             names: &mut BTreeMap<Unit, State>,
         ) {
             let mut powers = Powers::default();
@@ -255,9 +286,8 @@ impl Compound {
                     }
                 };
 
-                if let Some(multiple) = unit.multiple() {
-                    let f = std::mem::take(fac);
-                    *fac = f / multiple;
+                if let Some(multiple) = unit.multiple_ratio() {
+                    fac.ratio /= multiple;
                 }
             }
         }
@@ -430,33 +460,12 @@ fn pow_into_char(pow: u32) -> char {
     }
 }
 
-/// Get the factor as a bigdecimal.
-#[inline]
-fn pow10(pow: i32) -> BigDecimal {
-    BigDecimal::new(1.into(), -pow as i64)
-}
-
-fn multiply(pow: i32, factor: &mut BigDecimal, multiple: BigDecimal) {
+fn multiply_factor(pow: i32, factor: &mut Factor, multiple: BigRational) {
     for _ in pow..0 {
-        let f = std::mem::take(factor);
-        *factor = f / multiple.clone();
+        factor.ratio /= multiple.clone();
     }
 
     for _ in 0..pow {
-        let f = std::mem::take(factor);
-        *factor = f * multiple.clone();
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::pow10;
-    use bigdecimal::BigDecimal;
-
-    #[test]
-    fn test_pow10() {
-        assert_eq!(pow10(-1), BigDecimal::new(1.into(), 1));
-        assert_eq!(pow10(1), BigDecimal::new(1.into(), -1));
-        assert_eq!(pow10(0), BigDecimal::new(1.into(), 0));
+        factor.ratio *= multiple.clone();
     }
 }

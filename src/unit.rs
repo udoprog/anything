@@ -1,5 +1,6 @@
 use crate::powers::Powers;
 use bigdecimal::BigDecimal;
+use num::BigRational;
 use std::cmp;
 use std::fmt;
 use std::hash;
@@ -64,6 +65,14 @@ impl Unit {
         }
     }
 
+    /// Get the multiple of the type as a ratio.
+    pub fn multiple_ratio(&self) -> Option<BigRational> {
+        match self {
+            Unit::Derived(derived) => Some((derived.vtable.multiple_ratio?)()),
+            _ => None,
+        }
+    }
+
     pub(crate) fn prefix_bias(&self) -> i32 {
         match self {
             Unit::KiloGram => 3,
@@ -96,6 +105,8 @@ pub struct DerivedVtable {
     pub format: fn(&mut fmt::Formatter<'_>, bool) -> fmt::Result,
     /// Access multiplier.
     pub multiple: Option<fn() -> BigDecimal>,
+    /// Access multiplier as a ratio.
+    pub multiple_ratio: Option<fn() -> BigRational>,
 }
 
 /// Wrapper arounda derived unit.

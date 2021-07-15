@@ -43,3 +43,12 @@ fn test_compound_mul() {
     assert_eq!(n.unit(), &c);
     assert_eq!(n.to_u32(), Some(1));
 }
+
+#[test]
+fn test_multiple_division() {
+    let c = Compound::from_iter([]);
+    let n = query!("1Gbtu^2 / 1113025kJ^2");
+
+    assert_eq!(n.unit(), &c);
+    assert_eq!(n.to_u32(), Some(1000000));
+}

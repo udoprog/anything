@@ -1,6 +1,6 @@
 use crate::parser::Parser;
 use crate::prefix::Prefix;
-use crate::unit::Unit;
+use crate::unit::{Powers, Unit};
 use bigdecimal::BigDecimal;
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
@@ -204,17 +204,19 @@ impl Compound {
             }
         }
 
+        let mut powers = Powers::default();
+
         // Step where we try to reconstruct some of the deconstructed names.
         // We use the left-hand side to guide us on possible alternatives.
         for name in lhs_der {
-            let mut bases = BTreeMap::new();
+            powers.clear();
 
-            if !name.populate_bases(&mut bases, 1) {
+            if !name.powers(&mut powers, 1) {
                 continue;
             }
 
-            while bases.iter().all(|e| base_match(*e.0, *e.1, &names)) {
-                for (n, s) in &bases {
+            while powers.iter().all(|e| base_match(*e.0, *e.1, &names)) {
+                for (n, s) in powers.iter() {
                     if let btree_map::Entry::Occupied(mut e) = names.entry(*n) {
                         e.get_mut().power -= s;
 
@@ -254,16 +256,16 @@ impl Compound {
 
     /// Get all base units out of the current unit.
     fn base_units(&self) -> (Vec<Unit>, BTreeMap<Unit, i32>) {
-        let mut bases = BTreeMap::new();
+        let mut powers = Powers::default();
         let mut derived = Vec::new();
 
         for (name, state) in &self.names {
-            if name.populate_bases(&mut bases, state.power) {
+            if name.powers(&mut powers, state.power) {
                 derived.push(*name);
             }
         }
 
-        (derived, bases)
+        (derived, powers.into_inner())
     }
 
     /// Helper to format a compound unit. This allows for pluralization in the

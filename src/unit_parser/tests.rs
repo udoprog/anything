@@ -1,6 +1,7 @@
 use super::UnitParser;
 use crate::prefix::Prefix;
 use crate::unit::Unit;
+use crate::units;
 
 macro_rules! parse {
     ($expr:expr) => {{
@@ -43,37 +44,52 @@ fn test_prefixes() {
         (Prefix::YOTTA, &["Y", "yotta"]),
     ];
 
-    const UNITS: &[(Unit, &[&str])] = &[
-        (Unit::Second, &["s"]),
-        (Unit::KiloGram, &["kg"]),
-        (Unit::Meter, &["m", "meter", "meters"]),
-        (Unit::Ampere, &["A", "ampere", "amperes"]),
-        (Unit::Kelvin, &["K", "kelvin", "kelvins"]),
-        (Unit::Mole, &["mol", "mols", "mole", "moles"]),
-        (Unit::Candela, &["cd", "candela", "candelas"]),
-        (Unit::Byte, &["B", "byte"]),
-        (Unit::Acceleration, &["a", "acc", "acceleration"]),
-        (Unit::Gforce, &["gforce", "g-force"]),
-        (Unit::Ton, &["ton", "tons"]),
-        (Unit::Year, &["y", "year", "years"]),
-        (Unit::Decade, &["decade", "decades"]),
-        (Unit::Century, &["century", "centuries"]),
-        (Unit::Millenium, &["M", "millenium"]),
-        (Unit::Month, &["mth", "mths", "month", "months"]),
-        (Unit::Week, &["w", "week", "weeks"]),
-        (Unit::Day, &["day", "days"]),
-        (Unit::Hour, &["hour", "hours"]),
-        (Unit::Minute, &["min", "mins", "minute", "minutes"]),
-        (Unit::Btu, &["btu"]),
-        (Unit::Au, &["au"]),
-        (Unit::LightSpeed, &["c"]),
-        (Unit::Newton, &["N", "newton", "newtons"]),
-        (Unit::Pascal, &["Pa", "pascal", "pascals"]),
-        (Unit::Joule, &["J", "joule"]),
-        (Unit::Watt, &["W", "watt", "watts"]),
+    let units = &[
+        (Unit::Second, &["s"][..]),
+        (Unit::KiloGram, &["kg"][..]),
+        (Unit::Meter, &["m", "meter", "meters"][..]),
+        (Unit::Ampere, &["A", "ampere", "amperes"][..]),
+        (Unit::Kelvin, &["K", "kelvin", "kelvins"][..]),
+        (Unit::Mole, &["mol", "mols", "mole", "moles"][..]),
+        (Unit::Candela, &["cd", "candela", "candelas"][..]),
+        (Unit::Byte, &["B", "byte"][..]),
+        (
+            Unit::Derived(units::ACCELERATION),
+            &["a", "acc", "acceleration"],
+        ),
+        (Unit::Derived(units::BTU), &["btu"][..]),
+        (Unit::Derived(units::AU), &["au"][..]),
+        (Unit::Derived(units::LIGHTSPEED), &["c"][..]),
+        (Unit::Derived(units::JOULE), &["J", "joule"][..]),
+        (Unit::Derived(units::GFORCE), &["gforce", "g-force"][..]),
+        (Unit::Derived(units::TON), &["ton", "tons"][..]),
+        (Unit::Derived(units::YEAR), &["y", "year", "years"][..]),
+        (Unit::Derived(units::DECADE), &["decade", "decades"][..]),
+        (Unit::Derived(units::CENTURY), &["century", "centuries"][..]),
+        (Unit::Derived(units::MILLENIUM), &["M", "millenium"][..]),
+        (
+            Unit::Derived(units::MONTH),
+            &["mth", "mths", "month", "months"][..],
+        ),
+        (Unit::Derived(units::WEEK), &["w", "week", "weeks"][..]),
+        (Unit::Derived(units::DAY), &["day", "days"][..]),
+        (Unit::Derived(units::HOUR), &["hour", "hours"][..]),
+        (
+            Unit::Derived(units::MINUTE),
+            &["min", "mins", "minute", "minutes"][..],
+        ),
+        (
+            Unit::Derived(units::NEWTON),
+            &["N", "newton", "newtons"][..],
+        ),
+        (
+            Unit::Derived(units::PASCAL),
+            &["Pa", "pascal", "pascals"][..],
+        ),
+        (Unit::Derived(units::WATT), &["W", "watt", "watts"][..]),
     ];
 
-    for (unit, variants) in UNITS.iter().copied() {
+    for (unit, variants) in units.iter().copied() {
         for v in variants.iter().copied() {
             assert_eq! {
                 parse!(v).as_deref(),

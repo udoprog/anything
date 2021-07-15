@@ -37,7 +37,6 @@ pub enum Prefix {
     Kilo,
     Hecto,
     Deca,
-    /// Empty prefix.
     None,
     Deci,
     Centi,

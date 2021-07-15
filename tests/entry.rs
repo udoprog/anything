@@ -1,3 +1,4 @@
+use facts::units;
 use facts::{Compound, Unit};
 
 macro_rules! query {
@@ -12,7 +13,7 @@ macro_rules! query {
 
 #[test]
 fn test_queries() {
-    let c = Compound::from_iter([(Unit::LightSpeed, 1, 0)]);
+    let c = Compound::from_iter([(Unit::Derived(units::LIGHTSPEED), 1, 0)]);
 
     let n = query!("12c");
 

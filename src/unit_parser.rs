@@ -1,5 +1,6 @@
 use crate::prefix::Prefix;
 use crate::unit::Unit;
+use crate::units;
 use logos::Logos;
 
 #[cfg(test)]
@@ -241,7 +242,7 @@ impl<'a> UnitParser<'a> {
                 Token::Second => Unit::Second,
                 Token::GramOrGforce => {
                     if self.acceleration_bias {
-                        Unit::Gforce
+                        Unit::Derived(units::GFORCE)
                     } else {
                         prefix -= 3;
                         Unit::KiloGram
@@ -255,26 +256,26 @@ impl<'a> UnitParser<'a> {
                 Token::Kelvin => Unit::Kelvin,
                 Token::Mole => Unit::Mole,
                 Token::Candela => Unit::Candela,
-                Token::Ton => Unit::Ton,
                 Token::Byte => Unit::Byte,
-                Token::Minute => Unit::Minute,
-                Token::Hour => Unit::Hour,
-                Token::Day => Unit::Day,
-                Token::Week => Unit::Week,
-                Token::Month => Unit::Month,
-                Token::Year => Unit::Year,
-                Token::Decade => Unit::Decade,
-                Token::Century => Unit::Century,
-                Token::Millenium => Unit::Millenium,
                 Token::Meter => Unit::Meter,
-                Token::Btu => Unit::Btu,
-                Token::Au => Unit::Au,
-                Token::Acceleration => Unit::Acceleration,
-                Token::Gforce => Unit::Gforce,
-                Token::Newton => Unit::Newton,
-                Token::Pascal => Unit::Pascal,
-                Token::Joule => Unit::Joule,
-                Token::Watt => Unit::Watt,
+                Token::Ton => Unit::Derived(units::TON),
+                Token::Minute => Unit::Derived(units::MINUTE),
+                Token::Hour => Unit::Derived(units::HOUR),
+                Token::Day => Unit::Derived(units::DAY),
+                Token::Week => Unit::Derived(units::WEEK),
+                Token::Month => Unit::Derived(units::MONTH),
+                Token::Year => Unit::Derived(units::YEAR),
+                Token::Decade => Unit::Derived(units::DECADE),
+                Token::Century => Unit::Derived(units::CENTURY),
+                Token::Millenium => Unit::Derived(units::MILLENIUM),
+                Token::Btu => Unit::Derived(units::BTU),
+                Token::Au => Unit::Derived(units::AU),
+                Token::Acceleration => Unit::Derived(units::ACCELERATION),
+                Token::Gforce => Unit::Derived(units::GFORCE),
+                Token::Newton => Unit::Derived(units::NEWTON),
+                Token::Pascal => Unit::Derived(units::PASCAL),
+                Token::Joule => Unit::Derived(units::JOULE),
+                Token::Watt => Unit::Derived(units::WATT),
                 Token::Yotta => {
                     prefix += Prefix::YOTTA;
                     continue;
@@ -305,7 +306,7 @@ impl<'a> UnitParser<'a> {
                         continue;
                     }
 
-                    Unit::Millenium
+                    Unit::Derived(units::MILLENIUM)
                 }
                 Token::Mega => {
                     prefix += Prefix::MEGA;
@@ -329,7 +330,7 @@ impl<'a> UnitParser<'a> {
                         continue;
                     }
 
-                    Unit::Day
+                    Unit::Derived(units::DAY)
                 }
                 Token::Deci => {
                     prefix += Prefix::DECI;
@@ -341,7 +342,7 @@ impl<'a> UnitParser<'a> {
                         continue;
                     }
 
-                    Unit::LightSpeed
+                    Unit::Derived(units::LIGHTSPEED)
                 }
                 Token::Centi => {
                     prefix += Prefix::CENTI;
@@ -381,7 +382,7 @@ impl<'a> UnitParser<'a> {
                         continue;
                     }
 
-                    Unit::Acceleration
+                    Unit::Derived(units::ACCELERATION)
                 }
                 Token::Atto => {
                     prefix += Prefix::ATTO;
@@ -397,7 +398,7 @@ impl<'a> UnitParser<'a> {
                         continue;
                     }
 
-                    Unit::Year
+                    Unit::Derived(units::YEAR)
                 }
                 Token::Yocto => {
                     prefix += Prefix::YOCTO;

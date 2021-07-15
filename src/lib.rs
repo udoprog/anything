@@ -14,6 +14,7 @@ mod query;
 mod span;
 mod unit;
 mod unit_parser;
+pub mod units;
 
 pub use self::compound::Compound;
 pub use self::error::Error;

@@ -31,38 +31,36 @@ impl Bias {
 }
 
 fn add(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    if let Some(factor) = a.unit().factor(b.unit()) {
+    let (mut b, b_unit) = b.split();
+
+    if a.unit().factor(&b_unit, &mut b) {
         let (value, unit) = a.split();
-        Ok(Numeric::new(
-            value + b.into_value() / factor.into_big_rational(),
-            unit,
-        ))
+        Ok(Numeric::new(value + b, unit))
     } else {
         Err(Error::new(
             range,
             IllegalOperation {
                 op: "+",
                 lhs: a.unit().clone(),
-                rhs: b.unit().clone(),
+                rhs: b_unit,
             },
         ))
     }
 }
 
 fn sub(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    if let Some(factor) = a.unit().factor(b.unit()) {
+    let (mut b, b_unit) = b.split();
+
+    if a.unit().factor(&b_unit, &mut b) {
         let (value, unit) = a.split();
-        Ok(Numeric::new(
-            value - b.into_value() / factor.into_big_rational(),
-            unit,
-        ))
+        Ok(Numeric::new(value - b, unit))
     } else {
         Err(Error::new(
             range,
             IllegalOperation {
                 op: "-",
                 lhs: a.unit().clone(),
-                rhs: b.unit().clone(),
+                rhs: b_unit,
             },
         ))
     }
@@ -71,24 +69,30 @@ fn sub(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
 fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     use num::Zero;
 
-    let (fac, unit) = a.unit().mul(b.unit(), -1);
+    let (mut a, a_unit) = a.split();
+    let (mut b, b_unit) = b.split();
 
-    let fac = fac.into_big_rational();
+    let unit = a_unit.mul(&b_unit, -1, &mut a, &mut b);
 
-    let denom = b.into_value();
-
-    if denom.is_zero() {
+    if a.denom().is_zero() || b.numer().is_zero() {
         return Err(Error::message(range, "divide by zero"));
     }
 
-    Ok(Numeric::new(fac * a.into_value() / denom, unit))
+    Ok(Numeric::new(a / b, unit))
 }
 
-fn mul(_: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (fac, unit) = a.unit().mul(b.unit(), 1);
-    let fac = fac.into_big_rational();
+fn mul(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
+    use num::Zero;
 
-    Ok(Numeric::new(fac * a.into_value() * b.into_value(), unit))
+    let (mut a, a_unit) = a.split();
+    let (mut b, b_unit) = b.split();
+    let unit = a_unit.mul(&b_unit, 1, &mut a, &mut b);
+
+    if a.denom().is_zero() || b.denom().is_zero() {
+        return Err(Error::message(range, "divide by zero"));
+    }
+
+    Ok(Numeric::new(a * b, unit))
 }
 
 pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
@@ -315,22 +319,19 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
                             bias.with_acceleration_bias(rhs.is_acceleration()),
                         )?;
 
-                        let factor = match b.unit().factor(&rhs) {
-                            Some(factor) => factor,
-                            None => {
-                                return Err(Error::new(
-                                    op.text_range(),
-                                    IllegalCast {
-                                        from: b.unit().clone(),
-                                        to: rhs.clone(),
-                                    },
-                                ))
-                            }
+                        let (mut lhs, lhs_unit) = b.split();
+
+                        if !lhs_unit.factor(&rhs, &mut lhs) {
+                            return Err(Error::new(
+                                op.text_range(),
+                                IllegalCast {
+                                    from: lhs_unit,
+                                    to: rhs.clone(),
+                                },
+                            ));
                         };
 
-                        let factor = factor.into_big_rational();
-                        let value = b.into_value();
-                        base = DelayedEval::Numeric(Numeric::new(value * factor, rhs));
+                        base = DelayedEval::Numeric(Numeric::new(lhs, rhs));
                         continue;
                     }
                     ERROR => return Err(Error::message(op.text_range(), "expected operator")),

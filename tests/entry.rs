@@ -1,6 +1,6 @@
 use facts::units;
 use facts::{Compound, Unit};
-use num::BigRational;
+use num::{BigRational, ToPrimitive};
 
 macro_rules! query {
     ($expr:expr) => {{
@@ -10,6 +10,12 @@ macro_rules! query {
         assert!(values.next().is_none());
         value
     }};
+}
+
+macro_rules! unit {
+    ($expr:expr) => {
+        str::parse::<Compound>($expr).unwrap()
+    };
 }
 
 #[test]
@@ -47,11 +53,28 @@ fn test_compound_mul() {
 
 #[test]
 fn test_multiple_division() {
-    let c = Compound::from_iter([]);
-    let n = query!("1Gbtu^2 / 1113025kJ^2");
+    let value = query!("1Gbtu to J");
+    assert_eq!(value.to_u128(), Some(1055000000000));
 
-    assert_eq!(n.unit(), &c);
-    assert_eq!(n.to_u32(), Some(1000000));
+    let value = query!("1btu^2 to J^2");
+    assert_eq!(value.to_u128(), Some(1113025));
+
+    let value = query!("1Gbtu^2 to J^2");
+    assert_eq!(value.to_u128(), Some(1113025000000000000000000));
+
+    let value = query!("1Gbtu^2 / 1113025kJ^2");
+    assert_eq!(value.to_u128(), Some(1000000000000));
+
+    let value = query!("1btu^2 * 1113025J^2 as J^4");
+    assert_eq!(value.to_u128(), Some(1238824650625));
+    assert_eq!(value.unit(), &unit!("J^4"));
+
+    let value = query!("1Gbtu^2 * 1113025kJ^2");
+    assert_eq!(value.to_u128(), Some(1113025000000000000000000000000));
+    assert_eq!(value.unit(), &unit!("btu^2J^2"));
+
+    let value = query!("1Gbtu^2 * 1113025kJ^2 to J^4");
+    assert_eq!(value.to_u128(), Some(1238824650625000000000000000000000000));
 }
 
 #[test]

@@ -21,28 +21,13 @@ impl Numeric {
     }
 
     /// Convert into its underlying value.
-    pub(crate) fn into_value(self) -> BigRational {
+    pub fn into_value(self) -> BigRational {
         self.value
     }
 
     /// Interior method to split the numeric value into its components.
-    pub(crate) fn split(self) -> (BigRational, Compound) {
+    pub fn split(self) -> (BigRational, Compound) {
         (self.value, self.unit)
-    }
-
-    /// Get the value as a 32-bit integer.
-    pub fn to_u32(&self) -> Option<u32> {
-        self.value.to_u32()
-    }
-
-    /// Get the value as a 32-bit float.
-    pub fn to_f32(&self) -> Option<f32> {
-        self.value.to_f32()
-    }
-
-    /// Get the value as a 64-bit float.
-    pub fn to_f64(&self) -> Option<f64> {
-        self.value.to_f64()
     }
 
     /// Access the underlying rational.
@@ -53,6 +38,64 @@ impl Numeric {
     /// Get the unit of the numerical value.
     pub fn unit(&self) -> &Compound {
         &self.unit
+    }
+}
+
+impl ToPrimitive for Numeric {
+    fn to_i8(&self) -> Option<i8> {
+        self.value.to_i8()
+    }
+
+    fn to_i16(&self) -> Option<i16> {
+        self.value.to_i16()
+    }
+
+    fn to_i128(&self) -> Option<i128> {
+        self.value.to_i128()
+    }
+
+    fn to_usize(&self) -> Option<usize> {
+        self.value.to_usize()
+    }
+
+    fn to_u8(&self) -> Option<u8> {
+        self.value.to_u8()
+    }
+
+    fn to_isize(&self) -> Option<isize> {
+        self.value.to_isize()
+    }
+
+    fn to_u16(&self) -> Option<u16> {
+        self.value.to_u16()
+    }
+
+    fn to_u32(&self) -> Option<u32> {
+        self.value.to_u32()
+    }
+
+    fn to_u64(&self) -> Option<u64> {
+        self.value.to_u64()
+    }
+
+    fn to_u128(&self) -> Option<u128> {
+        self.value.to_u128()
+    }
+
+    fn to_f32(&self) -> Option<f32> {
+        self.value.to_f32()
+    }
+
+    fn to_f64(&self) -> Option<f64> {
+        self.value.to_f64()
+    }
+
+    fn to_i32(&self) -> Option<i32> {
+        self.value.to_i32()
+    }
+
+    fn to_i64(&self) -> Option<i64> {
+        self.value.to_i64()
     }
 }
 
@@ -68,7 +111,7 @@ impl fmt::Display for Numeric {
             write!(f, " ")?;
         }
 
-        self.unit.format(f, !self.value.is_one())?;
+        self.unit.display(!self.value.is_one()).fmt(f)?;
         Ok(())
     }
 }

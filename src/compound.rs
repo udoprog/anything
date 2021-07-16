@@ -1,31 +1,9 @@
 use crate::powers::Powers;
-use crate::prefix::Prefix;
 use crate::syntax::parser::Parser;
 use crate::unit::Unit;
 use num::BigRational;
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
-
-/// A calculated factor.
-pub struct Factor {
-    prefix: i32,
-    ratio: BigRational,
-}
-
-impl Factor {
-    fn new() -> Self {
-        Self {
-            prefix: 0,
-            ratio: BigRational::new(1.into(), 1.into()),
-        }
-    }
-
-    /// Convert into a big rational
-    pub fn into_big_rational(self) -> BigRational {
-        let ten = BigRational::new(10u32.into(), 1u32.into()).pow(self.prefix);
-        self.ratio * ten
-    }
-}
 
 /// The data for a base.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -48,7 +26,7 @@ pub struct State {
 /// let b = Compound::from_iter([(Unit::Meter, 1, -2), (Unit::Second, -2, 0)]);
 /// assert_eq!(b.to_string(), "cm/s²");
 /// ```
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq, Eq)]
 pub struct Compound {
     names: BTreeMap<Unit, State>,
 }
@@ -129,49 +107,50 @@ impl Compound {
     }
 
     /// Calculate the factor for coercing one unit to another.
-    pub fn factor(&self, other: &Self) -> Option<Factor> {
-        let mut factor = Factor::new();
-
+    pub fn factor(&self, other: &Self, value: &mut BigRational) -> bool {
         if self.is_empty() || other.is_empty() {
-            return Some(factor);
+            return true;
         }
 
         let (_, lhs_bases) = self.base_units();
         let (_, rhs_bases) = other.base_units();
 
         if lhs_bases.len() != rhs_bases.len() {
-            return None;
+            return false;
         }
 
         for (name, rhs) in &rhs_bases {
-            let lhs = lhs_bases.get(name)?;
+            let lhs = match lhs_bases.get(name) {
+                Some(lhs) => lhs,
+                None => return false,
+            };
 
             if lhs != rhs {
-                return None;
+                return false;
             }
         }
 
         for (name, state) in &self.names {
-            factor.prefix += state.prefix;
+            *value *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
 
             if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power, &mut factor, multiple);
+                multiply_factor(state.power, value, multiple);
             }
         }
 
         for (name, state) in &other.names {
-            factor.prefix -= state.prefix;
-
             if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power * -1, &mut factor, multiple);
+                multiply_factor(state.power * -1, value, multiple);
             }
+
+            *value /= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
         }
 
-        Some(factor)
+        true
     }
 
     /// Calculate multiplication factors for the given multiplication.
-    pub fn mul(&self, other: &Self, n: i32) -> (Factor, Self) {
+    pub fn mul(&self, other: &Self, n: i32, lhs: &mut BigRational, rhs: &mut BigRational) -> Self {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
                 Self::from_iter(
@@ -184,7 +163,7 @@ impl Compound {
                 self.clone()
             };
 
-            return (Factor::new(), unit);
+            return unit;
         }
 
         let (lhs_der, lhs_bases) = self.base_units();
@@ -214,21 +193,19 @@ impl Compound {
             }
         }
 
-        let mut fac = Factor::new();
-
         for (name, state) in &self.names {
-            fac.prefix += state.prefix;
+            *lhs *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
 
             if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power, &mut fac, multiple);
+                multiply_factor(state.power, lhs, multiple);
             }
         }
 
         for (name, state) in &other.names {
-            fac.prefix -= state.prefix;
+            *rhs *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
 
             if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power * n * -1, &mut fac, multiple);
+                multiply_factor(state.power * n, rhs, multiple);
             }
         }
 
@@ -237,14 +214,14 @@ impl Compound {
             .into_iter()
             .map(|(u, p)| (u, p, 1))
             .chain(rhs_der.into_iter().map(|(u, p)| (u, p, n)));
-        reconstruct(der, &mut fac, &mut names);
+        reconstruct(der, lhs, &mut names);
 
-        return (fac, Compound::new(names));
+        return Compound::new(names);
 
         /// Reconstruct names.
         fn reconstruct(
             der: impl IntoIterator<Item = (Unit, i32, i32)>,
-            fac: &mut Factor,
+            lhs: &mut BigRational,
             names: &mut BTreeMap<Unit, State>,
         ) {
             let mut powers = Powers::default();
@@ -290,7 +267,7 @@ impl Compound {
                     // original factor modifier, which we apply to mod_power to
                     // get the original power back. Then we multiply by `-1`
                     // because we want to shed the multiples here.
-                    multiply_factor(mod_power * n * -1, fac, multiple);
+                    multiply_factor(mod_power * n * -1, lhs, multiple);
                 }
             }
         }
@@ -355,32 +332,55 @@ impl Compound {
 
     /// Helper to format a compound unit. This allows for pluralization in the
     /// scenario that this compound unit is composed of a single unit.
-    pub(crate) fn format(&self, f: &mut fmt::Formatter<'_>, pluralize: bool) -> fmt::Result {
+    ///
+    /// ```
+    /// let unit = str::parse::<facts::Compound>("decade/s").unwrap();
+    /// assert_eq!(unit.display(true).to_string(), "decades/s");
+    /// ```
+    pub fn display(&self, pluralize: bool) -> Display<'_> {
+        Display {
+            this: self,
+            pluralize,
+        }
+    }
+}
+
+/// Display helper for [Compound].
+///
+/// Constructed through [Compound::display].
+pub struct Display<'a> {
+    this: &'a Compound,
+    pluralize: bool,
+}
+
+impl fmt::Display for Display<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use std::fmt::Write;
 
-        let mut pluralize = if self.names.iter().filter(|e| e.1.power >= 0).count() == 1 {
-            pluralize
+        let mut pluralize = if self.this.names.iter().filter(|e| e.1.power >= 0).count() == 1 {
+            self.pluralize
         } else {
             false
         };
 
-        let mut it = self.names.iter().filter(|e| e.1.power >= 0).peekable();
+        let mut it = self.this.names.iter().filter(|e| e.1.power >= 0).peekable();
 
         while let Some((base, data)) = it.next() {
-            inner(base, f, data, std::mem::take(&mut pluralize), 1)?;
+            base.display(data, std::mem::take(&mut pluralize), 1)
+                .fmt(f)?;
 
             if it.peek().is_some() {
                 f.write_char('⋅')?;
             }
         }
 
-        if self.names.iter().any(|c| c.1.power < 0) {
+        if self.this.names.iter().any(|c| c.1.power < 0) {
             write!(f, "/")?;
 
-            let mut it = self.names.iter().filter(|e| e.1.power < 0).peekable();
+            let mut it = self.this.names.iter().filter(|e| e.1.power < 0).peekable();
 
             while let Some((base, data)) = it.next() {
-                inner(base, f, data, false, -1)?;
+                base.display(data, false, -1).fmt(f)?;
 
                 if it.peek().is_some() {
                     f.write_char('⋅')?;
@@ -388,48 +388,7 @@ impl Compound {
             }
         }
 
-        return Ok(());
-
-        fn inner(
-            unit: &Unit,
-            f: &mut fmt::Formatter<'_>,
-            data: &State,
-            pluralize: bool,
-            n: i32,
-        ) -> fmt::Result {
-            use std::fmt::Display as _;
-
-            let (prefix, extra) = Prefix::find(data.prefix + unit.prefix_bias());
-
-            if extra == 0 {
-                write!(f, "{}", prefix)?;
-            } else {
-                write!(f, "e{}{}", extra, prefix)?;
-            }
-
-            unit.format(f, pluralize)?;
-
-            let mut power = (data.power * n) as u32;
-
-            if power != 1 {
-                if power < 10 {
-                    pow_into_char(power).fmt(f)?;
-                } else {
-                    let mut chars = Vec::new();
-
-                    while power != 0 {
-                        chars.push(pow_into_char(power % 10));
-                        power /= 10;
-                    }
-
-                    for c in chars.into_iter().rev() {
-                        c.fmt(f)?;
-                    }
-                }
-            }
-
-            Ok(())
-        }
+        Ok(())
     }
 }
 
@@ -442,33 +401,26 @@ impl std::str::FromStr for Compound {
     }
 }
 
+impl fmt::Debug for Compound {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("Compound")
+            .field(&self.display(false).to_string())
+            .finish()
+    }
+}
+
 impl fmt::Display for Compound {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Compound::format(self, f, false)
+        self.display(false).fmt(f)
     }
 }
 
-fn pow_into_char(pow: u32) -> char {
-    match pow {
-        0 => '⁰',
-        1 => '¹',
-        2 => '²',
-        3 => '³',
-        4 => '⁴',
-        5 => '⁵',
-        6 => '⁶',
-        7 => '⁷',
-        8 => '⁸',
-        _ => '⁹',
-    }
-}
-
-fn multiply_factor(pow: i32, factor: &mut Factor, multiple: BigRational) {
+fn multiply_factor(pow: i32, ratio: &mut BigRational, multiple: BigRational) {
     for _ in pow..0 {
-        factor.ratio /= multiple.clone();
+        *ratio /= multiple.clone();
     }
 
     for _ in 0..pow {
-        factor.ratio *= multiple.clone();
+        *ratio *= multiple.clone();
     }
 }

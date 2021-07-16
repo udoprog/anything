@@ -1,4 +1,6 @@
+use crate::compound::State;
 use crate::powers::Powers;
+use crate::prefix::Prefix;
 use num::BigRational;
 use std::cmp;
 use std::fmt;
@@ -71,7 +73,7 @@ impl Unit {
         }
     }
 
-    pub(crate) fn format(&self, f: &mut fmt::Formatter<'_>, pluralize: bool) -> fmt::Result {
+    pub(crate) fn format_suffix(&self, f: &mut fmt::Formatter<'_>, pluralize: bool) -> fmt::Result {
         use std::fmt::Display as _;
 
         match self {
@@ -85,6 +87,60 @@ impl Unit {
             Unit::Byte => 'B'.fmt(f),
             Unit::Derived(derived) => (derived.vtable.format)(f, pluralize),
         }
+    }
+
+    pub(crate) fn display<'a>(&'a self, data: &'a State, pluralize: bool, n: i32) -> Display<'a> {
+        Display {
+            unit: self,
+            data,
+            pluralize,
+            n,
+        }
+    }
+}
+
+/// Display helper for unit.
+///
+/// Constructed through [Unit::display].
+pub(crate) struct Display<'a> {
+    unit: &'a Unit,
+    data: &'a State,
+    pluralize: bool,
+    n: i32,
+}
+
+impl fmt::Display for Display<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (prefix, extra) = Prefix::find(self.data.prefix + self.unit.prefix_bias());
+
+        if extra == 0 {
+            write!(f, "{}", prefix)?;
+        } else {
+            write!(f, "e{}{}", extra, prefix)?;
+        }
+
+        self.unit.format_suffix(f, self.pluralize)?;
+
+        let mut power = (self.data.power * self.n) as u32;
+
+        if power != 1 {
+            if power < 10 {
+                pow_into_char(power).fmt(f)?;
+            } else {
+                let mut chars = Vec::new();
+
+                while power != 0 {
+                    chars.push(pow_into_char(power % 10));
+                    power /= 10;
+                }
+
+                for c in chars.into_iter().rev() {
+                    c.fmt(f)?;
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -139,5 +195,20 @@ impl cmp::Eq for Derived {}
 impl hash::Hash for Derived {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         state.write_u32(self.id);
+    }
+}
+
+fn pow_into_char(pow: u32) -> char {
+    match pow {
+        0 => '⁰',
+        1 => '¹',
+        2 => '²',
+        3 => '³',
+        4 => '⁴',
+        5 => '⁵',
+        6 => '⁶',
+        7 => '⁷',
+        8 => '⁸',
+        _ => '⁹',
     }
 }

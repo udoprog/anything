@@ -1,5 +1,6 @@
 use facts::units;
 use facts::{Compound, Unit};
+use num::BigRational;
 
 macro_rules! query {
     ($expr:expr) => {{
@@ -56,6 +57,12 @@ fn test_multiple_division() {
 #[test]
 fn test_multiple_identity_sheds() {
     let expected = query!("0.05c / 500years * mass of earth as N");
+
+    assert_eq!(
+        expected.value().clone(),
+        BigRational::new(223795069897000000000000000i128.into(), 39447u32.into())
+    );
+
     let mut alternatives = Vec::new();
     alternatives.push("(0.05c as m/s) / 500years * mass of earth as N");
     alternatives.push("(0.05c as m/s) / (500years as seconds) * mass of earth as N");

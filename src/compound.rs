@@ -171,7 +171,7 @@ impl Compound {
     }
 
     /// Calculate multiplication factors for the given multiplication.
-    pub fn mul(&self, other: &Self, n: i32) -> (Factor, Factor, Factor, Self) {
+    pub fn mul(&self, other: &Self, n: i32) -> (Factor, Self) {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
                 Self::from_iter(
@@ -184,7 +184,7 @@ impl Compound {
                 self.clone()
             };
 
-            return (Factor::new(), Factor::new(), Factor::new(), unit);
+            return (Factor::new(), unit);
         }
 
         let (lhs_der, lhs_bases) = self.base_units();
@@ -214,23 +214,21 @@ impl Compound {
             }
         }
 
-        let mut lhs_fac = Factor::new();
-        let mut rhs_fac = Factor::new();
-        let mut out_fac = Factor::new();
+        let mut fac = Factor::new();
 
         for (name, state) in &self.names {
-            lhs_fac.prefix += state.prefix;
+            fac.prefix += state.prefix;
 
             if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power, &mut lhs_fac, multiple);
+                multiply_factor(state.power, &mut fac, multiple);
             }
         }
 
         for (name, state) in &other.names {
-            rhs_fac.prefix += state.prefix;
+            fac.prefix -= state.prefix;
 
             if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power * n, &mut rhs_fac, multiple);
+                multiply_factor(state.power * n * -1, &mut fac, multiple);
             }
         }
 
@@ -239,9 +237,9 @@ impl Compound {
             .into_iter()
             .map(|(u, p)| (u, p, 1))
             .chain(rhs_der.into_iter().map(|(u, p)| (u, p, n)));
-        reconstruct(der, &mut out_fac, &mut names);
+        reconstruct(der, &mut fac, &mut names);
 
-        return (lhs_fac, rhs_fac, out_fac, Compound::new(names));
+        return (fac, Compound::new(names));
 
         /// Reconstruct names.
         fn reconstruct(

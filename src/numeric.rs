@@ -45,6 +45,11 @@ impl Numeric {
         self.value.to_f64()
     }
 
+    /// Access the underlying rational.
+    pub fn value(&self) -> &BigRational {
+        &self.value
+    }
+
     /// Get the unit of the numerical value.
     pub fn unit(&self) -> &Compound {
         &self.unit

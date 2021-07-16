@@ -71,35 +71,24 @@ fn sub(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
 fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     use num::Zero;
 
-    let (a_fac, b_fac, out_fac, unit) = a.unit().mul(b.unit(), -1);
+    let (fac, unit) = a.unit().mul(b.unit(), -1);
 
-    let a_fac = a_fac.into_big_rational();
-    let b_fac = b_fac.into_big_rational();
-    let out_fac = out_fac.into_big_rational();
+    let fac = fac.into_big_rational();
 
-    let denom = b.into_value() * b_fac;
+    let denom = b.into_value();
 
     if denom.is_zero() {
         return Err(Error::message(range, "divide by zero"));
     }
 
-    Ok(Numeric::new(
-        ((a.into_value() * a_fac) / denom) * out_fac,
-        unit,
-    ))
+    Ok(Numeric::new(fac * a.into_value() / denom, unit))
 }
 
 fn mul(_: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (a_fac, b_fac, out_fac, unit) = a.unit().mul(b.unit(), 1);
+    let (fac, unit) = a.unit().mul(b.unit(), 1);
+    let fac = fac.into_big_rational();
 
-    let a_fac = a_fac.into_big_rational();
-    let b_fac = b_fac.into_big_rational();
-    let out_fac = out_fac.into_big_rational();
-
-    Ok(Numeric::new(
-        (a.into_value() * a_fac) * (b.into_value() * b_fac) * out_fac,
-        unit,
-    ))
+    Ok(Numeric::new(fac * a.into_value() * b.into_value(), unit))
 }
 
 pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {

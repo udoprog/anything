@@ -52,58 +52,35 @@ pub struct Db {
 }
 
 impl Db {
+    /// Only open the database in-memory.
+    pub fn in_memory() -> Result<Self> {
+        Self::open_inner(true)
+    }
+
     /// Open the default database.
     pub fn open() -> Result<Self> {
+        Self::open_inner(false)
+    }
+
+    fn open_inner(in_memory: bool) -> Result<Self> {
         let mut config = crate::config::open()?;
         let hash = config.hash_assets();
 
         let mut rebuild = match config.meta.database_hash.as_deref() {
-            Some(existing) => existing != hash,
-            None => true,
+            Some(existing) if !in_memory => existing != hash,
+            _ => true,
         };
 
-        let force_rebuild = match config.meta.version.as_deref() {
-            Some(version) => version != config.this_version,
-            _ => false,
-        };
-
-        if force_rebuild {
-            if config.index_path.is_dir() {
-                log::info!("removing index (outdated): {}", config.index_path.display());
-                fs::remove_dir_all(&config.index_path)?;
-            }
-        }
-
-        let index = if config.index_path.is_dir() {
-            log::trace!("opening index: {}", config.index_path.display());
-            Index::open_in_dir(&config.index_path).ok()
+        let index = if in_memory {
+            let schema = build_schema();
+            Index::create_in_ram(schema)
         } else {
-            None
-        };
-
-        let index = if let Some(index) = index {
+            let (index_rebuild, index) = open_index(&config)?;
+            rebuild = index_rebuild;
             index
-        } else {
-            rebuild = true;
-
-            fs::create_dir_all(&config.index_path)?;
-
-            let text_field_indexing = TextFieldIndexing::default()
-                .set_tokenizer("ngram")
-                .set_index_option(IndexRecordOption::WithFreqsAndPositions);
-            let text_options = TextOptions::default()
-                .set_indexing_options(text_field_indexing)
-                .set_stored();
-
-            let mut schema = Schema::builder();
-            schema.add_bytes_field("data", STORED);
-
-            schema.add_text_field("name", text_options);
-            Index::create_in_dir(&config.index_path, schema.build())?
         };
 
         let tokenizer = TextAnalyzer::from(NgramTokenizer::new(1, 7, true)).filter(LowerCaser);
-
         index.tokenizers().register("ngram", tokenizer);
 
         let schema = index.schema();
@@ -204,6 +181,50 @@ impl Db {
 
         Ok(())
     }
+}
+
+fn open_index(config: &crate::config::Config) -> Result<(bool, Index)> {
+    let force_rebuild = match config.meta.version.as_deref() {
+        Some(version) => version != config.this_version,
+        _ => false,
+    };
+
+    if force_rebuild {
+        if config.index_path.is_dir() {
+            log::info!("removing index (outdated): {}", config.index_path.display());
+            fs::remove_dir_all(&config.index_path)?;
+        }
+    }
+
+    let index = if config.index_path.is_dir() {
+        log::trace!("opening index: {}", config.index_path.display());
+        Index::open_in_dir(&config.index_path).ok()
+    } else {
+        None
+    };
+
+    if let Some(index) = index {
+        Ok((false, index))
+    } else {
+        fs::create_dir_all(&config.index_path)?;
+        let schema = build_schema();
+        Ok((true, Index::create_in_dir(&config.index_path, schema)?))
+    }
+}
+
+fn build_schema() -> Schema {
+    let text_field_indexing = TextFieldIndexing::default()
+        .set_tokenizer("ngram")
+        .set_index_option(IndexRecordOption::WithFreqsAndPositions);
+    let text_options = TextOptions::default()
+        .set_indexing_options(text_field_indexing)
+        .set_stored();
+
+    let mut schema = Schema::builder();
+    schema.add_bytes_field("data", STORED);
+
+    schema.add_text_field("name", text_options);
+    schema.build()
 }
 
 pub(crate) mod serde {

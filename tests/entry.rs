@@ -6,7 +6,7 @@ use std::iter::FromIterator;
 #[macro_export]
 macro_rules! query {
     ($expr:expr) => {{
-        let db = facts::Db::open().unwrap();
+        let db = facts::Db::in_memory().unwrap();
         let mut values = facts::query($expr, &db);
         let value = values.next().unwrap().unwrap();
         assert!(values.next().is_none());

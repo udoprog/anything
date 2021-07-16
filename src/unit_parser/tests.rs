@@ -114,6 +114,10 @@ fn test_prefixes() {
             &["Sv", "sievert", "sieverts"][..],
         ),
         (Unit::Derived(units::KATAL), &["kat", "katal", "katals"][..]),
+        (Unit::Derived(units::INCH), &["in", "inch", "inches"][..]),
+        (Unit::Derived(units::FEET), &["ft", "feet", "feets"][..]),
+        (Unit::Derived(units::YARD), &["yd", "yard", "yards"][..]),
+        (Unit::Derived(units::MILE), &["mi", "mile", "miles"][..]),
     ];
 
     for (unit, variants) in units.iter().copied() {

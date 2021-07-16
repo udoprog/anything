@@ -6,6 +6,9 @@ use num::BigRational;
 mod times;
 pub use self::times::*;
 
+mod distances;
+pub use self::distances::*;
+
 /// Velocity in `m*s` with the `v` suffix.
 pub static VELOCITY: Derived = Derived {
     id: 0x47dd35dc,
@@ -357,6 +360,18 @@ pub static KATAL: Derived = Derived {
             powers.insert(Unit::Second, p * -1);
         },
         format: |f, _| write!(f, "kat"),
+        multiple_ratio: None,
+    },
+};
+
+/// Specific impuse as `s` with the `sp` suffix.
+pub static SPECIFIC_IMPUSE: Derived = Derived {
+    id: 0x9645d02f,
+    vtable: &DerivedVtable {
+        powers: |powers, p| {
+            powers.insert(Unit::Second, p);
+        },
+        format: |f, _| write!(f, "sp"),
         multiple_ratio: None,
     },
 };

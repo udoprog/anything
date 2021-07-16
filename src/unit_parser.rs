@@ -206,6 +206,26 @@ enum Token {
     #[token("katals")]
     Katal,
 
+    #[token("in")]
+    #[token("inch")]
+    #[token("inches")]
+    Inch,
+
+    #[token("ft")]
+    #[token("feet")]
+    #[token("feets")]
+    Feet,
+
+    #[token("yd")]
+    #[token("yard")]
+    #[token("yards")]
+    Yard,
+
+    #[token("mi")]
+    #[token("mile")]
+    #[token("miles")]
+    Mile,
+
     #[token("Y")]
     #[token("yotta")]
     Yotta,
@@ -363,6 +383,10 @@ impl<'a> UnitParser<'a> {
                 Token::Gray => Unit::Derived(units::GRAY),
                 Token::Sievert => Unit::Derived(units::SIEVERT),
                 Token::Katal => Unit::Derived(units::KATAL),
+                Token::Inch => Unit::Derived(units::INCH),
+                Token::Feet => Unit::Derived(units::FEET),
+                Token::Yard => Unit::Derived(units::YARD),
+                Token::Mile => Unit::Derived(units::MILE),
                 Token::Yotta => {
                     prefix += Prefix::YOTTA;
                     continue;

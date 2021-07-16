@@ -321,7 +321,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
 
                         let (mut lhs, lhs_unit) = b.split();
 
-                        if !lhs_unit.factor(&rhs, &mut lhs) {
+                        if !rhs.factor(&lhs_unit, &mut lhs) {
                             return Err(Error::new(
                                 op.text_range(),
                                 IllegalCast {

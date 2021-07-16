@@ -130,7 +130,7 @@ impl Compound {
             }
         }
 
-        for (name, state) in &self.names {
+        for (name, state) in &other.names {
             *value *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
 
             if let Some(multiple) = name.multiple_ratio() {
@@ -138,7 +138,7 @@ impl Compound {
             }
         }
 
-        for (name, state) in &other.names {
+        for (name, state) in &self.names {
             if let Some(multiple) = name.multiple_ratio() {
                 multiply_factor(state.power * -1, value, multiple);
             }
@@ -205,7 +205,7 @@ impl Compound {
             *rhs *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
 
             if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power * n, rhs, multiple);
+                multiply_factor(state.power, rhs, multiple);
             }
         }
 
@@ -214,14 +214,14 @@ impl Compound {
             .into_iter()
             .map(|(u, p)| (u, p, 1))
             .chain(rhs_der.into_iter().map(|(u, p)| (u, p, n)));
-        reconstruct(der, lhs, &mut names);
 
+        reconstruct(der, lhs, &mut names);
         return Compound::new(names);
 
         /// Reconstruct names.
         fn reconstruct(
             der: impl IntoIterator<Item = (Unit, i32, i32)>,
-            lhs: &mut BigRational,
+            out: &mut BigRational,
             names: &mut BTreeMap<Unit, State>,
         ) {
             let mut powers = Powers::default();
@@ -267,7 +267,7 @@ impl Compound {
                     // original factor modifier, which we apply to mod_power to
                     // get the original power back. Then we multiply by `-1`
                     // because we want to shed the multiples here.
-                    multiply_factor(mod_power * n * -1, lhs, multiple);
+                    multiply_factor(mod_power * -1, out, multiple);
                 }
             }
         }

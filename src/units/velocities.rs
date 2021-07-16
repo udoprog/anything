@@ -6,7 +6,7 @@ use num::BigRational;
 /// The speed of light in `m/s`.
 ///
 /// See [VELOCITY].
-pub static LIGHTSPEED: Derived = Derived {
+pub static LIGHT_SPEED: Derived = Derived {
     id: 0x8e8393e6,
     vtable: &DerivedVtable {
         powers: crate::units::VELOCITY.vtable.powers,

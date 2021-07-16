@@ -1,0 +1,298 @@
+[[units]]
+variant = "Second"
+names = ["s", "sec", "second", "seconds"]
+unit = "Unit::Second"
+[[units]]
+variant = "Minute"
+names = ["minute", "minutes", "min", "mins"]
+unit = "Unit::Derived(units::times::MINUTE)"
+[[units]]
+variant = "Hour"
+names = ["hr", "hour", "hours"]
+unit = "Unit::Derived(units::times::HOUR)"
+[[units]]
+variant = "Day"
+names = ["dy", "day", "days"]
+unit = "Unit::Derived(units::times::DAY)"
+[[units]]
+variant = "Week"
+names = ["wk", "week", "weeks"]
+unit = "Unit::Derived(units::times::WEEK)"
+[[units]]
+variant = "Month"
+names = ["mth", "mths", "month", "months"]
+unit = "Unit::Derived(units::times::MONTH)"
+[[units]]
+variant = "Year"
+names = ["y", "yr", "yrs", "year", "years"]
+unit = "Unit::Derived(units::times::YEAR)"
+[[units]]
+variant = "Decade"
+names = ["decade", "decades"]
+unit = "Unit::Derived(units::times::DECADE)"
+[[units]]
+variant = "Century"
+names = ["century", "centuries"]
+unit = "Unit::Derived(units::times::CENTURY)"
+[[units]]
+variant = "Millenium"
+names = ["M", "millenium", "milleniums", "millenia"]
+unit = "Unit::Derived(units::times::MILLENIUM)"
+[[units]]
+variant = "Meter"
+names = ["m", "metre", "meter", "meters"]
+unit = "Unit::Meter"
+[[units]]
+variant = "Gram"
+names = ["g", "gram"]
+unit = "Unit::KiloGram"
+prefix_bias = -3
+[[units]]
+variant = "Ton"
+names = ["tonnes", "tonne", "tons", "ton"]
+unit = "Unit::Derived(units::TON)"
+[[units]]
+variant = "Ampere"
+names = ["A", "ampere", "amperes"]
+unit = "Unit::Ampere"
+[[units]]
+variant = "Kelvin"
+names = ["K", "kelvin", "kelvins"]
+unit = "Unit::Kelvin"
+[[units]]
+variant = "Mole"
+names = ["mol", "mols", "mole", "moles"]
+unit = "Unit::Mole"
+[[units]]
+variant = "Candela"
+names = ["cd", "candela", "candelas"]
+unit = "Unit::Candela"
+[[units]]
+variant = "Byte"
+names = ["B", "byte"]
+unit = "Unit::Byte"
+[[units]]
+variant = "Au"
+names = ["au"]
+unit = "Unit::Derived(units::distances::AU)"
+[[units]]
+variant = "Acceleration"
+names = ["a", "acc", "acceleration"]
+unit = "Unit::Derived(units::ACCELERATION)"
+[[units]]
+variant = "Velocity"
+names = ["v", "vel", "velocity"]
+unit = "Unit::Derived(units::VELOCITY)"
+[[units]]
+variant = "Gforce"
+names = ["gforce", "g-force"]
+unit = "Unit::Derived(units::GFORCE)"
+[[units]]
+variant = "Newton"
+names = ["N", "newton", "newtons"]
+unit = "Unit::Derived(units::NEWTON)"
+[[units]]
+variant = "Pascal"
+names = ["Pa", "pascal", "pascals"]
+unit = "Unit::Derived(units::PASCAL)"
+[[units]]
+variant = "Joule"
+names = ["J", "joule"]
+unit = "Unit::Derived(units::JOULE)"
+[[units]]
+variant = "Btu"
+names = ["btu"]
+unit = "Unit::Derived(units::BTU)"
+[[units]]
+variant = "Watt"
+names = ["W", "watt", "watts"]
+unit = "Unit::Derived(units::WATT)"
+[[units]]
+variant = "Coulomb"
+names = ["C", "coulomb", "coulombs"]
+unit = "Unit::Derived(units::COULOMB)"
+[[units]]
+variant = "Volt"
+names = ["V", "volt", "volts"]
+unit = "Unit::Derived(units::VOLT)"
+[[units]]
+variant = "Farad"
+names = ["F", "farad", "farads"]
+unit = "Unit::Derived(units::FARAD)"
+[[units]]
+variant = "Ohm"
+names = ["Ω", "ohm", "ohms"]
+unit = "Unit::Derived(units::OHM)"
+[[units]]
+variant = "Siemens"
+names = ["S", "siemens"]
+unit = "Unit::Derived(units::SIEMENS)"
+[[units]]
+variant = "Weber"
+names = ["Wb", "weber", "webers"]
+unit = "Unit::Derived(units::WEBER)"
+[[units]]
+variant = "Tesla"
+names = ["T", "tesla", "teslas"]
+unit = "Unit::Derived(units::TESLA)"
+[[units]]
+variant = "Henry"
+names = ["H", "henry", "henrys", "henries"]
+unit = "Unit::Derived(units::HENRY)"
+[[units]]
+variant = "Lumen"
+names = ["lm", "lumen", "lumens"]
+unit = "Unit::Derived(units::LUMEN)"
+[[units]]
+variant = "Lux"
+names = ["lx", "lux"]
+unit = "Unit::Derived(units::LUX)"
+[[units]]
+variant = "Becquerel"
+names = ["Bq", "becquerel", "becquerels"]
+unit = "Unit::Derived(units::BECQUEREL)"
+[[units]]
+variant = "Gray"
+names = ["Gy", "gray", "grays"]
+unit = "Unit::Derived(units::GRAY)"
+[[units]]
+variant = "Sievert"
+names = ["Sv", "sievert", "sieverts"]
+unit = "Unit::Derived(units::SIEVERT)"
+[[units]]
+variant = "Katal"
+names = ["kat", "katal", "katals"]
+unit = "Unit::Derived(units::KATAL)"
+[[units]]
+variant = "NauticalMile"
+names = ["NM", "nmi"]
+unit = "Unit::Derived(units::distances::NAUTICAL_MILE)"
+[[units]]
+variant = "LightSpeed"
+names = ["c"]
+unit = "Unit::Derived(units::velocities::LIGHT_SPEED)"
+[[units]]
+variant = "Knot"
+names = ["kt", "knot", "knots"]
+unit = "Unit::Derived(units::velocities::KNOT)"
+[[units]]
+variant = "Thou"
+names = ["th", "thou", "thous"]
+unit = "Unit::Derived(units::imperial::THOU)"
+[[units]]
+variant = "Barleycorn"
+names = ["Bc", "barleycorn", "barleycorns"]
+unit = "Unit::Derived(units::imperial::BARLEYCORN)"
+[[units]]
+variant = "Inch"
+names = ["in", "inch", "inches"]
+unit = "Unit::Derived(units::imperial::INCH)"
+[[units]]
+variant = "Hand"
+names = ["hand", "hands"]
+unit = "Unit::Derived(units::imperial::HAND)"
+[[units]]
+variant = "Feet"
+names = ["ft", "feet", "feets"]
+unit = "Unit::Derived(units::imperial::FOOT)"
+[[units]]
+variant = "Yard"
+names = ["yd", "yard", "yards"]
+unit = "Unit::Derived(units::imperial::YARD)"
+[[units]]
+variant = "Chain"
+names = ["ch", "chain", "chains"]
+unit = "Unit::Derived(units::imperial::CHAIN)"
+[[units]]
+variant = "Furlong"
+names = ["fur", "furlong", "furlongs"]
+unit = "Unit::Derived(units::imperial::FURLONG)"
+[[units]]
+variant = "Mile"
+names = ["mi", "mile", "miles"]
+unit = "Unit::Derived(units::imperial::MILE)"
+[[units]]
+variant = "League"
+names = ["lea", "league", "leagues"]
+unit = "Unit::Derived(units::imperial::LEAGUE)"
+
+[[prefixes]]
+variant = "Yotta"
+names = ["Y", "yotta"]
+prefix = "Prefix::YOTTA"
+[[prefixes]]
+variant = "Zetta"
+names = ["Z", "zetta"]
+prefix = "Prefix::ZETTA"
+[[prefixes]]
+variant = "Exa"
+names = ["E", "exa"]
+prefix = "Prefix::EXA"
+[[prefixes]]
+variant = "Peta"
+names = ["P", "peta"]
+prefix = "Prefix::PETA"
+[[prefixes]]
+variant = "Tera"
+names = ["T", "tera"]
+prefix = "Prefix::TERA"
+[[prefixes]]
+variant = "Giga"
+names = ["G", "giga"]
+prefix = "Prefix::GIGA"
+[[prefixes]]
+variant = "Mega"
+names = ["M", "mega"]
+prefix = "Prefix::MEGA"
+[[prefixes]]
+variant = "Kilo"
+names = ["k", "kilo"]
+prefix = "Prefix::KILO"
+[[prefixes]]
+variant = "Hecto"
+names = ["h", "hecto"]
+prefix = "Prefix::HECTO"
+[[prefixes]]
+variant = "Deca"
+names = ["da", "deca"]
+prefix = "Prefix::DECA"
+[[prefixes]]
+variant = "Deci"
+names = ["d", "deci"]
+prefix = "Prefix::DECI"
+[[prefixes]]
+variant = "Centi"
+names = ["c", "centi"]
+prefix = "Prefix::CENTI"
+[[prefixes]]
+variant = "Milli"
+names = ["m", "milli"]
+prefix = "Prefix::MILLI"
+[[prefixes]]
+variant = "Micro"
+names = ["μ", "micro"]
+prefix = "Prefix::MICRO"
+[[prefixes]]
+variant = "Nano"
+names = ["n", "nano"]
+prefix = "Prefix::NANO"
+[[prefixes]]
+variant = "Pico"
+names = ["p", "pico"]
+prefix = "Prefix::PICO"
+[[prefixes]]
+variant = "Femto"
+names = ["f", "femto"]
+prefix = "Prefix::FEMTO"
+[[prefixes]]
+variant = "Atto"
+names = ["a", "atto"]
+prefix = "Prefix::ATTO"
+[[prefixes]]
+variant = "Zepto"
+names = ["z", "zepto"]
+prefix = "Prefix::ZEPTO"
+[[prefixes]]
+variant = "Yocto"
+names = ["y", "yocto"]
+prefix = "Prefix::YOCTO"

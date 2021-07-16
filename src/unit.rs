@@ -165,7 +165,19 @@ pub struct Derived {
 
 impl fmt::Debug for Derived {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        struct DebugFn(fn(&mut fmt::Formatter<'_>, bool) -> fmt::Result);
+
+        impl fmt::Debug for DebugFn {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "\"")?;
+                (self.0)(f, false)?;
+                write!(f, "\"")?;
+                Ok(())
+            }
+        }
+
         f.debug_struct("Derived")
+            .field("name", &DebugFn(self.vtable.format))
             .field("id", &format_args!("{:#x}", self.id))
             .field("vtable", &(self.vtable as *const _))
             .finish()

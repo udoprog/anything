@@ -1,0 +1,11 @@
+[package]
+name = "gen"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+anyhow = "1.0.42"
+serde = { version = "1.0.126", features = ["derive"] }
+toml = "0.5.8"
+genco = "0.15.1"

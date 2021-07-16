@@ -156,7 +156,7 @@ pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
         p: &mut Tokens<impl Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>>,
         bases: &mut BTreeMap<Unit, State>,
         power_factor: i32,
-        bias: Bias,
+        _bias: Bias,
     ) -> Result<()> {
         while let Some(t) = p.next() {
             match t.kind() {
@@ -167,7 +167,7 @@ pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
                     break;
                 }
                 UNIT_WORD | UNIT_ESCAPED_WORD => {
-                    let parser = match t.kind() {
+                    let mut unit_parser = match t.kind() {
                         UNIT_ESCAPED_WORD => {
                             let s = p.text(t.text_range());
                             let s = &s[1..(s.len() - 1)];
@@ -177,13 +177,12 @@ pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
                         kind => return Err(Error::unexpected(t.text_range(), kind)),
                     };
 
-                    let mut parser = parser.with_acceleration_bias(bias.acceleration_bias);
-
                     let mut last = None;
                     let range = t.text_range();
 
-                    while let Some(parsed) =
-                        parser.next().map_err(|e| Error::illegal_unit(range, e))?
+                    while let Some(parsed) = unit_parser
+                        .next()
+                        .map_err(|e| Error::illegal_unit(range, e))?
                     {
                         if let Some(parsed) = std::mem::replace(&mut last, Some(parsed)) {
                             populate_unit(p, bases, parsed, range, power_factor)?;

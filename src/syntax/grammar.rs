@@ -208,18 +208,18 @@ fn expr_nested(p: &mut Parser<'_>, mut level: Option<u32>) -> bool {
                     None => {
                         level = Some(n);
                     }
-                    Some(c) => {
-                        if c < n {
-                            if !expr(p, Some(n)) {
-                                return false;
-                            }
-
-                            p.finish_node_at(last, OPERATION);
-                            continue;
-                        } else if c > n {
-                            break;
+                    Some(c) if c < n => {
+                        if !expr(p, Some(n)) {
+                            return false;
                         }
+
+                        p.finish_node_at(last, OPERATION);
+                        continue;
                     }
+                    Some(c) if c > n => {
+                        break;
+                    }
+                    _ => {}
                 }
             }
         }

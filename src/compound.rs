@@ -4,6 +4,7 @@ use crate::unit::Unit;
 use num::BigRational;
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
+use std::iter::FromIterator;
 
 /// The data for a base.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -14,6 +15,12 @@ pub struct State {
     pub prefix: i32,
 }
 
+impl From<(i32, i32)> for State {
+    fn from((power, prefix): (i32, i32)) -> Self {
+        Self { power, prefix }
+    }
+}
+
 /// A complex unit which supports powers and prefixes.
 ///
 /// It uses a sparse internal representation where each unit is mapped to a
@@ -22,8 +29,9 @@ pub struct State {
 ///
 /// ```
 /// use facts::{Compound, Unit};
+/// use std::iter::FromIterator;
 ///
-/// let b = Compound::from_iter([(Unit::Meter, 1, -2), (Unit::Second, -2, 0)]);
+/// let b = Compound::from_iter([(Unit::Meter, (1, -2)), (Unit::Second, (-2, 0))]);
 /// assert_eq!(b.to_string(), "cm/s²");
 /// ```
 #[derive(Default, Clone, PartialEq, Eq)]
@@ -42,32 +50,6 @@ impl Compound {
         Self {
             names: BTreeMap::new(),
         }
-    }
-
-    /// Construct a unit from an iterator of its constituent names and powers.
-    ///
-    /// ```
-    /// use facts::{Unit, Compound};
-    ///
-    /// let a = str::parse::<facts::Compound>("cm/s^2").unwrap();
-    /// let b = facts::Compound::from_iter([(Unit::Meter, 1, -2), (Unit::Second, -2, 0)]);
-    ///
-    /// assert_eq!(a, b);
-    /// assert_eq!(a.to_string(), "cm/s²");
-    /// ```
-    pub fn from_iter<I>(iter: I) -> Self
-    where
-        I: IntoIterator<Item = (Unit, i32, i32)>,
-    {
-        let mut names = BTreeMap::new();
-
-        for (unit, power, prefix) in iter {
-            if power != 0 {
-                names.insert(unit, State { power, prefix });
-            }
-        }
-
-        Self { names }
     }
 
     /// Internal only function to construct a new unit.
@@ -153,12 +135,11 @@ impl Compound {
     pub fn mul(&self, other: &Self, n: i32, lhs: &mut BigRational, rhs: &mut BigRational) -> Self {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
-                Self::from_iter(
-                    other
-                        .names
-                        .iter()
-                        .map(|(unit, state)| (*unit, state.power * n, state.prefix)),
-                )
+                other
+                    .names
+                    .iter()
+                    .map(|(unit, state)| (*unit, (state.power * n, state.prefix)))
+                    .collect()
             } else {
                 self.clone()
             };
@@ -295,18 +276,16 @@ impl Compound {
             dec: i32,
             names: &BTreeMap<Unit, State>,
         ) -> bool {
-            let state = match names.get(&unit) {
-                Some(state) => state,
+            let s = match names.get(&unit) {
+                Some(state) => state.power,
                 None => return false,
             };
 
             while *cur != 0 {
-                let power = base * *cur;
+                let p = base * *cur;
 
-                if power.signum() == state.power.signum() {
-                    if power * power.signum() <= state.power * state.power.signum() {
-                        return true;
-                    }
+                if p.signum() == s.signum() && p * p.signum() <= s * s.signum() {
+                    return true;
                 }
 
                 *cur -= dec;
@@ -342,6 +321,37 @@ impl Compound {
             this: self,
             pluralize,
         }
+    }
+}
+
+/// Construct a unit from an iterator of its constituent names and powers.
+///
+/// ```
+/// use facts::{Unit, Compound};
+/// use std::iter::FromIterator;
+///
+/// let a = str::parse::<facts::Compound>("cm/s^2").unwrap();
+/// let b = facts::Compound::from_iter([(Unit::Meter, (1, -2)), (Unit::Second, (-2, 0))]);
+///
+/// assert_eq!(a, b);
+/// assert_eq!(a.to_string(), "cm/s²");
+/// ```
+impl<S> FromIterator<(Unit, S)> for Compound
+where
+    State: From<S>,
+{
+    fn from_iter<T: IntoIterator<Item = (Unit, S)>>(iter: T) -> Self {
+        let mut names = BTreeMap::new();
+
+        for (unit, state) in iter {
+            let state = State::from(state);
+
+            if state.power != 0 {
+                names.insert(unit, state);
+            }
+        }
+
+        Self { names }
     }
 }
 

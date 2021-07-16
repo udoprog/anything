@@ -124,7 +124,7 @@ pub struct ParseNumericError(());
 pub(crate) fn parse_decimal_big_rational(number: &str) -> Result<BigRational, ParseNumericError> {
     let mut dot = false;
     let mut init = false;
-    let mut dots = 0;
+    let mut dots = 0u32;
 
     let mut out = BigRational::new(0u32.into(), 1u32.into());
     let ten = BigInt::from(10u32);
@@ -147,11 +147,11 @@ pub(crate) fn parse_decimal_big_rational(number: &str) -> Result<BigRational, Pa
                 init = true;
 
                 let c = (b - b'0') as u32;
-                out *= ten.clone();
+                out *= &ten;
                 out += BigInt::from(c);
 
                 if dot {
-                    dots += 1;
+                    dots = dots.checked_add(1).ok_or(ParseNumericError(()))?;
                 }
             }
             b'.' if !dot => {
@@ -168,7 +168,7 @@ pub(crate) fn parse_decimal_big_rational(number: &str) -> Result<BigRational, Pa
                 let mut exp = 0u32;
                 let mut init = false;
 
-                while let Some(b) = it.next() {
+                for b in it {
                     match b {
                         // Ignore leading zeros.
                         b'0' if !init => {
@@ -194,6 +194,8 @@ pub(crate) fn parse_decimal_big_rational(number: &str) -> Result<BigRational, Pa
                 } else {
                     out *= ten.pow(exp);
                 }
+
+                break;
             }
             _ => {
                 return Err(ParseNumericError(()));

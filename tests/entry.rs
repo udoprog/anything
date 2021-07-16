@@ -1,6 +1,7 @@
 use facts::units;
 use facts::{Compound, Unit};
 use num::ToPrimitive;
+use std::iter::FromIterator;
 
 #[macro_export]
 macro_rules! query {
@@ -57,7 +58,7 @@ mod imperial;
 
 #[test]
 fn test_queries() {
-    let c = Compound::from_iter([(Unit::Derived(units::LIGHTSPEED), 1, 0)]);
+    let c = Compound::from_iter([(Unit::Derived(units::LIGHTSPEED), (1, 0))]);
 
     let n = query!("12c");
 
@@ -67,7 +68,7 @@ fn test_queries() {
 
 #[test]
 fn test_compound_division() {
-    let c = Compound::from_iter([(Unit::Derived(units::VOLT), -7, 0)]);
+    let c = Compound::from_iter([(Unit::Derived(units::VOLT), (-7, 0))]);
 
     let n = query!("1V^3 / 1V^10");
 

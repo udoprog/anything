@@ -41,7 +41,7 @@ impl Iterator for Query<'_, '_> {
 
         Some(crate::eval::eval(
             node,
-            &self.query,
+            self.query,
             self.db,
             Default::default(),
         ))

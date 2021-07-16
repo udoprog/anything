@@ -44,6 +44,7 @@ fn test_chain() {
 #[test]
 fn test_furlong() {
     assert_query!("(1mi / 8) to fur", 1, fur);
+    assert_query!("220yd to fur", 1, fur);
     assert_query!("10ch to fur", 1, fur);
 }
 

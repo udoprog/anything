@@ -1,6 +1,7 @@
 //! Facts is a flexible unit-aware arbitrary precision calculator.
 
 #![deny(missing_docs)]
+#![allow(clippy::neg_multiply)]
 
 mod compound;
 mod db;

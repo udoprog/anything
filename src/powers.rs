@@ -20,6 +20,18 @@ pub struct Powers {
 }
 
 impl Powers {
+    /// Test if powers is empty.
+    ///
+    /// ```
+    /// use facts::Powers;
+    ///
+    /// let powers = Powers::default();
+    /// assert!(powers.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.powers.is_empty()
+    }
+
     /// Get the number of units in this collection.
     ///
     /// ```

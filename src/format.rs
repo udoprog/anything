@@ -120,18 +120,17 @@ impl fmt::Display for FormatRatio<'_> {
 ///
 /// Each emitted value is guaranteed to be smaller than 10.
 fn emit<'a>(rem: &'a mut BigInt, den: &'a BigInt) -> impl Iterator<Item = u8> + 'a {
-    let ten = BigInt::from(10);
-
     std::iter::from_fn(move || {
         if rem.is_zero() {
             return None;
         }
 
-        *rem *= &ten;
+        *rem *= 10u32;
         let div = &*rem / den;
         *rem -= den * &div;
 
-        debug_assert!(div < ten);
-        div.to_u8()
+        let div = div.to_u8()?;
+        debug_assert!(div < 10u8);
+        Some(div)
     })
 }

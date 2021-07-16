@@ -212,9 +212,12 @@ impl<'a> Lexer<'a> {
             kind,
         })
     }
+}
 
-    /// Get the next token.
-    pub fn next(&mut self) -> Option<Token> {
+impl Iterator for Lexer<'_> {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
         if self.unit_mode {
             return self.next_unit();
         }

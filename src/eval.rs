@@ -23,10 +23,7 @@ pub struct Bias {
 impl Bias {
     /// Coerce the current bias to work with acceleration bias.
     fn with_acceleration_bias(self, acceleration_bias: bool) -> Self {
-        Self {
-            acceleration_bias,
-            ..self
-        }
+        Self { acceleration_bias }
     }
 }
 
@@ -326,7 +323,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
                                 op.text_range(),
                                 IllegalCast {
                                     from: lhs_unit,
-                                    to: rhs.clone(),
+                                    to: rhs,
                                 },
                             ));
                         };

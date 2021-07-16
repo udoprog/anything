@@ -24,8 +24,7 @@ fn main() -> anyhow::Result<()> {
                 writeln!(out, "{}", value)?;
             }
             Err(e) => {
-                let mut labels = Vec::new();
-                labels.push(Label::primary(id, e.range()).with_message(e.to_string()));
+                let labels = vec![Label::primary(id, e.range()).with_message(e.to_string())];
                 let diagnostic = Diagnostic::error()
                     .with_message(e.to_string())
                     .with_labels(labels);

@@ -4,6 +4,7 @@
 #![allow(clippy::neg_multiply)]
 
 mod compound;
+mod config;
 mod db;
 mod error;
 mod eval;

@@ -1,0 +1,14 @@
+[[constants]]
+names = ["saturn", "orbit", "distance"]
+unit = "au"
+value = "9.539"
+
+[[constants]]
+names = ["saturn", "mass"]
+unit = "kg"
+value = "5.6865e26"
+
+[[constants]]
+names = ["saturn", "orbital", "period"]
+unit = "yr"
+value = "29.458"

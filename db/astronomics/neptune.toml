@@ -1,0 +1,14 @@
+[[constants]]
+names = ["neptune", "orbit", "distance"]
+unit = "au"
+value = "30.1"
+
+[[constants]]
+names = ["neptune", "mass"]
+unit = "kg"
+value = "1.024e26"
+
+[[constants]]
+names = ["neptune", "orbital", "period"]
+unit = "yr"
+value = "165"

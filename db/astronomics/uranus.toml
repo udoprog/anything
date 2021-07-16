@@ -1,0 +1,14 @@
+[[constants]]
+names = ["uranus", "orbit", "distance"]
+unit = "au"
+value = "19.2184"
+
+[[constants]]
+names = ["uranus", "mass"]
+unit = "kg"
+value = "8.677316e25"
+
+[[constants]]
+names = ["uranus", "orbital", "period"]
+unit = "yr"
+value = "84"

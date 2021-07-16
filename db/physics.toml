@@ -1,19 +1,14 @@
 [[constants]]
-names = ["mass of earth", "earth mass"]
-unit = "kg"
-value = "5.972e24"
-
-[[constants]]
-names = ["c", "speed of light", "lightspeed"]
+names = ["c", "lightspeed", "speed", "light"]
 unit = "c"
 value = "1"
 
 [[constants]]
-names = ["standard gravity", "g0", "gravity"]
+names = ["standard", "gravity", "g0"]
 unit = "m/s^2"
 value = "9.80665"
 
 [[constants]]
-names = ["G", "gravitational constant"]
+names = ["G", "gravitational", "constant"]
 unit = "m^3/kgs^2"
 value = "6.6743015e-11"

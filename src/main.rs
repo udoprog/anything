@@ -5,6 +5,8 @@ use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use std::io::Write;
 
 fn main() -> anyhow::Result<()> {
+    pretty_env_logger::init();
+
     let mut it = std::env::args();
     it.next();
     let query = it.collect::<Vec<_>>().join(" ");

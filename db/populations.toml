@@ -1,0 +1,11 @@
+[[constants]]
+names = ["population", "stockholm", "sweden"]
+value = "975551"
+
+[[constants]]
+names = ["population", "sweden"]
+value = "10.23e6"
+
+[[constants]]
+names = ["population", "new york", "new", "york", "usa"]
+value = "8.419e6"

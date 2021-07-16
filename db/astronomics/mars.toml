@@ -1,0 +1,19 @@
+[[constants]]
+names = ["mars", "orbit", "distance"]
+unit = "au"
+value = "1.524"
+
+[[constants]]
+names = ["mars", "mass"]
+unit = "kg"
+value = "6.39e23"
+
+[[constants]]
+names = ["mars", "orbital", "period"]
+unit = "dy"
+value = "686.98"
+
+[[constants]]
+names = ["mars", "solar", "day"]
+unit = "dy"
+value = "1.02595717"

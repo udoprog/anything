@@ -206,10 +206,24 @@ enum Token {
     #[token("katals")]
     Katal,
 
+    #[token("th")]
+    #[token("thou")]
+    #[token("thous")]
+    Thou,
+
+    #[token("Bc")]
+    #[token("barleycorn")]
+    #[token("barleycorns")]
+    Barleycorn,
+
     #[token("in")]
     #[token("inch")]
     #[token("inches")]
     Inch,
+
+    #[token("hand")]
+    #[token("hands")]
+    Hand,
 
     #[token("ft")]
     #[token("feet")]
@@ -221,10 +235,25 @@ enum Token {
     #[token("yards")]
     Yard,
 
+    #[token("ch")]
+    #[token("chain")]
+    #[token("chains")]
+    Chain,
+
+    #[token("fur")]
+    #[token("furlong")]
+    #[token("furlongs")]
+    Furlong,
+
     #[token("mi")]
     #[token("mile")]
     #[token("miles")]
     Mile,
+
+    #[token("lea")]
+    #[token("league")]
+    #[token("leagues")]
+    League,
 
     #[token("Y")]
     #[token("yotta")]
@@ -383,10 +412,16 @@ impl<'a> UnitParser<'a> {
                 Token::Gray => Unit::Derived(units::GRAY),
                 Token::Sievert => Unit::Derived(units::SIEVERT),
                 Token::Katal => Unit::Derived(units::KATAL),
-                Token::Inch => Unit::Derived(units::INCH),
-                Token::Feet => Unit::Derived(units::FEET),
-                Token::Yard => Unit::Derived(units::YARD),
-                Token::Mile => Unit::Derived(units::MILE),
+                Token::Thou => Unit::Derived(units::imperial::THOU),
+                Token::Barleycorn => Unit::Derived(units::imperial::BARLEYCORN),
+                Token::Inch => Unit::Derived(units::imperial::INCH),
+                Token::Hand => Unit::Derived(units::imperial::HAND),
+                Token::Feet => Unit::Derived(units::imperial::FOOT),
+                Token::Yard => Unit::Derived(units::imperial::YARD),
+                Token::Chain => Unit::Derived(units::imperial::CHAIN),
+                Token::Furlong => Unit::Derived(units::imperial::FURLONG),
+                Token::Mile => Unit::Derived(units::imperial::MILE),
+                Token::League => Unit::Derived(units::imperial::LEAGUE),
                 Token::Yotta => {
                     prefix += Prefix::YOTTA;
                     continue;

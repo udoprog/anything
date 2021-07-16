@@ -6,8 +6,7 @@ use num::BigRational;
 mod times;
 pub use self::times::*;
 
-mod distances;
-pub use self::distances::*;
+pub mod imperial;
 
 /// Velocity in `m*s` with the `v` suffix.
 pub static VELOCITY: Derived = Derived {

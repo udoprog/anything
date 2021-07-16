@@ -114,10 +114,44 @@ fn test_prefixes() {
             &["Sv", "sievert", "sieverts"][..],
         ),
         (Unit::Derived(units::KATAL), &["kat", "katal", "katals"][..]),
-        (Unit::Derived(units::INCH), &["in", "inch", "inches"][..]),
-        (Unit::Derived(units::FEET), &["ft", "feet", "feets"][..]),
-        (Unit::Derived(units::YARD), &["yd", "yard", "yards"][..]),
-        (Unit::Derived(units::MILE), &["mi", "mile", "miles"][..]),
+        // imperial units
+        (
+            Unit::Derived(units::imperial::THOU),
+            &["th", "thou", "thous"][..],
+        ),
+        (
+            Unit::Derived(units::imperial::BARLEYCORN),
+            &["Bc", "barleycorn", "barleycorns"][..],
+        ),
+        (
+            Unit::Derived(units::imperial::INCH),
+            &["in", "inch", "inches"][..],
+        ),
+        (Unit::Derived(units::imperial::HAND), &["hand", "hands"][..]),
+        (
+            Unit::Derived(units::imperial::FOOT),
+            &["ft", "feet", "feets"][..],
+        ),
+        (
+            Unit::Derived(units::imperial::YARD),
+            &["yd", "yard", "yards"][..],
+        ),
+        (
+            Unit::Derived(units::imperial::CHAIN),
+            &["ch", "chain", "chains"][..],
+        ),
+        (
+            Unit::Derived(units::imperial::FURLONG),
+            &["fur", "furlong", "furlongs"][..],
+        ),
+        (
+            Unit::Derived(units::imperial::MILE),
+            &["mi", "mile", "miles"][..],
+        ),
+        (
+            Unit::Derived(units::imperial::LEAGUE),
+            &["lea", "league", "leagues"][..],
+        ),
     ];
 
     for (unit, variants) in units.iter().copied() {

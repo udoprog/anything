@@ -16,7 +16,7 @@ pub struct Numeric {
 
 impl Numeric {
     /// Construct a new numerical value.
-    pub(crate) fn new(value: BigRational, unit: Compound) -> Self {
+    pub fn new(value: BigRational, unit: Compound) -> Self {
         Self { value, unit }
     }
 

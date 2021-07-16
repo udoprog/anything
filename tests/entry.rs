@@ -1,7 +1,8 @@
 use facts::units;
 use facts::{Compound, Unit};
-use num::{BigRational, ToPrimitive};
+use num::ToPrimitive;
 
+#[macro_export]
 macro_rules! query {
     ($expr:expr) => {{
         let db = facts::Db::open().unwrap();
@@ -12,17 +13,47 @@ macro_rules! query {
     }};
 }
 
+#[macro_export]
 macro_rules! unit {
     ($expr:expr) => {
-        str::parse::<Compound>($expr).unwrap()
+        str::parse::<facts::Compound>($expr).unwrap()
     };
 }
 
+#[macro_export]
 macro_rules! ratio {
-    ($a:literal / $b:literal) => {
-        BigRational::new($a.into(), $b.into())
+    ($a:literal) => {{
+        let _a: u128 = $a;
+        num::BigRational::new(_a.into(), 1.into())
+    }};
+
+    ($a:literal / $b:literal) => {{
+        let _a: u128 = $a;
+        let _b: u128 = $b;
+        num::BigRational::new(_a.into(), _b.into())
+    }};
+}
+
+#[macro_export]
+macro_rules! lit {
+    ($a:literal $(/ $b:literal)? $(, $($tt:tt)*)?) => {
+        facts::Numeric::new(
+            ratio!($a $(/ $b)*),
+            str::parse::<facts::Compound>(concat!($($(stringify!($tt)),*)*)).unwrap(),
+        )
+    }
+}
+
+/// Assert that the result of the given query matches the given literal value.
+#[macro_export]
+macro_rules! assert_query {
+    ($query:expr, $($lit:tt)*) => {
+        assert_eq!(query!($query), lit!($($lit)*));
     };
 }
+
+#[path = "entry/imperial.rs"]
+mod imperial;
 
 #[test]
 fn test_queries() {
@@ -66,28 +97,17 @@ fn test_velocities() {
 
 #[test]
 fn test_multiple_division() {
-    let value = query!("1Gbtu to J");
-    assert_eq!(value.to_u128(), Some(1055000000000));
-
-    let value = query!("1btu^2 to J^2");
-    assert_eq!(value.to_u128(), Some(1113025));
-
-    let value = query!("1Gbtu^2 to J^2");
-    assert_eq!(value.to_u128(), Some(1113025000000000000000000));
-
-    let value = query!("1Gbtu^2 / 1113025kJ^2");
-    assert_eq!(value.to_u128(), Some(1000000000000));
-
-    let value = query!("1btu^2 * 1113025J^2 as J^4");
-    assert_eq!(value.to_u128(), Some(1238824650625));
-    assert_eq!(value.unit(), &unit!("J^4"));
-
-    let value = query!("1Gbtu^2 * 1113025kJ^2");
-    assert_eq!(value.to_u128(), Some(1113025000000000000000000000000));
-    assert_eq!(value.unit(), &unit!("btu^2J^2"));
-
-    let value = query!("1Gbtu^2 * 1113025kJ^2 to J^4");
-    assert_eq!(value.to_u128(), Some(1238824650625000000000000000000000000));
+    assert_query!("1Gbtu to J", 1055000000000, J);
+    assert_query!("1btu^2 to J^2", 1113025, J ^ 2);
+    assert_query!("1Gbtu^2 to J^2", 1113025000000000000000000, J ^ 2);
+    assert_query!("1Gbtu^2 / 1113025kJ^2", 1000000000000);
+    assert_query!("1btu^2 * 1113025J^2 as J^4", 1238824650625, J ^ 4);
+    assert_query!("1Gbtu^2 * 1113025kJ^2", 1113025000000000000000000000000, btu^2J^2);
+    assert_query!(
+        "1Gbtu^2 * 1113025kJ^2 to J^4",
+        1238824650625000000000000000000000000,
+        J ^ 4
+    );
 }
 
 #[test]
@@ -96,7 +116,7 @@ fn test_multiple_identity_sheds() {
 
     assert_eq!(
         expected.value().clone(),
-        ratio!(223795069897000000000000000i128 / 39447)
+        ratio!(223795069897000000000000000 / 39447)
     );
 
     let mut alternatives = Vec::new();
@@ -112,46 +132,12 @@ fn test_multiple_identity_sheds() {
 }
 
 #[test]
-fn test_addition() {
-    let value = query!("1m + 1cm");
-    assert_eq!(value.value(), &ratio!(101 / 100));
-}
-
-#[test]
-fn test_imperial() {
-    let value = query!("12in to ft");
-    assert_eq!(value.split(), (ratio!(1 / 1), unit!("ft")));
-
-    let value = query!("5ft + 12in");
-    assert_eq!(value.split(), (ratio!(6 / 1), unit!("ft")));
-
-    let value = query!("5yd + 3ft");
-    assert_eq!(value.split(), (ratio!(6 / 1), unit!("yd")));
-
-    let value = query!("5mi + 1760yd");
-    assert_eq!(value.split(), (ratio!(6 / 1), unit!("mi")));
-}
-
-#[test]
 fn test_times() {
-    let value = query!("1s + 59s to min");
-    assert_eq!(value.split(), (ratio!(1 / 1), unit!("min")));
-
-    let value = query!("5min + 55min to hour");
-    assert_eq!(value.split(), (ratio!(1 / 1), unit!("hr")));
-
-    let value = query!("5hours + 19hours to days");
-    assert_eq!(value.split(), (ratio!(1 / 1), unit!("days")));
-
-    let value = query!("5days + 25days to months");
-    assert_eq!(value.split(), (ratio!(480 / 487), unit!("months")));
-
-    let value = query!("1month + 11months to years");
-    assert_eq!(value.split(), (ratio!(1 / 1), unit!("years")));
-
-    let value = query!("4year + 6years to decades");
-    assert_eq!(value.split(), (ratio!(1 / 1), unit!("decades")));
-
-    let value = query!("4decades + 6decades to centuries");
-    assert_eq!(value.split(), (ratio!(1 / 1), unit!("centuries")));
+    assert_query!("1s + 59s to min", 1, min);
+    assert_query!("5min + 55min to hour", 1, hr);
+    assert_query!("5hours + 19hours to days", 1, days);
+    assert_query!("5days + 25days to months", 480 / 487, months);
+    assert_query!("1month + 11months to years", 1, years);
+    assert_query!("4year + 6years to decades", 1, decades);
+    assert_query!("4decades + 6decades to centuries", 1, centuries);
 }

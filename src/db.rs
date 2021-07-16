@@ -1,9 +1,28 @@
 use crate::compound::Compound;
 use anyhow::{anyhow, Context, Result};
-use hashbrown::{HashMap, HashSet};
 use num::BigRational;
-use std::fmt;
-use std::sync::Arc;
+use tantivy::collector::TopDocs;
+use tantivy::query::{QueryParser, QueryParserError};
+use tantivy::schema::{Field, Schema, Value, STORED, TEXT};
+use tantivy::{Document, Index, IndexReader, ReloadPolicy, TantivyError};
+use thiserror::Error;
+
+/// Error that can happen during lookup.
+#[derive(Debug, Error)]
+pub enum LookupError {
+    #[error("search error: {error}")]
+    TantivyError {
+        #[source]
+        #[from]
+        error: TantivyError,
+    },
+    #[error("bad query: {error}")]
+    QueryParserError {
+        #[source]
+        #[from]
+        error: QueryParserError,
+    },
+}
 
 const MATH: &[u8] = include_bytes!("../db/math.toml");
 const PHYSICS: &[u8] = include_bytes!("../db/physics.toml");
@@ -15,76 +34,50 @@ const SOURCES: [(&str, &[u8]); 3] = [
     ("distances", DISTANCES),
 ];
 
-const SEED: u64 = 0x681da70f3e1e3494;
-
 /// A match from the database.
 pub(crate) enum Match<'a> {
     /// A constant was matched.
-    Constant(&'a DbConstant),
-}
-
-/// The hash of the constant.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[repr(transparent)]
-pub(crate) struct Hash(u64);
-
-impl fmt::Debug for Hash {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:#08x}", self.0)
-    }
-}
-
-pub(crate) struct Hasher(());
-
-impl Hasher {
-    pub(crate) fn hash(&self, s: &str) -> Hash {
-        use std::hash::{Hash as _, Hasher};
-
-        let mut hash = twox_hash::xxh3::Hash64::with_seed(SEED);
-
-        for p in s.split(char::is_whitespace) {
-            let p = p.trim();
-
-            if p.is_empty() {
-                continue;
-            }
-
-            eudex::Hash::new(p).hash(&mut hash);
-        }
-
-        Hash(hash.finish())
-    }
+    Constant(&'a Constant),
 }
 
 /// A single constant.
 #[derive(Debug)]
-pub(crate) struct DbConstant {
-    names: HashSet<Box<str>>,
+pub(crate) struct Constant {
+    pub(crate) names: Vec<Box<str>>,
     pub(crate) value: BigRational,
     pub(crate) unit: Compound,
 }
 
-impl DbConstant {
-    /// If the given constant matches.
-    fn matches(&self, s: &str) -> bool {
-        self.names.contains(s)
-    }
-}
-
 /// The database of facts.
 pub struct Db {
-    hasher: Hasher,
-    constants: HashMap<Hash, Vec<Arc<DbConstant>>>,
+    index: Index,
+    reader: IndexReader,
+    field_id: Field,
+    field_name: Field,
+    constants: Vec<Constant>,
 }
 
 impl Db {
     /// Open the default database.
     pub fn open() -> Result<Self> {
-        let hasher = Hasher(());
+        let mut schema = Schema::builder();
+
+        let field_id = schema.add_u64_field("id", STORED);
+        let field_name = schema.add_text_field("name", TEXT);
+
+        let index = Index::create_in_ram(schema.build());
+
+        let reader = index
+            .reader_builder()
+            .reload_policy(ReloadPolicy::Manual)
+            .try_into()?;
 
         let mut db = Self {
-            hasher,
-            constants: HashMap::new(),
+            index,
+            reader,
+            field_id,
+            field_name,
+            constants: Vec::new(),
         };
 
         for (name, source) in SOURCES.iter().copied() {
@@ -96,27 +89,50 @@ impl Db {
     }
 
     /// Perform a lookup over the given string.
-    pub(crate) fn lookup<'a>(&'a self, s: &str) -> Option<Match<'a>> {
-        let hash = self.hasher.hash(s);
+    pub(crate) fn lookup<'a>(&'a self, query: &str) -> Result<Option<Match<'a>>, LookupError> {
+        let searcher = self.reader.searcher();
 
-        if let Some(matches) = self.constants.get(&hash) {
-            for m in matches {
-                if m.matches(s) {
-                    return Some(Match::Constant(m));
+        dbg!(query);
+
+        let query_parser = QueryParser::for_index(&self.index, vec![self.field_name]);
+        let query = query_parser.parse_query(query)?;
+        let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
+
+        for (_score, id) in top_docs {
+            let doc = searcher.doc(id)?;
+
+            let value = doc.get_first(self.field_id);
+
+            dbg!(value);
+
+            if let Some(Value::U64(id)) = value {
+                if let Some(c) = self.constants.get(*id as usize) {
+                    return Ok(Some(Match::Constant(c)));
                 }
             }
         }
 
-        None
+        Ok(None)
     }
 
     /// Load a document from the given bytes.
     pub(crate) fn load_bytes(&mut self, bytes: &[u8]) -> Result<()> {
         let doc: self::serde::Doc = toml::de::from_slice(bytes)?;
 
+        let mut writer = self.index.writer(50_000_000)?;
+
         for c in doc.constants {
-            let constant = Arc::new(DbConstant {
-                names: c.names.iter().cloned().collect(),
+            let id = self.constants.len() as u64;
+
+            let mut doc = Document::default();
+            doc.add_u64(self.field_id, id);
+
+            for name in &c.names {
+                doc.add_text(self.field_name, name.as_ref());
+            }
+
+            let constant = Constant {
+                names: c.names,
                 value: c.value,
                 unit: c
                     .unit
@@ -124,17 +140,14 @@ impl Db {
                     .map(str::parse::<Compound>)
                     .transpose()?
                     .unwrap_or_default(),
-            });
+            };
 
-            for name in &constant.names {
-                let hash = self.hasher.hash(name);
-                self.constants
-                    .entry(hash)
-                    .or_default()
-                    .push(constant.clone());
-            }
+            self.constants.push(constant);
+            writer.add_document(doc);
         }
 
+        writer.commit()?;
+        self.reader.reload()?;
         Ok(())
     }
 }

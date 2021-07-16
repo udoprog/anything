@@ -373,7 +373,10 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
         SENTENCE => {
             let s = &source[node.text_range()];
 
-            let m = match db.lookup(s) {
+            let m = match db
+                .lookup(s)
+                .map_err(|error| Error::new(node.text_range(), LookupError { error }))?
+            {
                 Some(m) => m,
                 None => return Err(Error::new(node.text_range(), Missing { query: s.into() })),
             };

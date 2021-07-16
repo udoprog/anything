@@ -1,4 +1,5 @@
 use crate::compound::Compound;
+use crate::db::LookupError;
 use crate::numeric::ParseNumericError;
 use crate::syntax::parser::SyntaxKind;
 use rowan::TextRange;
@@ -56,6 +57,11 @@ impl Error {
 /// En evaluation error.
 #[derive(Debug, Error)]
 pub(crate) enum ErrorKind {
+    #[error("failed to look up constant: {error}")]
+    LookupError {
+        #[source]
+        error: LookupError,
+    },
     #[error("illegal operation: {lhs} {op} {rhs}")]
     IllegalOperation {
         op: &'static str,

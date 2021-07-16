@@ -4,7 +4,7 @@ unit = "au"
 value = "1"
 
 [[constants]]
-names = ["london to new york", "new york to london"]
+names = ["distance london to new york"]
 unit = "km"
 value = "5571.55"
 

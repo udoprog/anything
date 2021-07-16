@@ -1,7 +1,7 @@
 use super::UnitParser;
 use crate::prefix::Prefix;
 use crate::unit::Unit;
-use crate::units;
+use crate::units::{self, distances, times, velocities};
 
 macro_rules! parse {
     ($expr:expr) => {{
@@ -59,24 +59,24 @@ fn test_prefixes() {
         ),
         (Unit::Derived(units::VELOCITY), &["v", "vel", "velocity"]),
         (Unit::Derived(units::BTU), &["btu"][..]),
-        (Unit::Derived(units::AU), &["au"][..]),
-        (Unit::Derived(units::LIGHTSPEED), &["c"][..]),
+        (Unit::Derived(distances::AU), &["au"][..]),
+        (Unit::Derived(velocities::LIGHTSPEED), &["c"][..]),
         (Unit::Derived(units::JOULE), &["J", "joule"][..]),
         (Unit::Derived(units::GFORCE), &["gforce", "g-force"][..]),
         (Unit::Derived(units::TON), &["ton", "tons"][..]),
-        (Unit::Derived(units::YEAR), &["yr", "year", "years"][..]),
-        (Unit::Derived(units::DECADE), &["decade", "decades"][..]),
-        (Unit::Derived(units::CENTURY), &["century", "centuries"][..]),
-        (Unit::Derived(units::MILLENIUM), &["M", "millenium"][..]),
+        (Unit::Derived(times::YEAR), &["yr", "year", "years"][..]),
+        (Unit::Derived(times::DECADE), &["decade", "decades"][..]),
+        (Unit::Derived(times::CENTURY), &["century", "centuries"][..]),
+        (Unit::Derived(times::MILLENIUM), &["M", "millenium"][..]),
         (
-            Unit::Derived(units::MONTH),
+            Unit::Derived(times::MONTH),
             &["mth", "mths", "month", "months"][..],
         ),
-        (Unit::Derived(units::WEEK), &["wk", "week", "weeks"][..]),
-        (Unit::Derived(units::DAY), &["dy", "day", "days"][..]),
-        (Unit::Derived(units::HOUR), &["hr", "hour", "hours"][..]),
+        (Unit::Derived(times::WEEK), &["wk", "week", "weeks"][..]),
+        (Unit::Derived(times::DAY), &["dy", "day", "days"][..]),
+        (Unit::Derived(times::HOUR), &["hr", "hour", "hours"][..]),
         (
-            Unit::Derived(units::MINUTE),
+            Unit::Derived(times::MINUTE),
             &["min", "mins", "minute", "minutes"][..],
         ),
         (
@@ -114,6 +114,12 @@ fn test_prefixes() {
             &["Sv", "sievert", "sieverts"][..],
         ),
         (Unit::Derived(units::KATAL), &["kat", "katal", "katals"][..]),
+        // misc
+        (Unit::Derived(distances::NAUTICAL_MILE), &["NM", "nmi"][..]),
+        (
+            Unit::Derived(velocities::KNOT),
+            &["kt", "knot", "knots"][..],
+        ),
         // imperial units
         (
             Unit::Derived(units::imperial::THOU),

@@ -3,10 +3,10 @@
 use crate::unit::{Derived, DerivedVtable, Unit};
 use num::BigRational;
 
-mod times;
-pub use self::times::*;
-
+pub mod distances;
 pub mod imperial;
+pub mod times;
+pub mod velocities;
 
 /// Velocity in `m*s` with the `v` suffix.
 pub static VELOCITY: Derived = Derived {
@@ -95,30 +95,6 @@ pub static PASCAL: Derived = Derived {
         },
         format: |f, _| write!(f, "Pa"),
         multiple_ratio: None,
-    },
-};
-
-/// An astronomical unit in [Unit::Meter].
-pub static AU: Derived = Derived {
-    id: 0xc790db55,
-    vtable: &DerivedVtable {
-        powers: |powers, p| {
-            powers.insert(Unit::Meter, p);
-        },
-        format: |f, _| write!(f, "au"),
-        multiple_ratio: Some(|| BigRational::new(149597870700u64.into(), 1u32.into())),
-    },
-};
-
-/// The speed of light in `m/s`.
-///
-/// See [VELOCITY].
-pub static LIGHTSPEED: Derived = Derived {
-    id: 0x8e8393e6,
-    vtable: &DerivedVtable {
-        powers: VELOCITY.vtable.powers,
-        format: |f, _| write!(f, "c"),
-        multiple_ratio: Some(|| BigRational::new(299792458u32.into(), 1u32.into())),
     },
 };
 
@@ -363,7 +339,7 @@ pub static KATAL: Derived = Derived {
     },
 };
 
-/// Specific impuse as `s` with the `sp` suffix.
+/// Specific impulse as `s` with the `sp` suffix.
 pub static SPECIFIC_IMPUSE: Derived = Derived {
     id: 0x9645d02f,
     vtable: &DerivedVtable {

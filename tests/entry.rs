@@ -53,12 +53,16 @@ macro_rules! assert_query {
     };
 }
 
+#[path = "entry/distances.rs"]
+mod distances;
 #[path = "entry/imperial.rs"]
 mod imperial;
+#[path = "entry/velocities.rs"]
+mod velocities;
 
 #[test]
 fn test_queries() {
-    let c = Compound::from_iter([(Unit::Derived(units::LIGHTSPEED), (1, 0))]);
+    let c = Compound::from_iter([(Unit::Derived(units::velocities::LIGHTSPEED), (1, 0))]);
 
     let n = query!("12c");
 

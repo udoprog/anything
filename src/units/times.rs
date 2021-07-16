@@ -1,3 +1,5 @@
+//! Special time units.
+
 use crate::powers::Powers;
 use crate::unit::{Derived, DerivedVtable, Unit};
 use num::BigRational;

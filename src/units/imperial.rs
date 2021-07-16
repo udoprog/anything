@@ -2,10 +2,7 @@
 //!
 //! See [Imperial units on Wikipedia](https://en.wikipedia.org/wiki/Imperial_units).
 
-use crate::{
-    unit::{Derived, DerivedVtable},
-    Unit,
-};
+use crate::unit::{Derived, DerivedVtable, Unit};
 use num::BigRational;
 
 /// Thou `thou` (`1⁄12000ft`).

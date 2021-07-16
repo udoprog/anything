@@ -1,6 +1,6 @@
 use crate::prefix::Prefix;
 use crate::unit::Unit;
-use crate::units;
+use crate::units::{self, distances, times, velocities};
 use logos::Logos;
 
 #[cfg(test)]
@@ -206,6 +206,15 @@ enum Token {
     #[token("katals")]
     Katal,
 
+    #[token("NM")]
+    #[token("nmi")]
+    NauticalMile,
+
+    #[token("kt")]
+    #[token("knot")]
+    #[token("knots")]
+    Knot,
+
     #[token("th")]
     #[token("thou")]
     #[token("thous")]
@@ -380,17 +389,17 @@ impl<'a> UnitParser<'a> {
                 Token::Byte => Unit::Byte,
                 Token::Meter => Unit::Meter,
                 Token::Ton => Unit::Derived(units::TON),
-                Token::Minute => Unit::Derived(units::MINUTE),
-                Token::Hour => Unit::Derived(units::HOUR),
-                Token::Day => Unit::Derived(units::DAY),
-                Token::Week => Unit::Derived(units::WEEK),
-                Token::Month => Unit::Derived(units::MONTH),
-                Token::Year => Unit::Derived(units::YEAR),
-                Token::Decade => Unit::Derived(units::DECADE),
-                Token::Century => Unit::Derived(units::CENTURY),
-                Token::Millenium => Unit::Derived(units::MILLENIUM),
+                Token::Minute => Unit::Derived(times::MINUTE),
+                Token::Hour => Unit::Derived(times::HOUR),
+                Token::Day => Unit::Derived(times::DAY),
+                Token::Week => Unit::Derived(times::WEEK),
+                Token::Month => Unit::Derived(times::MONTH),
+                Token::Year => Unit::Derived(times::YEAR),
+                Token::Decade => Unit::Derived(times::DECADE),
+                Token::Century => Unit::Derived(times::CENTURY),
+                Token::Millenium => Unit::Derived(times::MILLENIUM),
                 Token::Btu => Unit::Derived(units::BTU),
-                Token::Au => Unit::Derived(units::AU),
+                Token::Au => Unit::Derived(distances::AU),
                 Token::Acceleration => Unit::Derived(units::ACCELERATION),
                 Token::Velocity => Unit::Derived(units::VELOCITY),
                 Token::Gforce => Unit::Derived(units::GFORCE),
@@ -412,6 +421,10 @@ impl<'a> UnitParser<'a> {
                 Token::Gray => Unit::Derived(units::GRAY),
                 Token::Sievert => Unit::Derived(units::SIEVERT),
                 Token::Katal => Unit::Derived(units::KATAL),
+                // misc
+                Token::NauticalMile => Unit::Derived(units::distances::NAUTICAL_MILE),
+                Token::Knot => Unit::Derived(units::velocities::KNOT),
+                // imperial
                 Token::Thou => Unit::Derived(units::imperial::THOU),
                 Token::Barleycorn => Unit::Derived(units::imperial::BARLEYCORN),
                 Token::Inch => Unit::Derived(units::imperial::INCH),
@@ -460,7 +473,7 @@ impl<'a> UnitParser<'a> {
                         continue;
                     }
 
-                    Unit::Derived(units::MILLENIUM)
+                    Unit::Derived(units::times::MILLENIUM)
                 }
                 Token::Mega => {
                     prefix += Prefix::MEGA;
@@ -488,7 +501,7 @@ impl<'a> UnitParser<'a> {
                         continue;
                     }
 
-                    Unit::Derived(units::LIGHTSPEED)
+                    Unit::Derived(velocities::LIGHTSPEED)
                 }
                 Token::Centi => {
                     prefix += Prefix::CENTI;

@@ -208,6 +208,12 @@ enum Combined {
     #[token("league")]
     #[token("leagues")]
     League,
+    #[token("°C")]
+    #[token("celsius")]
+    Celsius,
+    #[token("°F")]
+    #[token("fahrenheit")]
+    Fahrenheit,
     /// Prefixes
     #[token("Y")]
     #[token("yotta")]
@@ -287,6 +293,7 @@ enum Units {
     #[token("min")]
     #[token("mins")]
     Minute,
+    #[token("h")]
     #[token("hr")]
     #[token("hour")]
     #[token("hours")]
@@ -487,6 +494,12 @@ enum Units {
     #[token("league")]
     #[token("leagues")]
     League,
+    #[token("°C")]
+    #[token("celsius")]
+    Celsius,
+    #[token("°F")]
+    #[token("fahrenheit")]
+    Fahrenheit,
     #[token("-")]
     Separator,
     #[error]
@@ -558,6 +571,8 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Combined::Furlong => Unit::Derived(units::imperial::FURLONG),
             Combined::Mile => Unit::Derived(units::imperial::MILE),
             Combined::League => Unit::Derived(units::imperial::LEAGUE),
+            Combined::Celsius => Unit::Derived(units::temperatures::CELSIUS),
+            Combined::Fahrenheit => Unit::Derived(units::temperatures::FAHRENHEIT),
             Combined::Yotta => {
                 prefix += Prefix::YOTTA;
                 break;
@@ -599,6 +614,10 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
                 break;
             }
             Combined::Hecto => {
+                if lexer.remainder().is_empty() {
+                    return Some(("", prefix, Unit::Derived(units::times::HOUR)));
+                }
+
                 prefix += Prefix::HECTO;
                 break;
             }
@@ -841,6 +860,12 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             }
             Units::League => {
                 break Unit::Derived(units::imperial::LEAGUE);
+            }
+            Units::Celsius => {
+                break Unit::Derived(units::temperatures::CELSIUS);
+            }
+            Units::Fahrenheit => {
+                break Unit::Derived(units::temperatures::FAHRENHEIT);
             }
             Units::Separator => {
                 continue;

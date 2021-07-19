@@ -8,7 +8,7 @@ names = ["minute", "minutes", "min", "mins"]
 unit = "Unit::Derived(units::times::MINUTE)"
 [[units]]
 variant = "Hour"
-names = ["hr", "hour", "hours"]
+names = ["h", "hr", "hour", "hours"]
 unit = "Unit::Derived(units::times::HOUR)"
 [[units]]
 variant = "Day"
@@ -215,6 +215,15 @@ unit = "Unit::Derived(units::imperial::MILE)"
 variant = "League"
 names = ["lea", "league", "leagues"]
 unit = "Unit::Derived(units::imperial::LEAGUE)"
+
+[[units]]
+variant = "Celsius"
+names = ["°C", "celsius"]
+unit = "Unit::Derived(units::temperatures::CELSIUS)"
+[[units]]
+variant = "Fahrenheit"
+names = ["°F","fahrenheit"]
+unit = "Unit::Derived(units::temperatures::FAHRENHEIT)"
 
 [[prefixes]]
 variant = "Yotta"

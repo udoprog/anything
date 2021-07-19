@@ -57,6 +57,8 @@ macro_rules! assert_query {
 mod distances;
 #[path = "entry/imperial.rs"]
 mod imperial;
+#[path = "entry/temperatures.rs"]
+mod temperatures;
 #[path = "entry/velocities.rs"]
 mod velocities;
 

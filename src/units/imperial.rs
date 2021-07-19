@@ -2,7 +2,7 @@
 //!
 //! See [Imperial units on Wikipedia](https://en.wikipedia.org/wiki/Imperial_units).
 
-use crate::unit::{Derived, DerivedVtable, Unit};
+use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
 use num::BigRational;
 
 /// Thou `thou` (`1⁄12000ft`).
@@ -13,7 +13,14 @@ pub static THOU: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "th"),
-        multiple_ratio: Some(|| BigRational::new(254u32.into(), 10000000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(254u32.into(), 10000000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(254u32.into(), 10000000u32.into());
+            },
+        }),
     },
 };
 
@@ -25,7 +32,14 @@ pub static BARLEYCORN: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "Bc"),
-        multiple_ratio: Some(|| BigRational::new(254u32.into(), 30000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(254u32.into(), 30000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(254u32.into(), 30000u32.into());
+            },
+        }),
     },
 };
 
@@ -37,7 +51,14 @@ pub static INCH: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "in"),
-        multiple_ratio: Some(|| BigRational::new(254u32.into(), 10000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(254u32.into(), 10000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(254u32.into(), 10000u32.into());
+            },
+        }),
     },
 };
 
@@ -49,7 +70,14 @@ pub static HAND: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "hand"),
-        multiple_ratio: Some(|| BigRational::new(1016.into(), 10000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(1016.into(), 10000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(1016.into(), 10000u32.into());
+            },
+        }),
     },
 };
 
@@ -61,7 +89,14 @@ pub static FOOT: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "ft"),
-        multiple_ratio: Some(|| BigRational::new(3048u32.into(), 10000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(3048u32.into(), 10000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(3048u32.into(), 10000u32.into());
+            },
+        }),
     },
 };
 
@@ -73,7 +108,14 @@ pub static YARD: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "yd"),
-        multiple_ratio: Some(|| BigRational::new(9144u32.into(), 10000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(9144u32.into(), 10000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(9144u32.into(), 10000u32.into());
+            },
+        }),
     },
 };
 
@@ -85,7 +127,14 @@ pub static CHAIN: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "ch"),
-        multiple_ratio: Some(|| BigRational::new(201168u32.into(), 10000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(201168u32.into(), 10000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(201168u32.into(), 10000u32.into());
+            },
+        }),
     },
 };
 
@@ -97,7 +146,14 @@ pub static FURLONG: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "fur"),
-        multiple_ratio: Some(|| BigRational::new(201168u32.into(), 1000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(201168u32.into(), 1000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(201168u32.into(), 1000u32.into());
+            },
+        }),
     },
 };
 
@@ -109,7 +165,14 @@ pub static MILE: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "mi"),
-        multiple_ratio: Some(|| BigRational::new(1609344u32.into(), 1000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(1609344u32.into(), 1000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(1609344u32.into(), 1000u32.into());
+            },
+        }),
     },
 };
 
@@ -121,6 +184,13 @@ pub static LEAGUE: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "lea"),
-        multiple_ratio: Some(|| BigRational::new(4828032u32.into(), 1000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(4828032u32.into(), 1000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(4828032u32.into(), 1000u32.into());
+            },
+        }),
     },
 };

@@ -138,7 +138,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn consume_unit_word(&mut self) {
-        while let Some('a'..='z' | 'A'..='Z' | '-') = self.peek() {
+        while let Some('a'..='z' | 'A'..='Z' | '°' | '\'' | '\"' | '-') = self.peek() {
             self.step();
         }
     }
@@ -185,7 +185,7 @@ impl<'a> Lexer<'a> {
                     ERROR
                 }
             }
-            'a'..='z' | 'A'..='Z' => {
+            'a'..='z' | 'A'..='Z' | '°' | '\'' | '\"' => {
                 self.step();
                 self.consume_unit_word();
                 UNIT_WORD

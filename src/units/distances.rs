@@ -1,6 +1,6 @@
 //! Special distance units.
 
-use crate::unit::{Derived, DerivedVtable, Unit};
+use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
 use num::BigRational;
 
 /// An astronomical unit (`au`) in [Unit::Meter].
@@ -11,7 +11,14 @@ pub static AU: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "au"),
-        multiple_ratio: Some(|| BigRational::new(149597870700u64.into(), 1u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(149597870700u64.into(), 1u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(149597870700u64.into(), 1u32.into());
+            },
+        }),
     },
 };
 
@@ -23,6 +30,13 @@ pub static NAUTICAL_MILE: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "NM"),
-        multiple_ratio: Some(|| BigRational::new(1852.into(), 1.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(1852.into(), 1.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(1852.into(), 1.into());
+            },
+        }),
     },
 };

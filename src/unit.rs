@@ -58,11 +58,12 @@ impl Unit {
         }
     }
 
-    /// Get the multiple of the type as a ratio.
-    pub fn multiple_ratio(&self) -> Option<BigRational> {
-        match self {
-            Unit::Derived(derived) => Some((derived.vtable.multiple_ratio?)()),
-            _ => None,
+    /// Access conversion functions for the given unit.
+    pub fn conversion(&self) -> Option<Conversion> {
+        if let Unit::Derived(d) = self {
+            d.vtable.conversion
+        } else {
+            None
         }
     }
 
@@ -144,14 +145,22 @@ impl fmt::Display for Display<'_> {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct Conversion {
+    /// A conversion to kelvin from a given unit.
+    pub to: fn(&mut BigRational),
+    /// Perform a conversion from kelvin to a given unit.
+    pub from: fn(&mut BigRational),
+}
+
 /// The vtable for a derived unit.
 pub struct DerivedVtable {
     /// Populate base powers.
     pub powers: fn(&mut Powers, i32),
     /// Format the unit.
     pub format: fn(&mut fmt::Formatter<'_>, bool) -> fmt::Result,
-    /// Access multiplier as a ratio.
-    pub multiple_ratio: Option<fn() -> BigRational>,
+    /// Access conversion functions.
+    pub conversion: Option<Conversion>,
 }
 
 /// Wrapper arounda derived unit.

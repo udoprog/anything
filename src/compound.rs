@@ -1,6 +1,6 @@
 use crate::powers::Powers;
 use crate::syntax::parser::Parser;
-use crate::unit::Unit;
+use crate::unit::{Conversion, Unit};
 use num::BigRational;
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
@@ -115,14 +115,14 @@ impl Compound {
         for (name, state) in &other.names {
             *value *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
 
-            if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power, value, multiple);
+            if let Some(conversion) = name.conversion() {
+                apply_conversion(state.power, value, conversion);
             }
         }
 
         for (name, state) in &self.names {
-            if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power * -1, value, multiple);
+            if let Some(conversion) = name.conversion() {
+                apply_conversion(state.power * -1, value, conversion);
             }
 
             *value /= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
@@ -177,16 +177,16 @@ impl Compound {
         for (name, state) in &self.names {
             *lhs *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
 
-            if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power, lhs, multiple);
+            if let Some(conversion) = name.conversion() {
+                apply_conversion(state.power, lhs, conversion);
             }
         }
 
         for (name, state) in &other.names {
             *rhs *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
 
-            if let Some(multiple) = name.multiple_ratio() {
-                multiply_factor(state.power, rhs, multiple);
+            if let Some(conversion) = name.conversion() {
+                apply_conversion(state.power, rhs, conversion);
             }
         }
 
@@ -243,12 +243,12 @@ impl Compound {
                     }
                 };
 
-                if let Some(multiple) = unit.multiple_ratio() {
+                if let Some(conversion) = unit.conversion() {
                     // So this is kinda complicated, so bear with me. `n` is the
                     // original factor modifier, which we apply to mod_power to
                     // get the original power back. Then we multiply by `-1`
                     // because we want to shed the multiples here.
-                    multiply_factor(mod_power * -1, out, multiple);
+                    apply_conversion(mod_power * -1, out, conversion);
                 }
             }
         }
@@ -425,12 +425,12 @@ impl fmt::Display for Compound {
     }
 }
 
-fn multiply_factor(pow: i32, ratio: &mut BigRational, multiple: BigRational) {
+fn apply_conversion(pow: i32, ratio: &mut BigRational, conversion: Conversion) {
     for _ in pow..0 {
-        *ratio /= multiple.clone();
+        (conversion.from)(ratio);
     }
 
     for _ in 0..pow {
-        *ratio *= multiple.clone();
+        (conversion.to)(ratio);
     }
 }

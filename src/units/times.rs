@@ -1,7 +1,7 @@
 //! Special time units.
 
 use crate::powers::Powers;
-use crate::unit::{Derived, DerivedVtable, Unit};
+use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
 use num::BigRational;
 
 fn time_powers(powers: &mut Powers, power: i32) {
@@ -16,7 +16,14 @@ macro_rules! time {
             vtable: &DerivedVtable {
                 powers: time_powers,
                 format: $f,
-                multiple_ratio: Some(|| BigRational::new($num.into(), $den.into())),
+                conversion: Some(Conversion {
+                    to: |num| {
+                        *num *= BigRational::new($num.into(), $den.into());
+                    },
+                    from: |num| {
+                        *num /= BigRational::new($num.into(), $den.into());
+                    }
+                }),
             },
         };
     };

@@ -1,10 +1,11 @@
 //! Available derived units.
 
-use crate::unit::{Derived, DerivedVtable, Unit};
+use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
 use num::BigRational;
 
 pub mod distances;
 pub mod imperial;
+pub mod temperatures;
 pub mod times;
 pub mod velocities;
 
@@ -17,7 +18,7 @@ pub static VELOCITY: Derived = Derived {
             powers.insert(Unit::Second, p * -1);
         },
         format: |f, _| write!(f, "v"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -30,7 +31,7 @@ pub static ACCELERATION: Derived = Derived {
             powers.insert(Unit::Second, p * -2);
         },
         format: |f, _| write!(f, "a"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -46,7 +47,14 @@ pub static GFORCE: Derived = Derived {
     vtable: &DerivedVtable {
         powers: ACCELERATION.vtable.powers,
         format: |f, _| write!(f, "g"),
-        multiple_ratio: Some(|| BigRational::new(980665u32.into(), 100000u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(980665u32.into(), 100000u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(980665u32.into(), 100000u32.into());
+            },
+        }),
     },
 };
 
@@ -66,7 +74,14 @@ pub static TON: Derived = Derived {
                 write!(f, "ton")
             }
         },
-        multiple_ratio: Some(|| BigRational::new(1000u32.into(), 1u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(1000u32.into(), 1u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(1000u32.into(), 1u32.into());
+            },
+        }),
     },
 };
 
@@ -80,7 +95,7 @@ pub static NEWTON: Derived = Derived {
             powers.insert(Unit::Second, p * -2);
         },
         format: |f, _| write!(f, "N"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -94,7 +109,7 @@ pub static PASCAL: Derived = Derived {
             powers.insert(Unit::Second, p * -2);
         },
         format: |f, _| write!(f, "Pa"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -108,7 +123,7 @@ pub static JOULE: Derived = Derived {
             powers.insert(Unit::Second, p * -2);
         },
         format: |f, _| write!(f, "J"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -128,7 +143,14 @@ pub static BTU: Derived = Derived {
                 write!(f, "btu")
             }
         },
-        multiple_ratio: Some(|| BigRational::new(1055u32.into(), 1u32.into())),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(1055u32.into(), 1u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(1055u32.into(), 1u32.into());
+            },
+        }),
     },
 };
 
@@ -142,7 +164,7 @@ pub static WATT: Derived = Derived {
             powers.insert(Unit::Second, p * -3);
         },
         format: |f, _| write!(f, "W"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -155,7 +177,7 @@ pub static COULOMB: Derived = Derived {
             powers.insert(Unit::Ampere, p);
         },
         format: |f, _| write!(f, "C"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -170,7 +192,7 @@ pub static VOLT: Derived = Derived {
             powers.insert(Unit::Ampere, p * -1);
         },
         format: |f, _| write!(f, "V"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -185,7 +207,7 @@ pub static FARAD: Derived = Derived {
             powers.insert(Unit::Ampere, p * 2);
         },
         format: |f, _| write!(f, "F"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -200,7 +222,7 @@ pub static OHM: Derived = Derived {
             powers.insert(Unit::Ampere, p * -2);
         },
         format: |f, _| write!(f, "Ω"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -215,7 +237,7 @@ pub static SIEMENS: Derived = Derived {
             powers.insert(Unit::Ampere, p * 2);
         },
         format: |f, _| write!(f, "S"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -230,7 +252,7 @@ pub static WEBER: Derived = Derived {
             powers.insert(Unit::Ampere, p * -1);
         },
         format: |f, _| write!(f, "Wb"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -244,7 +266,7 @@ pub static TESLA: Derived = Derived {
             powers.insert(Unit::Ampere, p * -1);
         },
         format: |f, _| write!(f, "T"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -259,7 +281,7 @@ pub static HENRY: Derived = Derived {
             powers.insert(Unit::Ampere, p * -2);
         },
         format: |f, _| write!(f, "H"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -271,7 +293,7 @@ pub static LUMEN: Derived = Derived {
             powers.insert(Unit::Candela, p);
         },
         format: |f, _| write!(f, "lm"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -284,7 +306,7 @@ pub static LUX: Derived = Derived {
             powers.insert(Unit::Meter, p * -2);
         },
         format: |f, _| write!(f, "lx"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -296,7 +318,7 @@ pub static BECQUEREL: Derived = Derived {
             powers.insert(Unit::Second, p * -1);
         },
         format: |f, _| write!(f, "Bq"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -309,7 +331,7 @@ pub static GRAY: Derived = Derived {
             powers.insert(Unit::Second, p * -2);
         },
         format: |f, _| write!(f, "Gy"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -322,7 +344,7 @@ pub static SIEVERT: Derived = Derived {
             powers.insert(Unit::Second, p * -2);
         },
         format: |f, _| write!(f, "Sv"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -335,7 +357,7 @@ pub static KATAL: Derived = Derived {
             powers.insert(Unit::Second, p * -1);
         },
         format: |f, _| write!(f, "kat"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };
 
@@ -347,6 +369,6 @@ pub static SPECIFIC_IMPUSE: Derived = Derived {
             powers.insert(Unit::Second, p);
         },
         format: |f, _| write!(f, "sp"),
-        multiple_ratio: None,
+        conversion: None,
     },
 };

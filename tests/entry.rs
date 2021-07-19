@@ -53,20 +53,24 @@ macro_rules! assert_query {
     };
 }
 
-#[path = "entry/imperial_lengths.rs"]
-mod imperial_lengths;
-#[path = "entry/imperial_weights.rs"]
-mod imperial_weights;
-#[path = "entry/lengths.rs"]
-mod lengths;
-#[path = "entry/temperatures.rs"]
-mod temperatures;
-#[path = "entry/velocities.rs"]
-mod velocities;
+#[path = "entry/areas.rs"]
+mod areas;
+#[path = "entry/energy.rs"]
+mod energy;
+#[path = "entry/length.rs"]
+mod length;
+#[path = "entry/mass.rs"]
+mod mass;
+#[path = "entry/temperature.rs"]
+mod temperature;
+#[path = "entry/velocity.rs"]
+mod velocity;
+#[path = "entry/volume.rs"]
+mod volume;
 
 #[test]
 fn test_queries() {
-    let c = Compound::from_iter([(Unit::Derived(units::velocities::LIGHT_SPEED), (1, 0))]);
+    let c = Compound::from_iter([(Unit::Derived(units::velocity::LIGHT_SPEED), (1, 0))]);
 
     let n = query!("12c");
 
@@ -102,21 +106,6 @@ fn test_velocities() {
 
     let value = query!("10km / 1c");
     assert_eq!(value.value(), &ratio!(5000 / 149896229));
-}
-
-#[test]
-fn test_multiple_division() {
-    assert_query!("1Gbtu to J", 1055000000000, J);
-    assert_query!("1btu^2 to J^2", 1113025, J ^ 2);
-    assert_query!("1Gbtu^2 to J^2", 1113025000000000000000000, J ^ 2);
-    assert_query!("1Gbtu^2 / 1113025kJ^2", 1000000000000);
-    assert_query!("1btu^2 * 1113025J^2 as J^4", 1238824650625, J ^ 4);
-    assert_query!("1Gbtu^2 * 1113025kJ^2", 1113025000000000000000000000000, btu^2J^2);
-    assert_query!(
-        "1Gbtu^2 * 1113025kJ^2 to J^4",
-        1238824650625000000000000000000000000,
-        J ^ 4
-    );
 }
 
 #[test]

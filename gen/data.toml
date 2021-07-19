@@ -3,42 +3,6 @@ variant = "Second"
 names = ["s", "sec", "second", "seconds"]
 unit = "Unit::Second"
 [[units]]
-variant = "Minute"
-names = ["minute", "minutes", "min", "mins"]
-unit = "Unit::Derived(units::times::MINUTE)"
-[[units]]
-variant = "Hour"
-names = ["h", "hr", "hour", "hours"]
-unit = "Unit::Derived(units::times::HOUR)"
-[[units]]
-variant = "Day"
-names = ["dy", "day", "days"]
-unit = "Unit::Derived(units::times::DAY)"
-[[units]]
-variant = "Week"
-names = ["wk", "week", "weeks"]
-unit = "Unit::Derived(units::times::WEEK)"
-[[units]]
-variant = "Month"
-names = ["mth", "mths", "month", "months"]
-unit = "Unit::Derived(units::times::MONTH)"
-[[units]]
-variant = "Year"
-names = ["y", "yr", "yrs", "year", "years"]
-unit = "Unit::Derived(units::times::YEAR)"
-[[units]]
-variant = "Decade"
-names = ["decade", "decades"]
-unit = "Unit::Derived(units::times::DECADE)"
-[[units]]
-variant = "Century"
-names = ["century", "centuries"]
-unit = "Unit::Derived(units::times::CENTURY)"
-[[units]]
-variant = "Millenium"
-names = ["M", "millenium", "milleniums", "millenia"]
-unit = "Unit::Derived(units::times::MILLENIUM)"
-[[units]]
 variant = "Meter"
 names = ["m", "metre", "meter", "meters"]
 unit = "Unit::Meter"
@@ -47,10 +11,6 @@ variant = "Gram"
 names = ["g", "gram"]
 unit = "Unit::KiloGram"
 prefix_bias = -3
-[[units]]
-variant = "Ton"
-names = ["ton", "tons", "tonnes", "tonne"]
-unit = "Unit::Derived(units::TON)"
 [[units]]
 variant = "Ampere"
 names = ["A", "ampere", "amperes"]
@@ -71,14 +31,101 @@ unit = "Unit::Candela"
 variant = "Byte"
 names = ["B", "byte"]
 unit = "Unit::Byte"
+
+[[units]]
+variant = "Minute"
+names = ["minute", "minutes", "min", "mins"]
+unit = "Unit::Derived(units::time::MINUTE)"
+[[units]]
+variant = "Hour"
+names = ["h", "hr", "hour", "hours"]
+unit = "Unit::Derived(units::time::HOUR)"
+[[units]]
+variant = "Day"
+names = ["dy", "day", "days"]
+unit = "Unit::Derived(units::time::DAY)"
+[[units]]
+variant = "Week"
+names = ["wk", "week", "weeks"]
+unit = "Unit::Derived(units::time::WEEK)"
+[[units]]
+variant = "Month"
+names = ["mth", "mths", "month", "months"]
+unit = "Unit::Derived(units::time::MONTH)"
+[[units]]
+variant = "Year"
+names = ["y", "yr", "yrs", "year", "years"]
+unit = "Unit::Derived(units::time::YEAR)"
+[[units]]
+variant = "Decade"
+names = ["decade", "decades"]
+unit = "Unit::Derived(units::time::DECADE)"
+[[units]]
+variant = "Century"
+names = ["century", "centuries"]
+unit = "Unit::Derived(units::time::CENTURY)"
+[[units]]
+variant = "Millenium"
+names = ["M", "millenium", "milleniums", "millenia"]
+unit = "Unit::Derived(units::time::MILLENIUM)"
+
+[[units]]
+variant = "Tonne"
+names = ["ton", "tons", "tonne", "tonnes"]
+unit = "Unit::Derived(units::mass::TONNE)"
+[[units]]
+variant = "Dalton"
+names = ["Da", "dalton", "daltons"]
+unit = "Unit::Derived(units::mass::DALTON)"
+
 [[units]]
 variant = "Au"
 names = ["au"]
-unit = "Unit::Derived(units::lengths::AU)"
+unit = "Unit::Derived(units::length::AU)"
+[[units]]
+variant = "Fathom"
+names = ["ftm", "fathom", "fathoms"]
+unit = "Unit::Derived(units::length::FATHOM)"
+[[units]]
+variant = "Cable"
+names = ["cable", "cables"]
+unit = "Unit::Derived(units::length::CABLE)"
 [[units]]
 variant = "NauticalMile"
 names = ["NM", "nmi"]
-unit = "Unit::Derived(units::lengths::NAUTICAL_MILE)"
+unit = "Unit::Derived(units::length::NAUTICAL_MILE)"
+[[units]]
+variant = "Link"
+names = ["link", "links"]
+unit = "Unit::Derived(units::length::LINK)"
+[[units]]
+variant = "Rod"
+names = ["rd", "rod", "rods"]
+unit = "Unit::Derived(units::length::ROD)"
+
+[[units]]
+variant = "Hectare"
+names = ["ha", "hectare", "hectares"]
+unit = "Unit::Derived(units::area::HECTARE)"
+
+[[units]]
+variant = "Litre"
+names = ["l", "L", "litre", "litres"]
+unit = "Unit::Derived(units::volume::LITRE)"
+
+[[units]]
+variant = "Perch"
+names = ["perch", "perches"]
+unit = "Unit::Derived(units::area::PERCH)"
+[[units]]
+variant = "Rood"
+names = ["rood", "roods"]
+unit = "Unit::Derived(units::area::ROOD)"
+[[units]]
+variant = "Acre"
+names = ["acre", "acres"]
+unit = "Unit::Derived(units::area::ACRE)"
+
 [[units]]
 variant = "Acceleration"
 names = ["a", "acc", "acceleration"]
@@ -99,14 +146,20 @@ unit = "Unit::Derived(units::NEWTON)"
 variant = "Pascal"
 names = ["Pa", "pascal", "pascals"]
 unit = "Unit::Derived(units::PASCAL)"
+
 [[units]]
 variant = "Joule"
 names = ["J", "joule"]
-unit = "Unit::Derived(units::JOULE)"
+unit = "Unit::Derived(units::energy::JOULE)"
 [[units]]
 variant = "Btu"
 names = ["btu"]
-unit = "Unit::Derived(units::BTU)"
+unit = "Unit::Derived(units::energy::BTU)"
+[[units]]
+variant = "Electronvolt"
+names = ["eV", "electronvolt", "electronvolts"]
+unit = "Unit::Derived(units::energy::ELECTRONVOLT)"
+
 [[units]]
 variant = "Watt"
 names = ["W", "watt", "watts"]
@@ -167,100 +220,102 @@ unit = "Unit::Derived(units::SIEVERT)"
 variant = "Katal"
 names = ["kat", "katal", "katals"]
 unit = "Unit::Derived(units::KATAL)"
+
 [[units]]
 variant = "LightSpeed"
 names = ["c"]
-unit = "Unit::Derived(units::velocities::LIGHT_SPEED)"
+unit = "Unit::Derived(units::velocity::LIGHT_SPEED)"
 [[units]]
 variant = "Knot"
 names = ["kt", "knot", "knots"]
-unit = "Unit::Derived(units::velocities::KNOT)"
+unit = "Unit::Derived(units::velocity::KNOT)"
+
 [[units]]
 variant = "Thou"
 names = ["th", "thou", "thous"]
-unit = "Unit::Derived(units::imperial_lengths::THOU)"
+unit = "Unit::Derived(units::length::THOU)"
 [[units]]
 variant = "Barleycorn"
 names = ["Bc", "barleycorn", "barleycorns"]
-unit = "Unit::Derived(units::imperial_lengths::BARLEYCORN)"
+unit = "Unit::Derived(units::length::BARLEYCORN)"
 [[units]]
 variant = "Inch"
 names = ["in", "inch", "inches"]
-unit = "Unit::Derived(units::imperial_lengths::INCH)"
+unit = "Unit::Derived(units::length::INCH)"
 [[units]]
 variant = "Hand"
 names = ["hand", "hands"]
-unit = "Unit::Derived(units::imperial_lengths::HAND)"
+unit = "Unit::Derived(units::length::HAND)"
 [[units]]
 variant = "Feet"
 names = ["ft", "feet", "feets"]
-unit = "Unit::Derived(units::imperial_lengths::FOOT)"
+unit = "Unit::Derived(units::length::FOOT)"
 [[units]]
 variant = "Yard"
 names = ["yd", "yard", "yards"]
-unit = "Unit::Derived(units::imperial_lengths::YARD)"
+unit = "Unit::Derived(units::length::YARD)"
 [[units]]
 variant = "Chain"
 names = ["ch", "chain", "chains"]
-unit = "Unit::Derived(units::imperial_lengths::CHAIN)"
+unit = "Unit::Derived(units::length::CHAIN)"
 [[units]]
 variant = "Furlong"
 names = ["fur", "furlong", "furlongs"]
-unit = "Unit::Derived(units::imperial_lengths::FURLONG)"
+unit = "Unit::Derived(units::length::FURLONG)"
 [[units]]
 variant = "Mile"
 names = ["mi", "mile", "miles"]
-unit = "Unit::Derived(units::imperial_lengths::MILE)"
+unit = "Unit::Derived(units::length::MILE)"
 [[units]]
 variant = "League"
 names = ["lea", "league", "leagues"]
-unit = "Unit::Derived(units::imperial_lengths::LEAGUE)"
+unit = "Unit::Derived(units::length::LEAGUE)"
 
 [[units]]
 variant = "Grain"
 names = ["gr", "grain", "grains"]
-unit = "Unit::Derived(units::imperial_weights::GRAIN)"
+unit = "Unit::Derived(units::mass::GRAIN)"
 [[units]]
 variant = "Drachm"
 names = ["dr", "drachm", "drachms"]
-unit = "Unit::Derived(units::imperial_weights::DRACHM)"
+unit = "Unit::Derived(units::mass::DRACHM)"
 [[units]]
 variant = "Ounce"
 names = ["oz", "ounce", "ounces"]
-unit = "Unit::Derived(units::imperial_weights::OUNCE)"
+unit = "Unit::Derived(units::mass::OUNCE)"
 [[units]]
 variant = "Pound"
 names = ["lb", "pound", "pounds"]
-unit = "Unit::Derived(units::imperial_weights::POUND)"
+unit = "Unit::Derived(units::mass::POUND)"
 [[units]]
 variant = "Stone"
 names = ["st", "stone", "stones"]
-unit = "Unit::Derived(units::imperial_weights::STONE)"
+unit = "Unit::Derived(units::mass::STONE)"
 [[units]]
 variant = "Quarter"
 names = ["qr", "qtr", "quarter", "quarters"]
-unit = "Unit::Derived(units::imperial_weights::QUARTER)"
+unit = "Unit::Derived(units::mass::QUARTER)"
 [[units]]
 variant = "Hundredweight"
 names = ["cwt", "hundredweight", "hundredweights"]
-unit = "Unit::Derived(units::imperial_weights::HUNDREDWEIGHT)"
+unit = "Unit::Derived(units::mass::HUNDREDWEIGHT)"
 [[units]]
 variant = "ImperialTon"
 names = ["t"]
-unit = "Unit::Derived(units::imperial_weights::TON)"
+unit = "Unit::Derived(units::mass::TON)"
 [[units]]
 variant = "Slug"
 names = ["slug", "slugs"]
-unit = "Unit::Derived(units::imperial_weights::SLUG)"
+unit = "Unit::Derived(units::mass::SLUG)"
 
 [[units]]
 variant = "Celsius"
 names = ["°C", "celsius"]
-unit = "Unit::Derived(units::temperatures::CELSIUS)"
+unit = "Unit::Derived(units::temperature::CELSIUS)"
 [[units]]
 variant = "Fahrenheit"
 names = ["°F","fahrenheit"]
-unit = "Unit::Derived(units::temperatures::FAHRENHEIT)"
+unit = "Unit::Derived(units::temperature::FAHRENHEIT)"
 
 [[prefixes]]
 variant = "Yotta"

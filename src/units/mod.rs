@@ -3,12 +3,14 @@
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
 use num::BigRational;
 
-pub mod imperial_lengths;
-pub mod imperial_weights;
-pub mod lengths;
-pub mod temperatures;
-pub mod times;
-pub mod velocities;
+pub mod area;
+pub mod energy;
+pub mod length;
+pub mod mass;
+pub mod temperature;
+pub mod time;
+pub mod velocity;
+pub mod volume;
 
 /// Velocity in `m*s` with the `v` suffix.
 pub static VELOCITY: Derived = Derived {
@@ -59,33 +61,6 @@ pub static GFORCE: Derived = Derived {
     },
 };
 
-/// A ton or `1000kg`.
-///
-/// See [Unit::KiloGram].
-pub static TON: Derived = Derived {
-    id: 0x7b15d4d8,
-    vtable: &DerivedVtable {
-        powers: |powers, p| {
-            powers.insert(Unit::KiloGram, p);
-        },
-        format: |f, pluralize| {
-            if pluralize {
-                write!(f, "tons")
-            } else {
-                write!(f, "ton")
-            }
-        },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= BigRational::new(1000u32.into(), 1u32.into());
-            },
-            from: |num| {
-                *num /= BigRational::new(1000u32.into(), 1u32.into());
-            },
-        }),
-    },
-};
-
 /// A Newton of force in `kh*m*s^-2` with the `N` suffix.
 pub static NEWTON: Derived = Derived {
     id: 0x150ab031,
@@ -111,47 +86,6 @@ pub static PASCAL: Derived = Derived {
         },
         format: |f, _| write!(f, "Pa"),
         conversion: None,
-    },
-};
-
-/// A Joule with the `J` suffix (`kg*m^2*s^-2`).
-pub static JOULE: Derived = Derived {
-    id: 0xe0796773,
-    vtable: &DerivedVtable {
-        powers: |powers, p| {
-            powers.insert(Unit::KiloGram, p);
-            powers.insert(Unit::Meter, p * 2);
-            powers.insert(Unit::Second, p * -2);
-        },
-        format: |f, _| write!(f, "J"),
-        conversion: None,
-    },
-};
-
-/// A [British Thermal Unit] or `1055J` with the `btu` suffix.
-///
-/// See [JOULE].
-///
-/// [British Thermal Unit]: https://en.wikipedia.org/wiki/British_thermal_unit
-pub static BTU: Derived = Derived {
-    id: 0xcf847a94,
-    vtable: &DerivedVtable {
-        powers: JOULE.vtable.powers,
-        format: |f, pluralize| {
-            if pluralize {
-                write!(f, "btus")
-            } else {
-                write!(f, "btu")
-            }
-        },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= BigRational::new(1055u32.into(), 1u32.into());
-            },
-            from: |num| {
-                *num /= BigRational::new(1055u32.into(), 1u32.into());
-            },
-        }),
     },
 };
 

@@ -1,4 +1,9 @@
 #[test]
+fn test_au() {
+    assert_query!("1.495978707e11m to au", 1, au);
+}
+
+#[test]
 fn test_thous() {
     assert_query!("(1ft / 12000) to th", 1, th);
 }
@@ -59,6 +64,34 @@ fn test_mile() {
 #[test]
 fn test_league() {
     assert_query!("3mi to lea", 1, lea);
+}
+
+#[test]
+fn test_fathom() {
+    assert_query!("1.852m to ftm", 1, ftm);
+    assert_query!("(1cable / 100) to ftm", 1, ftm);
+}
+
+#[test]
+fn test_cable() {
+    assert_query!("185.2m to cable", 1, cable);
+    assert_query!("100ftm to cable", 1, cable);
+    assert_query!("(1NM / 10) to cable", 1, cable);
+}
+
+#[test]
+fn test_nautical_miles() {
+    assert_query!("1852m to NM", 1, NM);
+}
+
+#[test]
+fn test_link() {
+    assert_query!("(66ft / 100) to link", 1, link);
+}
+
+#[test]
+fn test_rod() {
+    assert_query!("(66ft / 4) to rod", 1, rod);
 }
 
 #[test]

@@ -1,4 +1,14 @@
 #[test]
+fn test_tonne() {
+    assert_query!("1ton to kg", 1000, kg);
+}
+
+#[test]
+fn test_dalton() {
+    assert_query!("1Da to kg", 332107813321 / 200000000000, kg);
+}
+
+#[test]
 fn test_grains() {
     assert_query!("1g to gr", 100000000 / 6479891, gr);
     assert_query!("1gr to g", 6479891 / 100000000, g);

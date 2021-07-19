@@ -51,7 +51,14 @@ impl<'a> Lexer<'a> {
         self.source[self.pos..].chars().next()
     }
 
-    /// Advance to the next character.
+    /// Peek the next next character.
+    fn peek2(&mut self) -> Option<char> {
+        let mut it = self.source[self.pos..].chars();
+        it.next();
+        it.next()
+    }
+
+    /// Step to the next character.
     fn step(&mut self) {
         let mut it = self.source[self.pos..].chars();
 
@@ -76,6 +83,10 @@ impl<'a> Lexer<'a> {
                     count += 1;
                 }
                 'e' | 'E' => {
+                    if !matches!(self.peek2(), Some('-' | '+' | '0'..='9')) {
+                        break;
+                    }
+
                     self.step();
                     count += 1;
 

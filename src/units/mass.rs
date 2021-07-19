@@ -1,9 +1,51 @@
-//! Imperial weights.
-//!
-//! See [Imperial units on Wikipedia](https://en.wikipedia.org/wiki/Imperial_units).
+//! Special mass units.
 
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
 use num::BigRational;
+
+/// Tonne (metric ton) or `1000kg`.
+pub static TONNE: Derived = Derived {
+    id: 0x7b15d4d8,
+    vtable: &DerivedVtable {
+        powers: |powers, p| {
+            powers.insert(Unit::KiloGram, p);
+        },
+        format: |f, pluralize| {
+            if pluralize {
+                write!(f, "tons")
+            } else {
+                write!(f, "ton")
+            }
+        },
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(1000u32.into(), 1u32.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(1000u32.into(), 1u32.into());
+            },
+        }),
+    },
+};
+
+/// Dalton.
+pub static DALTON: Derived = Derived {
+    id: 0x95583f60,
+    vtable: &DerivedVtable {
+        powers: |powers, p| {
+            powers.insert(Unit::KiloGram, p);
+        },
+        format: |f, _| write!(f, "Da"),
+        conversion: Some(Conversion {
+            to: |num| {
+                *num *= BigRational::new(332107813321u64.into(), 200000000000u64.into());
+            },
+            from: |num| {
+                *num /= BigRational::new(332107813321u64.into(), 200000000000u64.into());
+            },
+        }),
+    },
+};
 
 /// Grain `gr` (`1⁄7000lb`).
 pub static GRAIN: Derived = Derived {

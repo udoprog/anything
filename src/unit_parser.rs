@@ -1,8 +1,5 @@
 use crate::unit::Unit;
 
-#[cfg(test)]
-mod tests;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ParsedUnit {
     pub prefix: i32,

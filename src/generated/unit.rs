@@ -54,10 +54,10 @@ enum Combined {
     #[token("g")]
     #[token("gram")]
     Gram,
+    #[token("ton")]
+    #[token("tons")]
     #[token("tonnes")]
     #[token("tonne")]
-    #[token("tons")]
-    #[token("ton")]
     Ton,
     #[token("A")]
     #[token("ampere")]
@@ -81,6 +81,9 @@ enum Combined {
     Byte,
     #[token("au")]
     Au,
+    #[token("NM")]
+    #[token("nmi")]
+    NauticalMile,
     #[token("acc")]
     #[token("acceleration")]
     Acceleration,
@@ -162,9 +165,6 @@ enum Combined {
     #[token("katal")]
     #[token("katals")]
     Katal,
-    #[token("NM")]
-    #[token("nmi")]
-    NauticalMile,
     #[token("kt")]
     #[token("knot")]
     #[token("knots")]
@@ -208,6 +208,40 @@ enum Combined {
     #[token("league")]
     #[token("leagues")]
     League,
+    #[token("gr")]
+    #[token("grain")]
+    #[token("grains")]
+    Grain,
+    #[token("dr")]
+    #[token("drachm")]
+    #[token("drachms")]
+    Drachm,
+    #[token("oz")]
+    #[token("ounce")]
+    #[token("ounces")]
+    Ounce,
+    #[token("lb")]
+    #[token("pound")]
+    #[token("pounds")]
+    Pound,
+    #[token("st")]
+    #[token("stone")]
+    #[token("stones")]
+    Stone,
+    #[token("qr")]
+    #[token("qtr")]
+    #[token("quarter")]
+    #[token("quarters")]
+    Quarter,
+    #[token("cwt")]
+    #[token("hundredweight")]
+    #[token("hundredweights")]
+    Hundredweight,
+    #[token("t")]
+    ImperialTon,
+    #[token("slug")]
+    #[token("slugs")]
+    Slug,
     #[token("°C")]
     #[token("celsius")]
     Celsius,
@@ -336,10 +370,10 @@ enum Units {
     #[token("g")]
     #[token("gram")]
     Gram,
+    #[token("ton")]
+    #[token("tons")]
     #[token("tonnes")]
     #[token("tonne")]
-    #[token("tons")]
-    #[token("ton")]
     Ton,
     #[token("A")]
     #[token("ampere")]
@@ -363,6 +397,9 @@ enum Units {
     Byte,
     #[token("au")]
     Au,
+    #[token("NM")]
+    #[token("nmi")]
+    NauticalMile,
     #[token("a")]
     #[token("acc")]
     #[token("acceleration")]
@@ -446,9 +483,6 @@ enum Units {
     #[token("katal")]
     #[token("katals")]
     Katal,
-    #[token("NM")]
-    #[token("nmi")]
-    NauticalMile,
     #[token("c")]
     LightSpeed,
     #[token("kt")]
@@ -494,6 +528,40 @@ enum Units {
     #[token("league")]
     #[token("leagues")]
     League,
+    #[token("gr")]
+    #[token("grain")]
+    #[token("grains")]
+    Grain,
+    #[token("dr")]
+    #[token("drachm")]
+    #[token("drachms")]
+    Drachm,
+    #[token("oz")]
+    #[token("ounce")]
+    #[token("ounces")]
+    Ounce,
+    #[token("lb")]
+    #[token("pound")]
+    #[token("pounds")]
+    Pound,
+    #[token("st")]
+    #[token("stone")]
+    #[token("stones")]
+    Stone,
+    #[token("qr")]
+    #[token("qtr")]
+    #[token("quarter")]
+    #[token("quarters")]
+    Quarter,
+    #[token("cwt")]
+    #[token("hundredweight")]
+    #[token("hundredweights")]
+    Hundredweight,
+    #[token("t")]
+    ImperialTon,
+    #[token("slug")]
+    #[token("slugs")]
+    Slug,
     #[token("°C")]
     #[token("celsius")]
     Celsius,
@@ -536,7 +604,8 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Combined::Mole => Unit::Mole,
             Combined::Candela => Unit::Candela,
             Combined::Byte => Unit::Byte,
-            Combined::Au => Unit::Derived(units::distances::AU),
+            Combined::Au => Unit::Derived(units::lengths::AU),
+            Combined::NauticalMile => Unit::Derived(units::lengths::NAUTICAL_MILE),
             Combined::Acceleration => Unit::Derived(units::ACCELERATION),
             Combined::Velocity => Unit::Derived(units::VELOCITY),
             Combined::Gforce => Unit::Derived(units::GFORCE),
@@ -559,18 +628,26 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Combined::Gray => Unit::Derived(units::GRAY),
             Combined::Sievert => Unit::Derived(units::SIEVERT),
             Combined::Katal => Unit::Derived(units::KATAL),
-            Combined::NauticalMile => Unit::Derived(units::distances::NAUTICAL_MILE),
             Combined::Knot => Unit::Derived(units::velocities::KNOT),
-            Combined::Thou => Unit::Derived(units::imperial::THOU),
-            Combined::Barleycorn => Unit::Derived(units::imperial::BARLEYCORN),
-            Combined::Inch => Unit::Derived(units::imperial::INCH),
-            Combined::Hand => Unit::Derived(units::imperial::HAND),
-            Combined::Feet => Unit::Derived(units::imperial::FOOT),
-            Combined::Yard => Unit::Derived(units::imperial::YARD),
-            Combined::Chain => Unit::Derived(units::imperial::CHAIN),
-            Combined::Furlong => Unit::Derived(units::imperial::FURLONG),
-            Combined::Mile => Unit::Derived(units::imperial::MILE),
-            Combined::League => Unit::Derived(units::imperial::LEAGUE),
+            Combined::Thou => Unit::Derived(units::imperial_lengths::THOU),
+            Combined::Barleycorn => Unit::Derived(units::imperial_lengths::BARLEYCORN),
+            Combined::Inch => Unit::Derived(units::imperial_lengths::INCH),
+            Combined::Hand => Unit::Derived(units::imperial_lengths::HAND),
+            Combined::Feet => Unit::Derived(units::imperial_lengths::FOOT),
+            Combined::Yard => Unit::Derived(units::imperial_lengths::YARD),
+            Combined::Chain => Unit::Derived(units::imperial_lengths::CHAIN),
+            Combined::Furlong => Unit::Derived(units::imperial_lengths::FURLONG),
+            Combined::Mile => Unit::Derived(units::imperial_lengths::MILE),
+            Combined::League => Unit::Derived(units::imperial_lengths::LEAGUE),
+            Combined::Grain => Unit::Derived(units::imperial_weights::GRAIN),
+            Combined::Drachm => Unit::Derived(units::imperial_weights::DRACHM),
+            Combined::Ounce => Unit::Derived(units::imperial_weights::OUNCE),
+            Combined::Pound => Unit::Derived(units::imperial_weights::POUND),
+            Combined::Stone => Unit::Derived(units::imperial_weights::STONE),
+            Combined::Quarter => Unit::Derived(units::imperial_weights::QUARTER),
+            Combined::Hundredweight => Unit::Derived(units::imperial_weights::HUNDREDWEIGHT),
+            Combined::ImperialTon => Unit::Derived(units::imperial_weights::TON),
+            Combined::Slug => Unit::Derived(units::imperial_weights::SLUG),
             Combined::Celsius => Unit::Derived(units::temperatures::CELSIUS),
             Combined::Fahrenheit => Unit::Derived(units::temperatures::FAHRENHEIT),
             Combined::Yotta => {
@@ -754,7 +831,10 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
                 break Unit::Byte;
             }
             Units::Au => {
-                break Unit::Derived(units::distances::AU);
+                break Unit::Derived(units::lengths::AU);
+            }
+            Units::NauticalMile => {
+                break Unit::Derived(units::lengths::NAUTICAL_MILE);
             }
             Units::Acceleration => {
                 break Unit::Derived(units::ACCELERATION);
@@ -822,9 +902,6 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Units::Katal => {
                 break Unit::Derived(units::KATAL);
             }
-            Units::NauticalMile => {
-                break Unit::Derived(units::distances::NAUTICAL_MILE);
-            }
             Units::LightSpeed => {
                 break Unit::Derived(units::velocities::LIGHT_SPEED);
             }
@@ -832,34 +909,61 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
                 break Unit::Derived(units::velocities::KNOT);
             }
             Units::Thou => {
-                break Unit::Derived(units::imperial::THOU);
+                break Unit::Derived(units::imperial_lengths::THOU);
             }
             Units::Barleycorn => {
-                break Unit::Derived(units::imperial::BARLEYCORN);
+                break Unit::Derived(units::imperial_lengths::BARLEYCORN);
             }
             Units::Inch => {
-                break Unit::Derived(units::imperial::INCH);
+                break Unit::Derived(units::imperial_lengths::INCH);
             }
             Units::Hand => {
-                break Unit::Derived(units::imperial::HAND);
+                break Unit::Derived(units::imperial_lengths::HAND);
             }
             Units::Feet => {
-                break Unit::Derived(units::imperial::FOOT);
+                break Unit::Derived(units::imperial_lengths::FOOT);
             }
             Units::Yard => {
-                break Unit::Derived(units::imperial::YARD);
+                break Unit::Derived(units::imperial_lengths::YARD);
             }
             Units::Chain => {
-                break Unit::Derived(units::imperial::CHAIN);
+                break Unit::Derived(units::imperial_lengths::CHAIN);
             }
             Units::Furlong => {
-                break Unit::Derived(units::imperial::FURLONG);
+                break Unit::Derived(units::imperial_lengths::FURLONG);
             }
             Units::Mile => {
-                break Unit::Derived(units::imperial::MILE);
+                break Unit::Derived(units::imperial_lengths::MILE);
             }
             Units::League => {
-                break Unit::Derived(units::imperial::LEAGUE);
+                break Unit::Derived(units::imperial_lengths::LEAGUE);
+            }
+            Units::Grain => {
+                break Unit::Derived(units::imperial_weights::GRAIN);
+            }
+            Units::Drachm => {
+                break Unit::Derived(units::imperial_weights::DRACHM);
+            }
+            Units::Ounce => {
+                break Unit::Derived(units::imperial_weights::OUNCE);
+            }
+            Units::Pound => {
+                break Unit::Derived(units::imperial_weights::POUND);
+            }
+            Units::Stone => {
+                break Unit::Derived(units::imperial_weights::STONE);
+            }
+            Units::Quarter => {
+                break Unit::Derived(units::imperial_weights::QUARTER);
+            }
+            Units::Hundredweight => {
+                break Unit::Derived(units::imperial_weights::HUNDREDWEIGHT);
+            }
+            Units::ImperialTon => {
+                break Unit::Derived(units::imperial_weights::TON);
+            }
+            Units::Slug => {
+                break Unit::Derived(units::imperial_weights::SLUG);
             }
             Units::Celsius => {
                 break Unit::Derived(units::temperatures::CELSIUS);

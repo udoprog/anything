@@ -1,4 +1,4 @@
-//! Imperial units.
+//! Imperial lengths.
 //!
 //! See [Imperial units on Wikipedia](https://en.wikipedia.org/wiki/Imperial_units).
 

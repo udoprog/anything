@@ -49,7 +49,7 @@ unit = "Unit::KiloGram"
 prefix_bias = -3
 [[units]]
 variant = "Ton"
-names = ["tonnes", "tonne", "tons", "ton"]
+names = ["ton", "tons", "tonnes", "tonne"]
 unit = "Unit::Derived(units::TON)"
 [[units]]
 variant = "Ampere"
@@ -74,7 +74,11 @@ unit = "Unit::Byte"
 [[units]]
 variant = "Au"
 names = ["au"]
-unit = "Unit::Derived(units::distances::AU)"
+unit = "Unit::Derived(units::lengths::AU)"
+[[units]]
+variant = "NauticalMile"
+names = ["NM", "nmi"]
+unit = "Unit::Derived(units::lengths::NAUTICAL_MILE)"
 [[units]]
 variant = "Acceleration"
 names = ["a", "acc", "acceleration"]
@@ -164,10 +168,6 @@ variant = "Katal"
 names = ["kat", "katal", "katals"]
 unit = "Unit::Derived(units::KATAL)"
 [[units]]
-variant = "NauticalMile"
-names = ["NM", "nmi"]
-unit = "Unit::Derived(units::distances::NAUTICAL_MILE)"
-[[units]]
 variant = "LightSpeed"
 names = ["c"]
 unit = "Unit::Derived(units::velocities::LIGHT_SPEED)"
@@ -178,43 +178,80 @@ unit = "Unit::Derived(units::velocities::KNOT)"
 [[units]]
 variant = "Thou"
 names = ["th", "thou", "thous"]
-unit = "Unit::Derived(units::imperial::THOU)"
+unit = "Unit::Derived(units::imperial_lengths::THOU)"
 [[units]]
 variant = "Barleycorn"
 names = ["Bc", "barleycorn", "barleycorns"]
-unit = "Unit::Derived(units::imperial::BARLEYCORN)"
+unit = "Unit::Derived(units::imperial_lengths::BARLEYCORN)"
 [[units]]
 variant = "Inch"
 names = ["in", "inch", "inches"]
-unit = "Unit::Derived(units::imperial::INCH)"
+unit = "Unit::Derived(units::imperial_lengths::INCH)"
 [[units]]
 variant = "Hand"
 names = ["hand", "hands"]
-unit = "Unit::Derived(units::imperial::HAND)"
+unit = "Unit::Derived(units::imperial_lengths::HAND)"
 [[units]]
 variant = "Feet"
 names = ["ft", "feet", "feets"]
-unit = "Unit::Derived(units::imperial::FOOT)"
+unit = "Unit::Derived(units::imperial_lengths::FOOT)"
 [[units]]
 variant = "Yard"
 names = ["yd", "yard", "yards"]
-unit = "Unit::Derived(units::imperial::YARD)"
+unit = "Unit::Derived(units::imperial_lengths::YARD)"
 [[units]]
 variant = "Chain"
 names = ["ch", "chain", "chains"]
-unit = "Unit::Derived(units::imperial::CHAIN)"
+unit = "Unit::Derived(units::imperial_lengths::CHAIN)"
 [[units]]
 variant = "Furlong"
 names = ["fur", "furlong", "furlongs"]
-unit = "Unit::Derived(units::imperial::FURLONG)"
+unit = "Unit::Derived(units::imperial_lengths::FURLONG)"
 [[units]]
 variant = "Mile"
 names = ["mi", "mile", "miles"]
-unit = "Unit::Derived(units::imperial::MILE)"
+unit = "Unit::Derived(units::imperial_lengths::MILE)"
 [[units]]
 variant = "League"
 names = ["lea", "league", "leagues"]
-unit = "Unit::Derived(units::imperial::LEAGUE)"
+unit = "Unit::Derived(units::imperial_lengths::LEAGUE)"
+
+[[units]]
+variant = "Grain"
+names = ["gr", "grain", "grains"]
+unit = "Unit::Derived(units::imperial_weights::GRAIN)"
+[[units]]
+variant = "Drachm"
+names = ["dr", "drachm", "drachms"]
+unit = "Unit::Derived(units::imperial_weights::DRACHM)"
+[[units]]
+variant = "Ounce"
+names = ["oz", "ounce", "ounces"]
+unit = "Unit::Derived(units::imperial_weights::OUNCE)"
+[[units]]
+variant = "Pound"
+names = ["lb", "pound", "pounds"]
+unit = "Unit::Derived(units::imperial_weights::POUND)"
+[[units]]
+variant = "Stone"
+names = ["st", "stone", "stones"]
+unit = "Unit::Derived(units::imperial_weights::STONE)"
+[[units]]
+variant = "Quarter"
+names = ["qr", "qtr", "quarter", "quarters"]
+unit = "Unit::Derived(units::imperial_weights::QUARTER)"
+[[units]]
+variant = "Hundredweight"
+names = ["cwt", "hundredweight", "hundredweights"]
+unit = "Unit::Derived(units::imperial_weights::HUNDREDWEIGHT)"
+[[units]]
+variant = "ImperialTon"
+names = ["t"]
+unit = "Unit::Derived(units::imperial_weights::TON)"
+[[units]]
+variant = "Slug"
+names = ["slug", "slugs"]
+unit = "Unit::Derived(units::imperial_weights::SLUG)"
 
 [[units]]
 variant = "Celsius"

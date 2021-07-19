@@ -3,8 +3,9 @@
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
 use num::BigRational;
 
-pub mod distances;
-pub mod imperial;
+pub mod imperial_lengths;
+pub mod imperial_weights;
+pub mod lengths;
 pub mod temperatures;
 pub mod times;
 pub mod velocities;

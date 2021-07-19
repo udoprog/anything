@@ -53,10 +53,12 @@ macro_rules! assert_query {
     };
 }
 
-#[path = "entry/distances.rs"]
-mod distances;
-#[path = "entry/imperial.rs"]
-mod imperial;
+#[path = "entry/imperial_lengths.rs"]
+mod imperial_lengths;
+#[path = "entry/imperial_weights.rs"]
+mod imperial_weights;
+#[path = "entry/lengths.rs"]
+mod lengths;
 #[path = "entry/temperatures.rs"]
 mod temperatures;
 #[path = "entry/velocities.rs"]

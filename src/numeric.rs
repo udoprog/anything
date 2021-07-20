@@ -20,6 +20,14 @@ impl Numeric {
         Self { value, unit }
     }
 
+    /// Construct from a 64-bit float.
+    pub fn from_f64(value: f64, unit: Compound) -> Self {
+        let value =
+            BigRational::from_float(value).unwrap_or_else(|| BigRational::new(1.into(), 1.into()));
+
+        Self { value, unit }
+    }
+
     /// Convert into its underlying value.
     pub fn into_value(self) -> BigRational {
         self.value

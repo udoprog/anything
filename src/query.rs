@@ -1,5 +1,6 @@
 use crate::db;
 use crate::error::Error;
+use crate::eval::Context;
 use crate::numeric::Numeric;
 use crate::syntax::parser::{FactsLang, Parser};
 
@@ -37,9 +38,11 @@ impl Iterator for Query<'_, '_> {
     type Item = Result<Numeric, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        let ctx = Context::new();
         let node = self.children.next()?;
 
         Some(crate::eval::eval(
+            &ctx,
             node,
             self.query,
             self.db,

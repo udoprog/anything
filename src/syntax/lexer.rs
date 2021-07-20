@@ -250,6 +250,10 @@ impl Iterator for Lexer<'_> {
                     NUMBER
                 }
             }
+            ',' => {
+                self.step();
+                COMMA
+            }
             '0'..='9' => {
                 self.consume_number(false);
                 NUMBER

@@ -96,6 +96,45 @@ pub(crate) fn unit(p: &mut Parser<'_>) -> bool {
     unit
 }
 
+fn call_arguments(p: &mut Parser<'_>) -> bool {
+    let c = p.checkpoint();
+
+    let skip = loop {
+        let skip = p.count_skip();
+
+        match p.nth(skip, 0) {
+            CLOSE_PAREN => {
+                break skip;
+            }
+            _ => {
+                p.skip(skip);
+
+                let c = p.checkpoint();
+
+                if !expr(p, None) {
+                    return false;
+                }
+
+                p.finish_node_at(c, OPERATION);
+
+                let skip = p.count_skip();
+
+                if !p.eat(skip, &[COMMA]) {
+                    break skip;
+                }
+            }
+        }
+    };
+
+    p.finish_node_at(c, FN_ARGUMENTS);
+
+    if !p.eat(skip, &[CLOSE_PAREN]) {
+        return false;
+    }
+
+    true
+}
+
 fn value(p: &mut Parser<'_>) -> bool {
     let skip = p.count_skip();
 
@@ -105,6 +144,18 @@ fn value(p: &mut Parser<'_>) -> bool {
 
             let c = p.checkpoint();
             p.bump();
+
+            if let OPEN_PAREN = p.nth(Skip::ZERO, 0) {
+                p.finish_node_at(c, FN_NAME);
+                p.bump();
+
+                if !call_arguments(p) {
+                    return false;
+                }
+
+                p.finish_node_at(c, FN_CALL);
+                return true;
+            }
 
             let mut skip = p.count_skip();
 

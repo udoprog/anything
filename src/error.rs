@@ -21,6 +21,20 @@ impl Error {
         usize::from(self.range.start())..usize::from(self.range.end())
     }
 
+    /// An argument mismatch in a custom function.
+    pub fn argument_mismatch(range: TextRange, expected: usize, actual: usize) -> Self {
+        Self::new(range, ErrorKind::ArgumentMismatch { expected, actual })
+    }
+
+    /// Indicate that an argument was bad.
+    pub fn bad_argument(range: TextRange, argument: usize) -> Self {
+        Self::new(range, ErrorKind::BadArgument { argument })
+    }
+
+    pub(crate) fn missing_function(range: TextRange, name: Box<str>) -> Self {
+        Self::new(range, ErrorKind::MissingFunction { name })
+    }
+
     pub(crate) fn new(range: TextRange, kind: ErrorKind) -> Self {
         Self { range, kind }
     }
@@ -99,4 +113,10 @@ pub(crate) enum ErrorKind {
     IllegalUnit { unit: Box<str> },
     #[error("{message}")]
     Message { message: &'static str },
+    #[error("missing function `{name}`")]
+    MissingFunction { name: Box<str> },
+    #[error("bad number of arguments, got {actual} but expected {expected}")]
+    ArgumentMismatch { expected: usize, actual: usize },
+    #[error("bad argument {argument}")]
+    BadArgument { argument: usize },
 }

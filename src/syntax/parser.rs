@@ -28,6 +28,8 @@ pub enum SyntaxKind {
     DASH,
     /// `^`.
     CARET,
+    /// `,`.
+    COMMA,
     /// Open delimiter.
     OPEN_PAREN,
     /// Close delimiter.
@@ -48,6 +50,13 @@ pub enum SyntaxKind {
     NUMBER,
     /// A number with a unit.
     NUMBER_WITH_UNIT,
+
+    /// The name of the function being called.
+    FN_NAME,
+    /// The arguments to the function being called.
+    FN_ARGUMENTS,
+    /// A function call.
+    FN_CALL,
 
     /// A percentage expression.
     PERCENTAGE,

@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use crate::compound::{Compound, State};
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
@@ -7,13 +5,86 @@ use crate::syntax::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
 use crate::unit::Unit;
 use crate::unit_parser::{ParsedUnit, UnitParser};
 use crate::{db, numeric};
-use num::BigRational;
+use hashbrown::HashMap;
+use num::{BigRational, ToPrimitive};
 use rowan::{NodeOrToken, TextRange};
+use std::collections::BTreeMap;
 
 use ErrorKind::*;
 use SyntaxKind::*;
 
 type Result<T, E = Error> = std::result::Result<T, E>;
+
+#[derive(Debug, Clone, Copy)]
+pub enum BuiltIn {
+    /// Sin function.
+    Sin,
+    /// Cos function.
+    Cos,
+}
+
+impl BuiltIn {
+    fn call(&self, range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
+        match self {
+            BuiltIn::Sin => {
+                if arguments.len() != 1 {
+                    return Err(Error::argument_mismatch(range, 1, arguments.len()));
+                }
+
+                let (value, unit) = arguments.into_iter().next().unwrap().split();
+
+                let value = match value.to_f64() {
+                    Some(value) => value.sin(),
+                    None => return Err(Error::bad_argument(range, 0)),
+                };
+
+                Ok(Numeric::from_f64(value, unit))
+            }
+            BuiltIn::Cos => {
+                if arguments.len() != 1 {
+                    return Err(Error::argument_mismatch(range, 1, arguments.len()));
+                }
+
+                let (value, unit) = arguments.into_iter().next().unwrap().split();
+
+                let value = match value.to_f64() {
+                    Some(value) => value.cos(),
+                    None => return Err(Error::bad_argument(range, 0)),
+                };
+
+                Ok(Numeric::from_f64(value, unit))
+            }
+        }
+    }
+}
+
+/// A function that can be called.
+pub enum Function {
+    /// A built-in function.
+    BuiltIn(BuiltIn),
+}
+
+/// Construct the default collection of functions.
+fn default_functions() -> HashMap<String, Function> {
+    let mut functions = HashMap::new();
+    functions.insert("sin".into(), Function::BuiltIn(BuiltIn::Sin));
+    functions.insert("cos".into(), Function::BuiltIn(BuiltIn::Cos));
+    functions
+}
+
+/// A context.
+pub struct Context {
+    functions: HashMap<String, Function>,
+}
+
+impl Context {
+    /// Construct a new empty context.
+    pub fn new() -> Self {
+        Self {
+            functions: default_functions(),
+        }
+    }
+}
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Bias {
@@ -266,16 +337,22 @@ enum DelayedEval {
 }
 
 impl DelayedEval {
-    fn eval(self, source: &str, db: &db::Db, bias: Bias) -> Result<Numeric> {
+    fn eval(self, ctx: &Context, source: &str, db: &db::Db, bias: Bias) -> Result<Numeric> {
         match self {
-            DelayedEval::Node(node) => eval(node, source, db, bias),
+            DelayedEval::Node(node) => eval(ctx, node, source, db, bias),
             DelayedEval::Numeric(numeric) => Ok(numeric),
         }
     }
 }
 
 /// Evaluate the given syntax node.
-pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<Numeric> {
+pub fn eval(
+    ctx: &Context,
+    node: SyntaxNode,
+    source: &str,
+    db: &db::Db,
+    bias: Bias,
+) -> Result<Numeric> {
     match node.kind() {
         OPERATION => {
             let mut it = node.children();
@@ -310,6 +387,7 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
                     AS | TO => {
                         let rhs = unit(source, rhs, bias)?;
                         let b = base.eval(
+                            ctx,
                             source,
                             db,
                             bias.with_acceleration_bias(rhs.is_acceleration()),
@@ -337,14 +415,14 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
                 };
 
                 let range = rhs.text_range();
-                let rhs = eval(rhs, source, db, bias)?;
-                let b = base.eval(source, db, bias)?;
+                let rhs = eval(ctx, rhs, source, db, bias)?;
+                let b = base.eval(ctx, source, db, bias)?;
 
                 let range = TextRange::new(start.start(), range.end());
                 base = DelayedEval::Numeric(op(range, b, rhs)?);
             }
 
-            let numeric = base.eval(source, db, bias)?;
+            let numeric = base.eval(ctx, source, db, bias)?;
             Ok(numeric)
         }
         NUMBER => {
@@ -395,6 +473,33 @@ pub fn eval(node: SyntaxNode, source: &str, db: &db::Db, bias: Bias) -> Result<N
             let one_hundred = BigRational::new(100u32.into(), 1u32.into());
 
             Ok(Numeric::new(number / one_hundred, Compound::empty()))
+        }
+        FN_CALL => {
+            let mut it = node.children();
+
+            let name = match it.next() {
+                Some(name) if name.kind() == FN_NAME => name,
+                _ => return Err(Error::expected_only(node.text_range(), FN_NAME)),
+            };
+            let arguments = match it.next() {
+                Some(arguments) if arguments.kind() == FN_ARGUMENTS => arguments,
+                _ => return Err(Error::expected_only(node.text_range(), FN_ARGUMENTS)),
+            };
+            let name = &source[name.text_range()];
+
+            let mut args = Vec::new();
+
+            for node in arguments.children() {
+                args.push(eval(ctx, node, source, db, bias)?);
+            }
+
+            if let Some(fun) = ctx.functions.get(name) {
+                match fun {
+                    Function::BuiltIn(builtin) => Ok(builtin.call(node.text_range(), args)?),
+                }
+            } else {
+                return Err(Error::missing_function(node.text_range(), name.into()));
+            }
         }
         ERROR => Err(Error::message(node.text_range(), "expected value")),
         kind => Err(Error::unexpected(node.text_range(), kind)),

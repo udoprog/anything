@@ -38,8 +38,6 @@ pub enum SyntaxKind {
     OPEN_BRACE,
     /// Close brace.
     CLOSE_BRACE,
-    /// The `as` keyword.
-    AS,
     /// The `to` keyword.
     TO,
     /// A word.
@@ -49,7 +47,7 @@ pub enum SyntaxKind {
     /// A number.
     NUMBER,
     /// A number with a unit.
-    NUMBER_WITH_UNIT,
+    WITH_UNIT,
 
     /// The name of the function being called.
     FN_NAME,
@@ -60,14 +58,21 @@ pub enum SyntaxKind {
 
     /// A percentage expression.
     PERCENTAGE,
-    /// A unit suffix to a number.
-    UNIT,
-    /// An escaped word which circumvents language analysis.
-    UNIT_ESCAPED_WORD,
-    /// A quoted unit word.
-    UNIT_WORD,
-    /// A simple unit number.
-    UNIT_NUMBER,
+
+    /// Cast values.
+    OP_CAST,
+    /// Add values.
+    OP_ADD,
+    /// Subtract values.
+    OP_SUB,
+    /// Implicit multiplication.
+    OP_IMPLICIT_MUL,
+    /// Multiplication.
+    OP_MUL,
+    /// Divide values.
+    OP_DIV,
+    /// Power operation.
+    OP_POWER,
 
     /// An operator in an operation.
     OPERATOR,
@@ -137,9 +142,16 @@ impl<'a> Parser<'a> {
 
     /// Consume and parse a unit node.
     pub fn parse_unit(mut self) -> SyntaxNode {
-        if !grammar::unit(&mut self) {
-            self.builder.start_node(UNIT.into());
+        if let EOF = self.nth(Skip::ZERO, 0) {
+            self.builder.start_node(WORD.into());
             self.builder.finish_node();
+        } else {
+            let c = self.checkpoint();
+
+            if !grammar::unit(&mut self) {
+                self.bump();
+                self.finish_node_at(c, ERROR);
+            }
         }
 
         SyntaxNode::new_root(self.builder.finish())
@@ -182,13 +194,6 @@ impl<'a> Parser<'a> {
     pub(crate) fn error_node_at(&mut self, c: Checkpoint) {
         self.builder.start_node_at(c, ERROR.into());
         self.builder.finish_node();
-    }
-
-    /// Switch to unit mode.
-    pub(crate) fn set_mode(&mut self, unit_mode: bool, ws_mode: bool) {
-        let head = self.buf.pop_front();
-        self.buf.clear();
-        self.lexer.set_mode(head, unit_mode, ws_mode);
     }
 
     /// Fill the buffer up until the size of `n`.

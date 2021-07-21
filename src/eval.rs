@@ -1,14 +1,14 @@
-use crate::compound::{Compound, State};
+use crate::compound::Compound;
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
-use crate::syntax::parser::{SyntaxKind, SyntaxNode, SyntaxToken};
+use crate::syntax::parser::{SyntaxKind, SyntaxNode};
 use crate::unit::Unit;
-use crate::unit_parser::{ParsedUnit, UnitParser};
+use crate::unit_parser::UnitParser;
 use crate::{db, numeric};
 use hashbrown::HashMap;
-use num::{BigRational, ToPrimitive};
-use rowan::{NodeOrToken, TextRange};
-use std::collections::BTreeMap;
+use num::bigint::Sign;
+use num::{BigRational, Signed, ToPrimitive, Zero};
+use rowan::TextRange;
 
 use ErrorKind::*;
 use SyntaxKind::*;
@@ -135,8 +135,6 @@ fn sub(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
 }
 
 fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    use num::Zero;
-
     let (mut a, a_unit) = a.split();
     let (mut b, b_unit) = b.split();
 
@@ -150,8 +148,6 @@ fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
 }
 
 fn mul(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    use num::Zero;
-
     let (mut a, a_unit) = a.split();
     let (mut b, b_unit) = b.split();
     let unit = a_unit.mul(&b_unit, 1, &mut a, &mut b);
@@ -163,171 +159,140 @@ fn mul(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     Ok(Numeric::new(a * b, unit))
 }
 
-pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
-    match node.kind() {
-        UNIT => {}
-        kind => return Err(Error::expected(node.text_range(), UNIT, kind)),
+fn pow(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
+    let (base, unit) = a.split();
+    let (pow, pow_unit) = b.split();
+
+    if !pow_unit.is_empty() {
+        return Err(Error::new(range, IllegalPowerUnit));
     }
 
-    let mut it = Tokens {
-        source,
-        iter: node.children_with_tokens().peekable(),
-        next: None,
+    if !pow.is_integer() {
+        return Err(Error::new(range, IllegalPowerNonInteger));
+    }
+
+    if pow.is_zero() {
+        return Ok(Numeric::new(BigRational::new(1.into(), 1.into()), unit));
+    }
+
+    if base.is_zero() {
+        return Ok(Numeric::new(base, unit));
+    }
+
+    let mut value = base.clone();
+    let mut pow = pow.numer().clone();
+    let sign = pow.signum();
+
+    let base = match sign.sign() {
+        Sign::Minus => base.recip(),
+        _ => base,
     };
 
-    let mut bases = BTreeMap::new();
-
-    inner(&mut it, &mut bases, 1, bias)?;
-    inner(&mut it, &mut bases, -1, bias)?;
-
-    return Ok(Compound::new(bases));
-
-    struct Tokens<'a, T> {
-        source: &'a str,
-        iter: T,
-        next: Option<SyntaxToken>,
+    while !pow.is_zero() {
+        value *= &base;
+        pow -= &sign;
     }
 
-    impl<T> Tokens<'_, T>
-    where
-        T: Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>,
-    {
-        fn text(&self, range: TextRange) -> &str {
-            &self.source[range]
-        }
+    Ok(Numeric::new(value, unit))
+}
 
-        fn next(&mut self) -> Option<SyntaxToken> {
-            if let Some(token) = self.next.take() {
-                return Some(token);
+pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
+    let mut compound = Compound::default();
+    inner_unit(source, node, bias, &mut compound, 1)?;
+    Ok(compound)
+}
+
+fn inner_unit(
+    source: &str,
+    node: SyntaxNode,
+    bias: Bias,
+    compound: &mut Compound,
+    n: i32,
+) -> Result<Option<Unit>> {
+    let last = match node.kind() {
+        NUMBER => {
+            let range = node.text_range();
+
+            let number = match str::parse::<i32>(&source[range]) {
+                Ok(number) => number,
+                Err(error) => return Err(Error::new(range, ParseIntError { error })),
+            };
+
+            if number != 1 {
+                return Err(Error::new(range, IllegalUnitNumber));
             }
 
-            loop {
-                return match self.iter.next()? {
-                    NodeOrToken::Token(token) => Some(token),
-                    _ => continue,
-                };
-            }
+            None
         }
+        OPERATION => {
+            let range = node.text_range();
+            let mut it = node.children();
 
-        fn peek(&mut self) -> Option<SyntaxToken> {
-            loop {
-                if let Some(token) = &self.next {
-                    return Some(token.clone());
-                }
+            let base = it.next().ok_or_else(|| Error::missing_node(range))?;
+            let last = inner_unit(source, base, bias, compound, n)?;
 
-                self.next = Some(match self.iter.next()? {
-                    NodeOrToken::Token(token) => token,
-                    _ => continue,
-                });
-            }
-        }
-    }
-
-    fn inner(
-        p: &mut Tokens<impl Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>>,
-        bases: &mut BTreeMap<Unit, State>,
-        power_factor: i32,
-        _bias: Bias,
-    ) -> Result<()> {
-        while let Some(t) = p.next() {
-            match t.kind() {
-                STAR => {
-                    continue;
-                }
-                SLASH => {
-                    break;
-                }
-                UNIT_WORD | UNIT_ESCAPED_WORD => {
-                    let mut unit_parser = match t.kind() {
-                        UNIT_ESCAPED_WORD => {
-                            let s = p.text(t.text_range());
-                            let s = &s[1..(s.len() - 1)];
-                            UnitParser::new(s)
-                        }
-                        UNIT_WORD => UnitParser::new(p.text(t.text_range())),
-                        kind => return Err(Error::unexpected(t.text_range(), kind)),
-                    };
-
-                    let mut last = None;
-                    let range = t.text_range();
-
-                    while let Some(parsed) = unit_parser
-                        .next()
-                        .map_err(|e| Error::illegal_unit(range, e))?
-                    {
-                        if let Some(parsed) = std::mem::replace(&mut last, Some(parsed)) {
-                            populate_unit(p, bases, parsed, range, power_factor)?;
-                        }
-                    }
-
-                    if let Some(parsed) = last {
-                        let caret = p.peek().map(|t| t.kind()).unwrap_or(EOF);
-
-                        let power = if caret == CARET {
-                            p.next();
-
-                            let number = match p.next() {
-                                Some(t) => match t.kind() {
-                                    UNIT_NUMBER => t,
-                                    ERROR => {
-                                        return Err(Error::message(
-                                            t.text_range(),
-                                            "expected number",
-                                        ))
-                                    }
-                                    kind => return Err(Error::unexpected(t.text_range(), kind)),
-                                },
-                                _ => return Err(Error::expected_only(t.text_range(), UNIT_NUMBER)),
-                            };
-
-                            let text = p.text(number.text_range());
-
-                            match str::parse::<i32>(text) {
-                                Ok(n) => n,
-                                Err(e) => return Err(Error::int(number.text_range(), e)),
-                            }
-                        } else {
-                            1
+            while let (Some(op), Some(arg)) = (it.next(), it.next()) {
+                match (last, op.kind()) {
+                    (Some(last), OP_POWER) => {
+                        let power = match arg.kind() {
+                            NUMBER => match str::parse::<i32>(&source[arg.text_range()]) {
+                                Ok(power) => power,
+                                Err(error) => {
+                                    return Err(Error::new(
+                                        arg.text_range(),
+                                        ParseIntError { error },
+                                    ))
+                                }
+                            },
+                            _ => return Err(Error::expected_only(arg.text_range(), NUMBER)),
                         };
 
-                        populate_unit(p, bases, parsed, range, power * power_factor)?;
+                        compound.update_power(last, power * n);
+                    }
+                    (_, OP_MUL | OP_IMPLICIT_MUL) => {
+                        inner_unit(source, arg, bias, compound, 1)?;
+                    }
+                    (_, OP_DIV) => {
+                        inner_unit(source, arg, bias, compound, -1)?;
+                    }
+                    (_, kind) => {
+                        return Err(Error::unexpected(op.text_range(), kind));
                     }
                 }
-                ERROR => return Err(Error::message(t.text_range(), "expected unit component")),
-                kind => return Err(Error::unexpected(t.text_range(), kind)),
             }
+
+            None
         }
+        WORD => {
+            let range = node.text_range();
+            let unit = &source[range];
+            let mut parser = UnitParser::new(unit);
 
-        Ok(())
-    }
+            let mut last = None;
 
-    fn populate_unit(
-        p: &Tokens<impl Iterator<Item = NodeOrToken<SyntaxNode, SyntaxToken>>>,
-        bases: &mut BTreeMap<Unit, State>,
-        parsed: ParsedUnit,
-        range: TextRange,
-        power_factor: i32,
-    ) -> Result<()> {
-        let entry = bases.entry(parsed.name).or_insert_with(|| State {
-            prefix: parsed.prefix,
-            power: 0,
-        });
+            while let Some(parsed) = parser.next().map_err(|e| Error::illegal_unit(range, e))? {
+                if let Err(expected) = compound.update(parsed.name, n, parsed.prefix) {
+                    return Err(Error::new(
+                        range,
+                        PrefixMismatch {
+                            unit: unit.into(),
+                            expected,
+                            actual: parsed.prefix,
+                        },
+                    ));
+                }
 
-        entry.power += power_factor;
+                last = Some(parsed.name);
+            }
 
-        if entry.prefix != parsed.prefix {
-            return Err(Error::new(
-                range,
-                PrefixMismatch {
-                    unit: p.text(range).into(),
-                    expected: entry.prefix,
-                    actual: parsed.prefix,
-                },
-            ));
+            last
         }
+        kind => {
+            return Err(Error::unexpected(node.text_range(), kind));
+        }
+    };
 
-        Ok(())
-    }
+    Ok(last)
 }
 
 /// Helper to delay evaluation of a syntax node so that we can modify its bias.
@@ -367,25 +332,15 @@ pub fn eval(
             let mut base = DelayedEval::Node(base);
 
             while let (Some(op), Some(rhs)) = (it.next(), it.next()) {
-                let op = match op.first_token() {
-                    Some(op) => op,
-                    None => {
-                        return Err(Error::new(
-                            op.text_range(),
-                            Internal {
-                                message: "missing operator",
-                            },
-                        ))
-                    }
-                };
-
                 let op = match op.kind() {
-                    PLUS => add,
-                    DASH => sub,
-                    SLASH => div,
-                    STAR => mul,
-                    AS | TO => {
+                    OP_ADD => add,
+                    OP_SUB => sub,
+                    OP_DIV => div,
+                    OP_MUL | OP_IMPLICIT_MUL => mul,
+                    OP_POWER => pow,
+                    OP_CAST => {
                         let rhs = unit(source, rhs, bias)?;
+
                         let b = base.eval(
                             ctx,
                             source,
@@ -433,22 +388,24 @@ pub fn eval(
             };
             Ok(Numeric::new(number, Compound::empty()))
         }
-        NUMBER_WITH_UNIT => {
+        WITH_UNIT => {
             let mut it = node.children();
 
-            let number = it.next().unwrap();
-            let number = &source[number.text_range()];
-            let number = match numeric::parse_decimal_big_rational(number) {
-                Ok(number) => number,
-                Err(error) => return Err(Error::parse(node.text_range(), error)),
+            let value_node = match it.next() {
+                Some(number) => number,
+                None => return Err(Error::missing_node(node.text_range())),
             };
 
-            let node = it.next().unwrap();
-            let unit = unit(source, node, bias)?;
+            let unit_node = match it.next() {
+                Some(unit) => unit,
+                None => return Err(Error::missing_node(node.text_range())),
+            };
 
-            Ok(Numeric::new(number, unit))
+            let value = eval(ctx, value_node, source, db, bias)?;
+            let unit = unit(source, unit_node, bias)?;
+            Ok(Numeric::new(value.into_value(), unit))
         }
-        SENTENCE => {
+        SENTENCE | WORD => {
             let s = &source[node.text_range()];
 
             let m = match db

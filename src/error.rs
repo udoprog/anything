@@ -31,6 +31,10 @@ impl Error {
         Self::new(range, ErrorKind::BadArgument { argument })
     }
 
+    pub(crate) fn missing_node(range: TextRange) -> Self {
+        Self::new(range, ErrorKind::MissingNode)
+    }
+
     pub(crate) fn missing_function(range: TextRange, name: Box<str>) -> Self {
         Self::new(range, ErrorKind::MissingFunction { name })
     }
@@ -43,20 +47,12 @@ impl Error {
         Self::new(range, ErrorKind::Message { message })
     }
 
-    pub(crate) fn expected(range: TextRange, kind: SyntaxKind, actual: SyntaxKind) -> Self {
-        Self::new(range, ErrorKind::Expected { kind, actual })
-    }
-
     pub(crate) fn expected_only(range: TextRange, kind: SyntaxKind) -> Self {
         Self::new(range, ErrorKind::ExpectedOnly { kind })
     }
 
     pub(crate) fn unexpected(range: TextRange, kind: SyntaxKind) -> Self {
         Self::new(range, ErrorKind::Unexpected { kind })
-    }
-
-    pub(crate) fn int(range: TextRange, error: ParseIntError) -> Self {
-        Self::new(range, ErrorKind::ParseIntError { error })
     }
 
     pub(crate) fn parse(range: TextRange, error: ParseNumericError) -> Self {
@@ -90,25 +86,10 @@ pub(crate) enum ErrorKind {
     ParseIntError { error: ParseIntError },
     #[error("expected syntax `{kind:?}` (internal error)")]
     ExpectedOnly { kind: SyntaxKind },
-    #[error("expected syntax `{kind:?}` but got `{actual:?}` (internal error)")]
-    Expected {
-        kind: SyntaxKind,
-        actual: SyntaxKind,
-    },
     #[error("unexpected syntax `{kind:?}` (internal error)")]
     Unexpected { kind: SyntaxKind },
     #[error("nothing matching `{query}` found in database")]
     Missing { query: Box<str> },
-    #[error("{message} (internal error)")]
-    Internal { message: &'static str },
-    #[error(
-        "unit `{unit}` contains multiple mismatching prefixes; expected {expected} got {actual}"
-    )]
-    PrefixMismatch {
-        unit: Box<str>,
-        expected: i32,
-        actual: i32,
-    },
     #[error("unit `{unit}` is not a valid unit")]
     IllegalUnit { unit: Box<str> },
     #[error("{message}")]
@@ -119,4 +100,18 @@ pub(crate) enum ErrorKind {
     ArgumentMismatch { expected: usize, actual: usize },
     #[error("bad argument {argument}")]
     BadArgument { argument: usize },
+    #[error("missing expected node")]
+    MissingNode,
+    #[error("mismatching prefix for unit `{unit}`; expected {expected} but got {actual}")]
+    PrefixMismatch {
+        unit: Box<str>,
+        expected: i32,
+        actual: i32,
+    },
+    #[error("unit numbers must be `1`")]
+    IllegalUnitNumber,
+    #[error("the power must not have a unit")]
+    IllegalPowerUnit,
+    #[error("the power of a number must be an integer")]
+    IllegalPowerNonInteger,
 }

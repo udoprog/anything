@@ -1,4 +1,5 @@
 use crate::syntax::parser::{Parser, Skip, SyntaxKind};
+use rowan::Checkpoint;
 use SyntaxKind::*;
 
 /// Parse the root of an expression.
@@ -19,13 +20,9 @@ pub fn root(p: &mut Parser<'_>) {
             OPEN_PAREN | WORD | NUMBER => {
                 p.skip(skip);
 
-                let c = p.checkpoint();
-
-                if !expr(p, None) {
+                if !expr(p) {
                     p.error_node_at(c);
                 }
-
-                p.finish_node_at(c, OPERATION);
             }
             _ => {
                 p.skip(skip);
@@ -42,60 +39,6 @@ pub fn root(p: &mut Parser<'_>) {
     p.finish_node();
 }
 
-fn unit_component(c: &mut Parser<'_>, mut word: bool) {
-    loop {
-        match c.nth(Skip::ZERO, 0) {
-            UNIT_WORD => {
-                word = true;
-                c.bump();
-            }
-            UNIT_ESCAPED_WORD => {
-                c.bump();
-            }
-            STAR if word => {
-                word = false;
-                c.bump();
-            }
-            CARET if word => {
-                word = false;
-
-                if !c.eat(Skip::ZERO, &[CARET, UNIT_NUMBER]) {
-                    break;
-                }
-            }
-            _ => {
-                break;
-            }
-        }
-    }
-}
-
-pub(crate) fn unit(p: &mut Parser<'_>) -> bool {
-    p.set_mode(true, true);
-    let skip = p.count_skip();
-
-    let unit = match p.nth(skip, 0) {
-        UNIT_WORD | UNIT_ESCAPED_WORD => {
-            p.skip(skip);
-            p.set_mode(true, false);
-
-            let c = p.checkpoint();
-            unit_component(p, false);
-
-            if p.eat(Skip::ZERO, &[SLASH]) {
-                unit_component(p, true);
-            }
-
-            p.finish_node_at(c, UNIT);
-            true
-        }
-        _ => false,
-    };
-
-    p.set_mode(false, true);
-    unit
-}
-
 fn call_arguments(p: &mut Parser<'_>) -> bool {
     let c = p.checkpoint();
 
@@ -109,13 +52,9 @@ fn call_arguments(p: &mut Parser<'_>) -> bool {
             _ => {
                 p.skip(skip);
 
-                let c = p.checkpoint();
-
-                if !expr(p, None) {
+                if !expr(p) {
                     return false;
                 }
-
-                p.finish_node_at(c, OPERATION);
 
                 let skip = p.count_skip();
 
@@ -143,7 +82,7 @@ fn value(p: &mut Parser<'_>) -> bool {
             p.skip(skip);
 
             let c = p.checkpoint();
-            p.bump();
+            p.bump_node(WORD);
 
             if let OPEN_PAREN = p.nth(Skip::ZERO, 0) {
                 p.finish_node_at(c, FN_NAME);
@@ -158,33 +97,46 @@ fn value(p: &mut Parser<'_>) -> bool {
             }
 
             let mut skip = p.count_skip();
+            let mut is_sentence = false;
 
-            while let (WORD, _) | (AS | TO, WORD) = (p.nth(skip, 0), p.nth(skip, 1)) {
+            while let WORD = p.nth(skip, 0) {
                 p.skip(skip);
-                p.bump();
+                p.bump_node(WORD);
                 skip = p.count_skip();
+                is_sentence = true;
             }
 
-            p.finish_node_at(c, SENTENCE);
+            if is_sentence {
+                p.finish_node_at(c, SENTENCE);
+            }
+
             true
         }
         NUMBER => {
             p.skip(skip);
 
             let c = p.checkpoint();
-            p.bump();
+            p.bump_node(NUMBER);
 
-            match p.nth(Skip::ZERO, 0) {
+            let skip = p.count_skip();
+
+            match p.nth(skip, 0) {
                 PERCENTAGE => {
+                    p.skip(skip);
                     p.bump();
                     p.finish_node_at(c, PERCENTAGE);
                 }
-                _ => {
-                    p.finish_node_at(c, NUMBER);
+                WORD | NUMBER => {
+                    p.skip(skip);
 
                     if unit(p) {
-                        p.finish_node_at(c, NUMBER_WITH_UNIT);
+                        p.finish_node_at(c, WITH_UNIT);
+                    } else {
+                        p.error_node_at(c);
                     }
+                }
+                _ => {
+                    p.finish_node_at(c, NUMBER);
                 }
             }
 
@@ -192,105 +144,188 @@ fn value(p: &mut Parser<'_>) -> bool {
         }
         OPEN_PAREN => {
             p.skip(skip);
-
-            let c = p.checkpoint();
             p.bump();
 
-            if !expr(p, None) {
+            if !expr(p) {
                 return false;
             }
+
+            let skip = p.count_skip();
 
             if !p.eat(skip, &[CLOSE_PAREN]) {
                 return false;
             }
 
-            p.finish_node_at(c, OPERATION);
             true
         }
         _ => false,
     }
 }
 
-fn expr(p: &mut Parser<'_>, level: Option<u32>) -> bool {
-    if !expr_nested(p, level) {
-        return false;
-    }
+/// Parse an expression.
+pub fn expr(p: &mut Parser<'_>) -> bool {
+    let start = p.checkpoint();
+
+    let mut stack: Vec<(Checkpoint, i32, bool)> = vec![];
+    let mut first = true;
 
     loop {
         let skip = p.count_skip();
-
-        if !matches!(p.nth(skip, 0), AS | TO) {
-            break;
-        }
-
         p.skip(skip);
 
-        p.start_node(OPERATOR);
-        p.bump();
-        p.finish_node();
+        let last = p.checkpoint();
 
-        if !unit(p) {
-            return false;
+        if stack.last().map(|e| e.2).unwrap_or_default() {
+            if !unit(p) {
+                return false;
+            }
+        } else {
+            if !value(p) {
+                return false;
+            }
         }
-    }
 
-    true
-}
-
-fn expr_nested(p: &mut Parser<'_>, mut level: Option<u32>) -> bool {
-    let mut last = p.checkpoint();
-
-    if !value(p) {
-        return false;
-    }
-
-    loop {
         let skip = p.count_skip();
 
-        match op(p.nth(skip, 0)) {
-            None => {
-                break;
-            }
-            Some(n) => {
-                p.skip(skip);
-                p.bump_node(OPERATOR);
+        let (next, operator, unit) = match op(p.nth(skip, 0)) {
+            Some(n) => n,
+            None => break,
+        };
 
-                match level {
-                    None => {
-                        level = Some(n);
-                    }
-                    Some(c) if c < n => {
-                        if !expr(p, Some(n)) {
-                            return false;
-                        }
+        if std::mem::take(&mut first) {
+            stack.push((start, next, unit));
+        }
 
-                        p.finish_node_at(last, OPERATION);
-                        continue;
-                    }
-                    Some(c) if c > n => {
-                        break;
-                    }
-                    _ => {}
+        while let Some((pop_last, pop_current, pop_unit)) = stack.pop() {
+            match (pop_current - next).signum() {
+                -1 => {
+                    stack.push((pop_last, pop_current, pop_unit));
+                    stack.push((last, next, unit));
+                    break;
+                }
+                1 => {
+                    p.finish_node_at(pop_last, OPERATION);
+                    stack.push((pop_last, next, unit));
+                }
+                _ => {
+                    stack.push((pop_last, pop_current, pop_unit));
+                    break;
                 }
             }
         }
 
+        p.skip(skip);
+        p.bump_node(operator);
+    }
+
+    while let Some((last, _, _)) = stack.pop() {
+        p.finish_node_at(last, OPERATION);
+    }
+
+    return true;
+
+    /// Get the binding power of an operator.
+    fn op(kind: SyntaxKind) -> Option<(i32, SyntaxKind, bool)> {
+        let out = match kind {
+            TO => (1, OP_CAST, true),
+            PLUS => (2, OP_ADD, false),
+            DASH => (2, OP_SUB, false),
+            STAR => (3, OP_MUL, false),
+            SLASH => (3, OP_DIV, false),
+            CARET => (10, OP_POWER, false),
+            _ => return None,
+        };
+
+        Some(out)
+    }
+}
+
+fn unit_component(p: &mut Parser<'_>) -> bool {
+    match p.nth(Skip::ZERO, 0) {
+        NUMBER => {
+            p.bump_node(NUMBER);
+            true
+        }
+        WORD | TO => {
+            p.bump_node(WORD);
+            true
+        }
+        _ => false,
+    }
+}
+
+/// Parse a unit.
+pub fn unit(p: &mut Parser<'_>) -> bool {
+    let start = p.checkpoint();
+
+    let mut stack = vec![];
+    let mut first = true;
+
+    let mut last = p.checkpoint();
+
+    if !unit_component(p) {
+        return false;
+    }
+
+    loop {
+        let (next, operator, steps) = match op(p.nth(Skip::ZERO, 0)) {
+            Some(n) => n,
+            None => break,
+        };
+
+        if std::mem::take(&mut first) {
+            stack.push((start, next));
+        }
+
+        while let Some((pop_last, pop_current)) = stack.pop() {
+            match (pop_current - next).signum() {
+                -1 => {
+                    stack.push((pop_last, pop_current));
+                    stack.push((last, next));
+                    break;
+                }
+                1 => {
+                    p.finish_node_at(pop_last, OPERATION);
+                    stack.push((pop_last, next));
+                }
+                _ => {
+                    stack.push((pop_last, pop_current));
+                    break;
+                }
+            }
+        }
+
+        let c = p.checkpoint();
+
+        for _ in 0..steps {
+            p.bump();
+        }
+
+        p.finish_node_at(c, operator);
+
         last = p.checkpoint();
 
-        if !value(p) {
+        if !unit_component(p) {
             return false;
         }
     }
 
-    true
-}
+    while let Some((last, _)) = stack.pop() {
+        p.finish_node_at(last, OPERATION);
+    }
 
-/// Get the binding power of an operator.
-fn op(kind: SyntaxKind) -> Option<u32> {
-    match kind {
-        PLUS | DASH => Some(1),
-        STAR | SLASH => Some(2),
-        CARET => Some(3),
-        _ => None,
+    return true;
+
+    /// Get the binding power of an operator.
+    fn op(kind: SyntaxKind) -> Option<(i32, SyntaxKind, usize)> {
+        let out = match kind {
+            STAR => (3, OP_MUL, 1),
+            SLASH => (3, OP_DIV, 1),
+            WORD => (3, OP_IMPLICIT_MUL, 0),
+            CARET => (10, OP_POWER, 1),
+            _ => return None,
+        };
+
+        Some(out)
     }
 }

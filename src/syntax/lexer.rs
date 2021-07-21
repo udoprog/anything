@@ -13,19 +13,12 @@ pub struct Token {
 pub struct Lexer<'a> {
     source: &'a str,
     pos: usize,
-    unit_mode: bool,
-    ws_mode: bool,
 }
 
 impl<'a> Lexer<'a> {
     /// Construct a new lexer.
     pub fn new(source: &'a str) -> Self {
-        Self {
-            source,
-            pos: 0,
-            unit_mode: false,
-            ws_mode: true,
-        }
+        Self { source, pos: 0 }
     }
 
     /// Get the text for the given span.
@@ -33,17 +26,6 @@ impl<'a> Lexer<'a> {
         self.source
             .get(span.start()..span.end())
             .expect("expected span")
-    }
-
-    /// Set the lexer to run in unit mode, rewinding it to the given head if
-    /// appropriate.
-    pub fn set_mode(&mut self, head: Option<Token>, unit_mode: bool, ws_mode: bool) {
-        if let Some(head) = head {
-            self.pos = head.span.start();
-        }
-
-        self.unit_mode = unit_mode;
-        self.ws_mode = ws_mode;
     }
 
     /// Peek the next character.
@@ -112,13 +94,7 @@ impl<'a> Lexer<'a> {
     fn consume_word(&mut self) -> usize {
         let mut count = 0;
 
-        while let Some(c) = self.peek() {
-            match c {
-                c if c.is_alphanumeric() => {}
-                '\'' => {}
-                _ => break,
-            }
-
+        while let Some('a'..='z' | 'A'..='Z' | '0'..='9' | '°' | '\'') = self.peek() {
             count += 1;
             self.step();
         }
@@ -136,108 +112,17 @@ impl<'a> Lexer<'a> {
             self.step();
         }
     }
-
-    fn consume_unit_number(&mut self) -> usize {
-        let mut count = 0;
-
-        while let Some('0'..='9') = self.peek() {
-            count += 1;
-            self.step();
-        }
-
-        count
-    }
-
-    fn consume_unit_word(&mut self) {
-        while let Some('a'..='z' | 'A'..='Z' | '°' | '\'' | '\"' | '-') = self.peek() {
-            self.step();
-        }
-    }
-
-    fn consume_escaped_unit_word(&mut self) -> bool {
-        self.consume_unit_word();
-
-        if !matches!(self.peek(), Some('}')) {
-            return false;
-        }
-
-        self.step();
-        true
-    }
-
-    /// Run the lexer in unit mode.
-    pub fn next_unit(&mut self) -> Option<Token> {
-        let start = self.pos as u32;
-
-        let kind = match self.peek()? {
-            c if self.ws_mode && c.is_whitespace() => {
-                self.consume_whitespace();
-                WHITESPACE
-            }
-            '0'..='9' => {
-                self.consume_unit_number();
-                UNIT_NUMBER
-            }
-            '-' => {
-                self.step();
-
-                if self.consume_unit_number() == 0 {
-                    ERROR
-                } else {
-                    UNIT_NUMBER
-                }
-            }
-            '{' => {
-                self.step();
-
-                if self.consume_escaped_unit_word() {
-                    UNIT_ESCAPED_WORD
-                } else {
-                    ERROR
-                }
-            }
-            'a'..='z' | 'A'..='Z' | '°' | '\'' | '\"' => {
-                self.step();
-                self.consume_unit_word();
-                UNIT_WORD
-            }
-            '^' => {
-                self.step();
-                CARET
-            }
-            '/' => {
-                self.step();
-                SLASH
-            }
-            '*' => {
-                self.step();
-                STAR
-            }
-            _ => {
-                return None;
-            }
-        };
-
-        Some(Token {
-            span: Span::new(start, self.pos as u32),
-            kind,
-        })
-    }
 }
 
 impl Iterator for Lexer<'_> {
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.unit_mode {
-            return self.next_unit();
-        }
-
         let start = self.pos;
         let c = self.peek()?;
 
         let kind = match c {
-            c if self.ws_mode && c.is_whitespace() => {
+            c if c.is_whitespace() => {
                 self.consume_whitespace();
                 WHITESPACE
             }
@@ -303,7 +188,6 @@ impl Iterator for Lexer<'_> {
             _ => {
                 if self.consume_word() > 0 {
                     match &self.source[start..self.pos] {
-                        "as" => AS,
                         "to" => TO,
                         _ => WORD,
                     }

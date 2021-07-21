@@ -65,6 +65,42 @@ impl Compound {
         Self { names }
     }
 
+    /// Insert powers of the given unit, ensures that the prefix of any existing
+    /// units matches otherwise will return the prefix that was expected as
+    /// `Err(<prefix>)`.
+    #[must_use]
+    pub fn update(&mut self, unit: Unit, power: i32, prefix: i32) -> Result<(), i32> {
+        match self.names.entry(unit) {
+            btree_map::Entry::Vacant(e) => {
+                e.insert(State { power, prefix });
+                Ok(())
+            }
+            btree_map::Entry::Occupied(mut e) => {
+                let state = e.get_mut();
+
+                if state.prefix != prefix {
+                    return Err(state.prefix);
+                }
+
+                state.power += power;
+
+                if state.power == 0 {
+                    e.remove_entry();
+                    return Ok(());
+                }
+
+                Ok(())
+            }
+        }
+    }
+
+    /// Update the power of the given unit.
+    pub fn update_power(&mut self, unit: Unit, power: i32) {
+        if let Some(state) = self.names.get_mut(&unit) {
+            state.power = power;
+        }
+    }
+
     /// Test if this unit has a numerator.
     pub fn has_numerator(&self) -> bool {
         self.names.values().any(|s| s.power > 0)

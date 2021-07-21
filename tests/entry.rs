@@ -110,7 +110,7 @@ fn test_velocities() {
 
 #[test]
 fn test_multiple_identity_sheds() {
-    let expected = query!("0.05c / 500 years * mass of earth as N");
+    let expected = query!("0.05c / 500 years * mass of earth to N");
 
     assert_eq!(
         expected.value().clone(),
@@ -118,10 +118,10 @@ fn test_multiple_identity_sheds() {
     );
 
     let mut alternatives = Vec::new();
-    alternatives.push("(0.05c as m/s) / 500years * mass of earth as N");
-    alternatives.push("(0.05c as m/s) / (500years as seconds) * mass of earth as N");
-    alternatives.push("0.05c / (500years as seconds) * mass of earth as N");
-    alternatives.push("(0.05c / 500years as m/s^2) * mass of earth as N");
+    alternatives.push("(0.05c to m/s) / 500years * mass of earth to N");
+    alternatives.push("(0.05c to m/s) / (500years to seconds) * mass of earth to N");
+    alternatives.push("0.05c / (500years to seconds) * mass of earth to N");
+    alternatives.push("(0.05c / 500years to m/s^2) * mass of earth to N");
 
     for alt in alternatives {
         let actual = query!(alt);

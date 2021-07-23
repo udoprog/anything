@@ -112,6 +112,10 @@ unit = "Unit::Derived(units::area::HECTARE)"
 variant = "Litre"
 names = ["l", "L", "litre", "litres"]
 unit = "Unit::Derived(units::volume::LITRE)"
+[[units]]
+variant = "CubicCentimetre"
+names = ["cc"]
+unit = "Unit::Derived(units::volume::CUBIC_CENTIMETER)"
 
 [[units]]
 variant = "Perch"

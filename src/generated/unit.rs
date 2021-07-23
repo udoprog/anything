@@ -111,6 +111,8 @@ enum Combined {
     #[token("litre")]
     #[token("litres")]
     Litre,
+    #[token("cc")]
+    CubicCentimetre,
     #[token("perch")]
     #[token("perches")]
     Perch,
@@ -467,6 +469,8 @@ enum Units {
     #[token("litre")]
     #[token("litres")]
     Litre,
+    #[token("cc")]
+    CubicCentimetre,
     #[token("perch")]
     #[token("perches")]
     Perch,
@@ -693,6 +697,7 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Combined::Rod => Unit::Derived(units::length::ROD),
             Combined::Hectare => Unit::Derived(units::area::HECTARE),
             Combined::Litre => Unit::Derived(units::volume::LITRE),
+            Combined::CubicCentimetre => Unit::Derived(units::volume::CUBIC_CENTIMETER),
             Combined::Perch => Unit::Derived(units::area::PERCH),
             Combined::Rood => Unit::Derived(units::area::ROOD),
             Combined::Acre => Unit::Derived(units::area::ACRE),
@@ -947,6 +952,9 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             }
             Units::Litre => {
                 break Unit::Derived(units::volume::LITRE);
+            }
+            Units::CubicCentimetre => {
+                break Unit::Derived(units::volume::CUBIC_CENTIMETER);
             }
             Units::Perch => {
                 break Unit::Derived(units::area::PERCH);

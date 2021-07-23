@@ -27,29 +27,49 @@ impl BuiltIn {
     fn call(&self, range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
         match self {
             BuiltIn::Sin => {
-                if arguments.len() != 1 {
-                    return Err(Error::argument_mismatch(range, 1, arguments.len()));
-                }
+                let actual = arguments.len();
+                let mut it = arguments.into_iter();
 
-                let (value, unit) = arguments.into_iter().next().unwrap().split();
+                let (value, unit) = match it.next() {
+                    Some(argument) if actual == 1 => argument.split(),
+                    _ => {
+                        return Err(Error::new(
+                            range,
+                            ArgumentMismatch {
+                                expected: 1,
+                                actual,
+                            },
+                        ));
+                    }
+                };
 
                 let value = match value.to_f64() {
                     Some(value) => value.sin(),
-                    None => return Err(Error::bad_argument(range, 0)),
+                    None => return Err(Error::new(range, BadArgument { argument: 0 })),
                 };
 
                 Ok(Numeric::from_f64(value, unit))
             }
             BuiltIn::Cos => {
-                if arguments.len() != 1 {
-                    return Err(Error::argument_mismatch(range, 1, arguments.len()));
-                }
+                let actual = arguments.len();
+                let mut it = arguments.into_iter();
 
-                let (value, unit) = arguments.into_iter().next().unwrap().split();
+                let (value, unit) = match it.next() {
+                    Some(argument) if actual == 1 => argument.split(),
+                    _ => {
+                        return Err(Error::new(
+                            range,
+                            ArgumentMismatch {
+                                expected: 1,
+                                actual,
+                            },
+                        ));
+                    }
+                };
 
                 let value = match value.to_f64() {
                     Some(value) => value.cos(),
-                    None => return Err(Error::bad_argument(range, 0)),
+                    None => return Err(Error::new(range, BadArgument { argument: 0 })),
                 };
 
                 Ok(Numeric::from_f64(value, unit))
@@ -141,7 +161,7 @@ fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     let unit = a_unit.mul(&b_unit, -1, &mut a, &mut b);
 
     if a.denom().is_zero() || b.numer().is_zero() {
-        return Err(Error::message(range, "divide by zero"));
+        return Err(Error::new(range, DivideByZero));
     }
 
     Ok(Numeric::new(a / b, unit))
@@ -153,7 +173,7 @@ fn mul(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     let unit = a_unit.mul(&b_unit, 1, &mut a, &mut b);
 
     if a.denom().is_zero() || b.denom().is_zero() {
-        return Err(Error::message(range, "divide by zero"));
+        return Err(Error::new(range, DivideByZero));
     }
 
     Ok(Numeric::new(a * b, unit))
@@ -228,7 +248,10 @@ fn inner_unit(
             let range = node.text_range();
             let mut it = node.children();
 
-            let base = it.next().ok_or_else(|| Error::missing_node(range))?;
+            let base = match it.next() {
+                Some(base) => base,
+                None => return Err(Error::new(range, MissingNode)),
+            };
             let last = inner_unit(source, base, bias, compound, n)?;
 
             while let (Some(op), Some(arg)) = (it.next(), it.next()) {
@@ -244,7 +267,12 @@ fn inner_unit(
                                     ))
                                 }
                             },
-                            _ => return Err(Error::expected_only(arg.text_range(), NUMBER)),
+                            _ => {
+                                return Err(Error::new(
+                                    arg.text_range(),
+                                    Unexpected { kind: NUMBER },
+                                ))
+                            }
                         };
 
                         compound.update_power(last, power * n);
@@ -256,7 +284,7 @@ fn inner_unit(
                         inner_unit(source, arg, bias, compound, -1)?;
                     }
                     (_, kind) => {
-                        return Err(Error::unexpected(op.text_range(), kind));
+                        return Err(Error::new(op.text_range(), Unexpected { kind }));
                     }
                 }
             }
@@ -270,25 +298,28 @@ fn inner_unit(
 
             let mut last = None;
 
-            while let Some(parsed) = parser.next().map_err(|e| Error::illegal_unit(range, e))? {
-                if let Err(expected) = compound.update(parsed.name, n, parsed.prefix) {
+            while let Some((prefix, name)) = parser
+                .next()
+                .map_err(|unit| Error::new(range, IllegalUnit { unit: unit.into() }))?
+            {
+                if let Err(expected) = compound.update(name, n, prefix) {
                     return Err(Error::new(
                         range,
                         PrefixMismatch {
                             unit: unit.into(),
                             expected,
-                            actual: parsed.prefix,
+                            actual: prefix,
                         },
                     ));
                 }
 
-                last = Some(parsed.name);
+                last = Some(name);
             }
 
             last
         }
         kind => {
-            return Err(Error::unexpected(node.text_range(), kind));
+            return Err(Error::new(node.text_range(), Unexpected { kind }));
         }
     };
 
@@ -324,7 +355,7 @@ pub fn eval(
 
             let base = match it.next() {
                 Some(base) => base,
-                None => return Err(Error::message(node.text_range(), "expected base node")),
+                None => return Err(Error::new(node.text_range(), MissingNode)),
             };
 
             let start = base.text_range();
@@ -363,9 +394,9 @@ pub fn eval(
                         base = DelayedEval::Numeric(Numeric::new(lhs, rhs));
                         continue;
                     }
-                    ERROR => return Err(Error::message(op.text_range(), "expected operator")),
+                    ERROR => return Err(Error::new(op.text_range(), SyntaxError)),
                     kind => {
-                        return Err(Error::unexpected(op.text_range(), kind));
+                        return Err(Error::new(op.text_range(), Unexpected { kind }));
                     }
                 };
 
@@ -384,7 +415,9 @@ pub fn eval(
             let number = &source[node.text_range()];
             let number = match numeric::parse_decimal_big_rational(number) {
                 Ok(number) => number,
-                Err(error) => return Err(Error::parse(node.text_range(), error)),
+                Err(error) => {
+                    return Err(Error::new(node.text_range(), ParseNumericError { error }))
+                }
             };
             Ok(Numeric::new(number, Compound::empty()))
         }
@@ -393,12 +426,12 @@ pub fn eval(
 
             let value_node = match it.next() {
                 Some(number) => number,
-                None => return Err(Error::missing_node(node.text_range())),
+                None => return Err(Error::new(node.text_range(), MissingNode)),
             };
 
             let unit_node = match it.next() {
                 Some(unit) => unit,
-                None => return Err(Error::missing_node(node.text_range())),
+                None => return Err(Error::new(node.text_range(), MissingNode)),
             };
 
             let value = eval(ctx, value_node, source, db, bias)?;
@@ -425,7 +458,9 @@ pub fn eval(
             let number = &source[number.text_range()];
             let number = match numeric::parse_decimal_big_rational(number) {
                 Ok(number) => number,
-                Err(error) => return Err(Error::parse(node.text_range(), error)),
+                Err(error) => {
+                    return Err(Error::new(node.text_range(), ParseNumericError { error }))
+                }
             };
             let one_hundred = BigRational::new(100u32.into(), 1u32.into());
 
@@ -436,11 +471,16 @@ pub fn eval(
 
             let name = match it.next() {
                 Some(name) if name.kind() == FN_NAME => name,
-                _ => return Err(Error::expected_only(node.text_range(), FN_NAME)),
+                _ => return Err(Error::new(node.text_range(), Unexpected { kind: FN_NAME })),
             };
             let arguments = match it.next() {
                 Some(arguments) if arguments.kind() == FN_ARGUMENTS => arguments,
-                _ => return Err(Error::expected_only(node.text_range(), FN_ARGUMENTS)),
+                _ => {
+                    return Err(Error::new(
+                        node.text_range(),
+                        Unexpected { kind: FN_ARGUMENTS },
+                    ))
+                }
             };
             let name = &source[name.text_range()];
 
@@ -455,10 +495,13 @@ pub fn eval(
                     Function::BuiltIn(builtin) => Ok(builtin.call(node.text_range(), args)?),
                 }
             } else {
-                return Err(Error::missing_function(node.text_range(), name.into()));
+                return Err(Error::new(
+                    node.text_range(),
+                    MissingFunction { name: name.into() },
+                ));
             }
         }
-        ERROR => Err(Error::message(node.text_range(), "expected value")),
-        kind => Err(Error::unexpected(node.text_range(), kind)),
+        ERROR => Err(Error::new(node.text_range(), SyntaxError)),
+        kind => Err(Error::new(node.text_range(), Unexpected { kind })),
     }
 }

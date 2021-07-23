@@ -162,11 +162,19 @@ fn value(p: &mut Parser<'_>) -> bool {
     }
 }
 
-/// Parse an expression.
-pub fn expr(p: &mut Parser<'_>) -> bool {
+/// Helper to parse a hierarchy of expressions which can have differen
+/// priorities. These are called operations and are separated by operators.
+fn operations<T>(
+    p: &mut Parser<'_>,
+    operand: fn(p: &mut Parser<'_>, T) -> bool,
+    op: fn(p: &mut Parser<'_>) -> Option<(i32, SyntaxKind, usize, T)>,
+) -> bool
+where
+    T: Copy + Default,
+{
     let start = p.checkpoint();
 
-    let mut stack: Vec<(Checkpoint, i32, bool)> = vec![];
+    let mut stack: Vec<(Checkpoint, i32, T)> = vec![];
     let mut first = true;
 
     loop {
@@ -175,121 +183,34 @@ pub fn expr(p: &mut Parser<'_>) -> bool {
 
         let last = p.checkpoint();
 
-        if stack.last().map(|e| e.2).unwrap_or_default() {
-            if !unit(p) {
-                return false;
-            }
-        } else {
-            if !value(p) {
-                return false;
-            }
+        let extra = stack.last().map(|e| e.2).unwrap_or_default();
+
+        if !operand(p, extra) {
+            return false;
         }
 
-        let skip = p.count_skip();
-
-        let (next, operator, unit) = match op(p.nth(skip, 0)) {
+        let (next, operator, steps, extra) = match op(p) {
             Some(n) => n,
             None => break,
         };
 
         if std::mem::take(&mut first) {
-            stack.push((start, next, unit));
+            stack.push((start, next, extra));
         }
 
-        while let Some((pop_last, pop_current, pop_unit)) = stack.pop() {
+        while let Some((pop_last, pop_current, pop_extra)) = stack.pop() {
             match (pop_current - next).signum() {
                 -1 => {
-                    stack.push((pop_last, pop_current, pop_unit));
-                    stack.push((last, next, unit));
+                    stack.push((pop_last, pop_current, pop_extra));
+                    stack.push((last, next, extra));
                     break;
                 }
                 1 => {
                     p.finish_node_at(pop_last, OPERATION);
-                    stack.push((pop_last, next, unit));
+                    stack.push((pop_last, next, extra));
                 }
                 _ => {
-                    stack.push((pop_last, pop_current, pop_unit));
-                    break;
-                }
-            }
-        }
-
-        p.skip(skip);
-        p.bump_node(operator);
-    }
-
-    while let Some((last, _, _)) = stack.pop() {
-        p.finish_node_at(last, OPERATION);
-    }
-
-    return true;
-
-    /// Get the binding power of an operator.
-    fn op(kind: SyntaxKind) -> Option<(i32, SyntaxKind, bool)> {
-        let out = match kind {
-            TO => (1, OP_CAST, true),
-            PLUS => (2, OP_ADD, false),
-            DASH => (2, OP_SUB, false),
-            STAR => (3, OP_MUL, false),
-            SLASH => (3, OP_DIV, false),
-            CARET => (10, OP_POWER, false),
-            _ => return None,
-        };
-
-        Some(out)
-    }
-}
-
-fn unit_component(p: &mut Parser<'_>) -> bool {
-    match p.nth(Skip::ZERO, 0) {
-        NUMBER => {
-            p.bump_node(NUMBER);
-            true
-        }
-        WORD | TO => {
-            p.bump_node(WORD);
-            true
-        }
-        _ => false,
-    }
-}
-
-/// Parse a unit.
-pub fn unit(p: &mut Parser<'_>) -> bool {
-    let start = p.checkpoint();
-
-    let mut stack = vec![];
-    let mut first = true;
-
-    let mut last = p.checkpoint();
-
-    if !unit_component(p) {
-        return false;
-    }
-
-    loop {
-        let (next, operator, steps) = match op(p.nth(Skip::ZERO, 0)) {
-            Some(n) => n,
-            None => break,
-        };
-
-        if std::mem::take(&mut first) {
-            stack.push((start, next));
-        }
-
-        while let Some((pop_last, pop_current)) = stack.pop() {
-            match (pop_current - next).signum() {
-                -1 => {
-                    stack.push((pop_last, pop_current));
-                    stack.push((last, next));
-                    break;
-                }
-                1 => {
-                    p.finish_node_at(pop_last, OPERATION);
-                    stack.push((pop_last, next));
-                }
-                _ => {
-                    stack.push((pop_last, pop_current));
+                    stack.push((pop_last, pop_current, pop_extra));
                     break;
                 }
             }
@@ -302,27 +223,73 @@ pub fn unit(p: &mut Parser<'_>) -> bool {
         }
 
         p.finish_node_at(c, operator);
-
-        last = p.checkpoint();
-
-        if !unit_component(p) {
-            return false;
-        }
     }
 
-    while let Some((last, _)) = stack.pop() {
+    while let Some((last, _, _)) = stack.pop() {
         p.finish_node_at(last, OPERATION);
     }
 
-    return true;
+    true
+}
+
+/// Parse an expression.
+pub fn expr(p: &mut Parser<'_>) -> bool {
+    return operations(p, operand, op);
+
+    fn operand(p: &mut Parser<'_>, is_unit: bool) -> bool {
+        if is_unit {
+            let skip = p.count_skip();
+            p.skip(skip);
+            unit(p)
+        } else {
+            value(p)
+        }
+    }
 
     /// Get the binding power of an operator.
-    fn op(kind: SyntaxKind) -> Option<(i32, SyntaxKind, usize)> {
-        let out = match kind {
-            STAR => (3, OP_MUL, 1),
-            SLASH => (3, OP_DIV, 1),
-            WORD => (3, OP_IMPLICIT_MUL, 0),
-            CARET => (10, OP_POWER, 1),
+    fn op(p: &mut Parser<'_>) -> Option<(i32, SyntaxKind, usize, bool)> {
+        let skip = p.count_skip();
+
+        let out = match p.nth(skip, 0) {
+            TO => (1, OP_CAST, 1, true),
+            PLUS => (2, OP_ADD, 1, false),
+            DASH => (2, OP_SUB, 1, false),
+            STAR => (3, OP_MUL, 1, false),
+            SLASH => (3, OP_DIV, 1, false),
+            CARET => (10, OP_POWER, 1, false),
+            _ => return None,
+        };
+
+        p.skip(skip);
+        Some(out)
+    }
+}
+
+/// Parse a unit.
+pub fn unit(p: &mut Parser<'_>) -> bool {
+    return operations(p, operand, op);
+
+    fn operand(p: &mut Parser<'_>, (): ()) -> bool {
+        match p.nth(Skip::ZERO, 0) {
+            NUMBER => {
+                p.bump_node(NUMBER);
+                true
+            }
+            WORD | TO => {
+                p.bump_node(WORD);
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// Get the binding power of an operator.
+    fn op(p: &mut Parser<'_>) -> Option<(i32, SyntaxKind, usize, ())> {
+        let out = match p.nth(Skip::ZERO, 0) {
+            STAR => (3, OP_MUL, 1, ()),
+            SLASH => (3, OP_DIV, 1, ()),
+            WORD => (3, OP_IMPLICIT_MUL, 0, ()),
+            CARET => (10, OP_POWER, 1, ()),
             _ => return None,
         };
 

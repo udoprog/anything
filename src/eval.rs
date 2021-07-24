@@ -1,13 +1,14 @@
 use crate::compound::Compound;
+use crate::db;
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
 use crate::syntax::parser::{SyntaxKind, SyntaxNode};
 use crate::unit::Unit;
 use crate::unit_parser::UnitParser;
-use crate::{db, numeric};
 use hashbrown::HashMap;
 use num::bigint::Sign;
-use num::{BigRational, Signed, ToPrimitive, Zero};
+use num::{Signed, ToPrimitive, Zero};
+use rational::Rational;
 use rowan::TextRange;
 
 use ErrorKind::*;
@@ -48,7 +49,7 @@ impl BuiltIn {
                     None => return Err(Error::new(range, BadArgument { argument: 0 })),
                 };
 
-                Ok(Numeric::from_f64(value, unit))
+                Ok(Numeric::new(Rational::from_f64(value), unit))
             }
             BuiltIn::Cos => {
                 let actual = arguments.len();
@@ -72,7 +73,7 @@ impl BuiltIn {
                     None => return Err(Error::new(range, BadArgument { argument: 0 })),
                 };
 
-                Ok(Numeric::from_f64(value, unit))
+                Ok(Numeric::new(Rational::from_f64(value), unit))
             }
         }
     }
@@ -192,14 +193,14 @@ fn pow(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     }
 
     if pow.is_zero() {
-        return Ok(Numeric::new(BigRational::new(1.into(), 1.into()), unit));
+        return Ok(Numeric::new(Rational::new(1, 1), unit));
     }
 
     if base.is_zero() {
         return Ok(Numeric::new(base, unit));
     }
 
-    let mut value = base.clone();
+    let mut value = Rational::new(1, 1);
     let mut pow = pow.numer().clone();
     let sign = pow.signum();
 
@@ -413,10 +414,10 @@ pub fn eval(
         }
         NUMBER => {
             let number = &source[node.text_range()];
-            let number = match numeric::parse_decimal_big_rational(number) {
+            let number = match str::parse::<Rational>(number) {
                 Ok(number) => number,
                 Err(error) => {
-                    return Err(Error::new(node.text_range(), ParseNumericError { error }))
+                    return Err(Error::new(node.text_range(), ParseRationalError { error }))
                 }
             };
             Ok(Numeric::new(number, Compound::empty()))
@@ -456,13 +457,13 @@ pub fn eval(
         PERCENTAGE => {
             let number = node.first_token().expect("number of percentage");
             let number = &source[number.text_range()];
-            let number = match numeric::parse_decimal_big_rational(number) {
+            let number = match str::parse::<Rational>(number) {
                 Ok(number) => number,
                 Err(error) => {
-                    return Err(Error::new(node.text_range(), ParseNumericError { error }))
+                    return Err(Error::new(node.text_range(), ParseRationalError { error }))
                 }
             };
-            let one_hundred = BigRational::new(100u32.into(), 1u32.into());
+            let one_hundred = Rational::new(100u32, 1u32);
 
             Ok(Numeric::new(number / one_hundred, Compound::empty()))
         }

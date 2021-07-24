@@ -1,7 +1,7 @@
 //! Available derived units.
 
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use num::BigRational;
+use rational::Rational;
 
 pub mod area;
 pub mod energy;
@@ -52,10 +52,10 @@ pub static GFORCE: Derived = Derived {
         format: |f, _| write!(f, "g"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(980665u32.into(), 100000u32.into());
+                *num *= Rational::new(980665u32, 100000u32);
             },
             from: |num| {
-                *num /= BigRational::new(980665u32.into(), 100000u32.into());
+                *num /= Rational::new(980665u32, 100000u32);
             },
         }),
     },
@@ -297,8 +297,8 @@ pub static KATAL: Derived = Derived {
 };
 
 /// Specific impulse as `s` with the `sp` suffix.
-pub static SPECIFIC_IMPUSE: Derived = Derived {
-    id: 0x9645d02f,
+pub static SPECIFIC_IMPULSE: Derived = Derived {
+    id: 0x445f9706,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Second, p);

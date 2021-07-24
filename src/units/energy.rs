@@ -1,7 +1,7 @@
 //! Energy units.
 
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use num::BigRational;
+use rational::Rational;
 
 /// A Joule with the `J` suffix (`kg*m^2*s^-2`).
 pub static JOULE: Derived = Derived {
@@ -35,10 +35,10 @@ pub static BTU: Derived = Derived {
         },
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1055u32.into(), 1u32.into());
+                *num *= Rational::new(1055u32, 1u32);
             },
             from: |num| {
-                *num /= BigRational::new(1055u32.into(), 1u32.into());
+                *num /= Rational::new(1055u32, 1u32);
             },
         }),
     },
@@ -52,12 +52,10 @@ pub static ELECTRONVOLT: Derived = Derived {
         format: |f, _| write!(f, "eV"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *=
-                    BigRational::new(801088317u32.into(), 5000000000000000000000000000u128.into());
+                *num *= Rational::new(801088317u32, 5000000000000000000000000000u128);
             },
             from: |num| {
-                *num /=
-                    BigRational::new(801088317u32.into(), 5000000000000000000000000000u128.into());
+                *num /= Rational::new(801088317u32, 5000000000000000000000000000u128);
             },
         }),
     },

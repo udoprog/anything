@@ -290,6 +290,8 @@ enum Combined {
     #[token("°F")]
     #[token("fahrenheit")]
     Fahrenheit,
+    #[token("sp")]
+    SpecificImpulse,
     /// Prefixes
     #[token("Y")]
     #[token("yotta")]
@@ -652,6 +654,8 @@ enum Units {
     #[token("°F")]
     #[token("fahrenheit")]
     Fahrenheit,
+    #[token("sp")]
+    SpecificImpulse,
     #[token("-")]
     Separator,
     #[error]
@@ -746,6 +750,7 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Combined::Slug => Unit::Derived(units::mass::SLUG),
             Combined::Celsius => Unit::Derived(units::temperature::CELSIUS),
             Combined::Fahrenheit => Unit::Derived(units::temperature::FAHRENHEIT),
+            Combined::SpecificImpulse => Unit::Derived(units::SPECIFIC_IMPULSE),
             Combined::Yotta => {
                 prefix += Prefix::YOTTA;
                 break;
@@ -1102,6 +1107,9 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             }
             Units::Fahrenheit => {
                 break Unit::Derived(units::temperature::FAHRENHEIT);
+            }
+            Units::SpecificImpulse => {
+                break Unit::Derived(units::SPECIFIC_IMPULSE);
             }
             Units::Separator => {
                 continue;

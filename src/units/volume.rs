@@ -1,7 +1,7 @@
 //! Special volume units.
 
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use num::BigRational;
+use rational::Rational;
 
 /// Litre `l` or `0.001m^3`.
 pub static LITRE: Derived = Derived {
@@ -13,10 +13,10 @@ pub static LITRE: Derived = Derived {
         format: |f, _| write!(f, "l"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1u32.into(), 1000u32.into());
+                *num *= Rational::new(1u32, 1000u32);
             },
             from: |num| {
-                *num /= BigRational::new(1u32.into(), 1000u32.into());
+                *num /= Rational::new(1u32, 1000u32);
             },
         }),
     },
@@ -32,10 +32,10 @@ pub static CUBIC_CENTIMETER: Derived = Derived {
         format: |f, _| write!(f, "cc"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1u32.into(), 1000000u32.into());
+                *num *= Rational::new(1u32, 1000000u32);
             },
             from: |num| {
-                *num /= BigRational::new(1u32.into(), 1000000u32.into());
+                *num /= Rational::new(1u32, 1000000u32);
             },
         }),
     },

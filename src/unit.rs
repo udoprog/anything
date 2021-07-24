@@ -1,7 +1,7 @@
 use crate::compound::State;
 use crate::powers::Powers;
 use crate::prefix::Prefix;
-use num::BigRational;
+use rational::Rational;
 use std::cmp;
 use std::fmt;
 use std::hash;
@@ -148,9 +148,9 @@ impl fmt::Display for Display<'_> {
 #[derive(Clone, Copy)]
 pub struct Conversion {
     /// A conversion to kelvin from a given unit.
-    pub to: fn(&mut BigRational),
+    pub to: fn(&mut Rational),
     /// Perform a conversion from kelvin to a given unit.
-    pub from: fn(&mut BigRational),
+    pub from: fn(&mut Rational),
 }
 
 /// The vtable for a derived unit.

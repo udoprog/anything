@@ -1,7 +1,7 @@
 //! Special velocity units.
 
 use crate::unit::{Conversion, Derived, DerivedVtable};
-use num::BigRational;
+use rational::Rational;
 
 /// The speed of light in `m/s`.
 ///
@@ -13,10 +13,10 @@ pub static LIGHT_SPEED: Derived = Derived {
         format: |f, _| write!(f, "c"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(299792458u32.into(), 1u32.into());
+                *num *= Rational::new(299792458u32, 1u32);
             },
             from: |num| {
-                *num /= BigRational::new(299792458u32.into(), 1u32.into());
+                *num /= Rational::new(299792458u32, 1u32);
             },
         }),
     },
@@ -30,10 +30,10 @@ pub static KNOT: Derived = Derived {
         format: |f, _| write!(f, "kt"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1852.into(), 3600u32.into());
+                *num *= Rational::new(1852, 3600u32);
             },
             from: |num| {
-                *num /= BigRational::new(1852.into(), 3600u32.into());
+                *num /= Rational::new(1852, 3600u32);
             },
         }),
     },

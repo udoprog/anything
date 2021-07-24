@@ -8,7 +8,6 @@ mod config;
 mod db;
 mod error;
 mod eval;
-mod format;
 mod generated;
 mod numeric;
 mod powers;

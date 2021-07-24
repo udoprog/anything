@@ -1,7 +1,7 @@
 //! Special temperature units (separate from Kelvin).
 
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use num::BigRational;
+use rational::Rational;
 
 /// Celsius (`°C`) in based on kelvin (`K`).
 pub static CELSIUS: Derived = Derived {
@@ -13,10 +13,10 @@ pub static CELSIUS: Derived = Derived {
         format: |f, _| write!(f, "°C"),
         conversion: Some(Conversion {
             to: |num| {
-                *num += BigRational::new(27315.into(), 100.into());
+                *num += Rational::new(27315, 100);
             },
             from: |num| {
-                *num -= BigRational::new(27315.into(), 100.into());
+                *num -= Rational::new(27315, 100);
             },
         }),
     },
@@ -32,14 +32,14 @@ pub static FAHRENHEIT: Derived = Derived {
         format: |f, _| write!(f, "°F"),
         conversion: Some(Conversion {
             to: |num| {
-                *num -= BigRational::new(32.into(), 1.into());
-                *num *= BigRational::new(5.into(), 9.into());
-                *num += BigRational::new(27315.into(), 100.into());
+                *num -= Rational::new(32, 1);
+                *num *= Rational::new(5, 9);
+                *num += Rational::new(27315, 100);
             },
             from: |num| {
-                *num -= BigRational::new(27315.into(), 100.into());
-                *num *= BigRational::new(9.into(), 5.into());
-                *num += BigRational::new(32.into(), 1.into());
+                *num -= Rational::new(27315, 100);
+                *num *= Rational::new(9, 5);
+                *num += Rational::new(32, 1);
             },
         }),
     },

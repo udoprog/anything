@@ -1,7 +1,7 @@
 use crate::powers::Powers;
 use crate::syntax::parser::Parser;
 use crate::unit::{Conversion, Unit};
-use num::BigRational;
+use rational::Rational;
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
 use std::iter::FromIterator;
@@ -125,7 +125,7 @@ impl Compound {
     }
 
     /// Calculate the factor for coercing one unit to another.
-    pub fn factor(&self, other: &Self, value: &mut BigRational) -> bool {
+    pub fn factor(&self, other: &Self, value: &mut Rational) -> bool {
         if self.is_empty() || other.is_empty() {
             return true;
         }
@@ -149,7 +149,7 @@ impl Compound {
         }
 
         for (name, state) in &other.names {
-            *value *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
+            *value *= Rational::new(10u32, 1u32).pow(state.prefix * state.power);
 
             if let Some(conversion) = name.conversion() {
                 apply_conversion(state.power, value, conversion);
@@ -161,14 +161,14 @@ impl Compound {
                 apply_conversion(state.power * -1, value, conversion);
             }
 
-            *value /= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
+            *value /= Rational::new(10u32, 1u32).pow(state.prefix * state.power);
         }
 
         true
     }
 
     /// Calculate multiplication factors for the given multiplication.
-    pub fn mul(&self, other: &Self, n: i32, lhs: &mut BigRational, rhs: &mut BigRational) -> Self {
+    pub fn mul(&self, other: &Self, n: i32, lhs: &mut Rational, rhs: &mut Rational) -> Self {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
                 other
@@ -211,7 +211,7 @@ impl Compound {
         }
 
         for (name, state) in &self.names {
-            *lhs *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
+            *lhs *= Rational::new(10u32, 1u32).pow(state.prefix * state.power);
 
             if let Some(conversion) = name.conversion() {
                 apply_conversion(state.power, lhs, conversion);
@@ -219,7 +219,7 @@ impl Compound {
         }
 
         for (name, state) in &other.names {
-            *rhs *= BigRational::new(10u32.into(), 1u32.into()).pow(state.prefix * state.power);
+            *rhs *= Rational::new(10u32, 1u32).pow(state.prefix * state.power);
 
             if let Some(conversion) = name.conversion() {
                 apply_conversion(state.power, rhs, conversion);
@@ -238,7 +238,7 @@ impl Compound {
         /// Reconstruct names.
         fn reconstruct(
             der: impl IntoIterator<Item = (Unit, i32, i32)>,
-            out: &mut BigRational,
+            out: &mut Rational,
             names: &mut BTreeMap<Unit, State>,
         ) {
             let mut powers = Powers::default();
@@ -461,7 +461,7 @@ impl fmt::Display for Compound {
     }
 }
 
-fn apply_conversion(pow: i32, ratio: &mut BigRational, conversion: Conversion) {
+fn apply_conversion(pow: i32, ratio: &mut Rational, conversion: Conversion) {
     for _ in pow..0 {
         (conversion.from)(ratio);
     }

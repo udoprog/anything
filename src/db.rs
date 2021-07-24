@@ -1,8 +1,7 @@
-use std::fs;
-
 use crate::compound::Compound;
 use anyhow::{anyhow, Context, Result};
-use num::BigRational;
+use rational::Rational;
+use std::fs;
 use tantivy::collector::TopDocs;
 use tantivy::query::{QueryParser, QueryParserError};
 use tantivy::schema::{
@@ -39,7 +38,7 @@ pub(crate) enum Match {
 #[derive(Debug)]
 pub(crate) struct Constant {
     pub(crate) names: Vec<Box<str>>,
-    pub(crate) value: BigRational,
+    pub(crate) value: Rational,
     pub(crate) unit: Compound,
 }
 
@@ -76,7 +75,7 @@ impl Db {
             Index::create_in_ram(schema)
         } else {
             let (index_rebuild, index) = open_index(&config)?;
-            rebuild = index_rebuild;
+            rebuild = rebuild || index_rebuild;
             index
         };
 
@@ -228,11 +227,8 @@ fn build_schema() -> Schema {
 }
 
 pub(crate) mod serde {
-    use num::BigRational;
-    use serde::{de, Deserialize, Serialize};
-    use std::borrow::Cow;
-
-    use crate::numeric::parse_decimal_big_rational;
+    use rational::Rational;
+    use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Deserialize)]
     pub struct Doc {
@@ -250,19 +246,8 @@ pub(crate) mod serde {
     #[derive(Debug, Deserialize)]
     pub struct Constant {
         pub names: Vec<Box<str>>,
-        #[serde(deserialize_with = "des_value")]
-        pub value: BigRational,
+        pub value: Rational,
         #[serde(default)]
         pub unit: Option<Box<str>>,
-    }
-
-    fn des_value<'de, D>(d: D) -> Result<BigRational, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        match parse_decimal_big_rational(Cow::<str>::deserialize(d)?.as_ref()) {
-            Ok(ratio) => Ok(ratio),
-            Err(e) => Err(<D::Error as de::Error>::custom(e)),
-        }
     }
 }

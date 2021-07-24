@@ -25,13 +25,13 @@ macro_rules! unit {
 macro_rules! ratio {
     ($a:literal) => {{
         let _a: u128 = $a;
-        num::BigRational::new(_a.into(), 1.into())
+        rational::Rational::new(_a, 1)
     }};
 
     ($a:literal / $b:literal) => {{
         let _a: u128 = $a;
         let _b: u128 = $b;
-        num::BigRational::new(_a.into(), _b.into())
+        rational::Rational::new(_a, _b)
     }};
 }
 
@@ -75,7 +75,7 @@ fn test_queries() {
     let n = query!("12c");
 
     assert_eq!(n.unit(), &c);
-    assert_eq!(n.to_u32(), Some(12));
+    assert_eq!(n.value().to_u32(), Some(12));
 }
 
 #[test]
@@ -85,7 +85,7 @@ fn test_compound_division() {
     let n = query!("1V^3 / 1V^10");
 
     assert_eq!(n.unit(), &c);
-    assert_eq!(n.to_u32(), Some(1));
+    assert_eq!(n.value().to_u32(), Some(1));
 }
 
 #[test]
@@ -93,7 +93,7 @@ fn test_compound_mul() {
     let n = query!("1Wb*V * 1V");
 
     assert_eq!(n.unit(), &unit!("WbV^2"));
-    assert_eq!(n.to_u32(), Some(1));
+    assert_eq!(n.value().to_u32(), Some(1));
 }
 
 #[test]

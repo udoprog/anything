@@ -1,7 +1,7 @@
 //! Special area units.
 
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use num::BigRational;
+use rational::Rational;
 
 /// Hectare `ha` or `10000m^2`.
 pub static HECTARE: Derived = Derived {
@@ -13,10 +13,10 @@ pub static HECTARE: Derived = Derived {
         format: |f, _| write!(f, "ha"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(10000u32.into(), 1u32.into());
+                *num *= Rational::new(10000u32, 1u32);
             },
             from: |num| {
-                *num /= BigRational::new(10000u32.into(), 1u32.into());
+                *num /= Rational::new(10000u32, 1u32);
             },
         }),
     },
@@ -38,10 +38,10 @@ pub static PERCH: Derived = Derived {
         },
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(2529285264u64.into(), 100000000u32.into());
+                *num *= Rational::new(2529285264u64, 100000000u32);
             },
             from: |num| {
-                *num /= BigRational::new(2529285264u64.into(), 100000000u32.into());
+                *num /= Rational::new(2529285264u64, 100000000u32);
             },
         }),
     },
@@ -63,10 +63,10 @@ pub static ROOD: Derived = Derived {
         },
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(10117141056u64.into(), 10000000u32.into());
+                *num *= Rational::new(10117141056u64, 10000000u32);
             },
             from: |num| {
-                *num /= BigRational::new(10117141056u64.into(), 10000000u32.into());
+                *num /= Rational::new(10117141056u64, 10000000u32);
             },
         }),
     },
@@ -88,10 +88,10 @@ pub static ACRE: Derived = Derived {
         },
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(40468564224u64.into(), 10000000u32.into());
+                *num *= Rational::new(40468564224u64, 10000000u32);
             },
             from: |num| {
-                *num /= BigRational::new(40468564224u64.into(), 10000000u32.into());
+                *num /= Rational::new(40468564224u64, 10000000u32);
             },
         }),
     },

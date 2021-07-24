@@ -321,6 +321,11 @@ variant = "Fahrenheit"
 names = ["°F","fahrenheit"]
 unit = "Unit::Derived(units::temperature::FAHRENHEIT)"
 
+[[units]]
+variant = "SpecificImpulse"
+names = ["sp"]
+unit = "Unit::Derived(units::SPECIFIC_IMPULSE)"
+
 [[prefixes]]
 variant = "Yotta"
 names = ["Y", "yotta"]

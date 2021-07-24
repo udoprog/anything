@@ -1,7 +1,7 @@
 //! Special distance units.
 
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use num::BigRational;
+use rational::Rational;
 
 /// Astronomical unit (`au`) or `149597870700m`.
 pub static AU: Derived = Derived {
@@ -13,10 +13,10 @@ pub static AU: Derived = Derived {
         format: |f, _| write!(f, "au"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(149597870700u64.into(), 1u32.into());
+                *num *= Rational::new(149597870700u64, 1u32);
             },
             from: |num| {
-                *num /= BigRational::new(149597870700u64.into(), 1u32.into());
+                *num /= Rational::new(149597870700u64, 1u32);
             },
         }),
     },
@@ -32,10 +32,10 @@ pub static FATHOM: Derived = Derived {
         format: |f, _| write!(f, "ftm"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1852.into(), 1000u32.into());
+                *num *= Rational::new(1852, 1000u32);
             },
             from: |num| {
-                *num /= BigRational::new(1852.into(), 1000u32.into());
+                *num /= Rational::new(1852, 1000u32);
             },
         }),
     },
@@ -57,10 +57,10 @@ pub static CABLE: Derived = Derived {
         },
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1852.into(), 10u32.into());
+                *num *= Rational::new(1852, 10u32);
             },
             from: |num| {
-                *num /= BigRational::new(1852.into(), 10u32.into());
+                *num /= Rational::new(1852, 10u32);
             },
         }),
     },
@@ -76,10 +76,10 @@ pub static NAUTICAL_MILE: Derived = Derived {
         format: |f, _| write!(f, "NM"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1852.into(), 1u32.into());
+                *num *= Rational::new(1852, 1u32);
             },
             from: |num| {
-                *num /= BigRational::new(1852.into(), 1u32.into());
+                *num /= Rational::new(1852, 1u32);
             },
         }),
     },
@@ -101,10 +101,10 @@ pub static LINK: Derived = Derived {
         },
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(201168u32.into(), 1000000u32.into());
+                *num *= Rational::new(201168u32, 1000000u32);
             },
             from: |num| {
-                *num /= BigRational::new(201168u32.into(), 1000000u32.into());
+                *num /= Rational::new(201168u32, 1000000u32);
             },
         }),
     },
@@ -120,10 +120,10 @@ pub static ROD: Derived = Derived {
         format: |f, _| write!(f, "rd"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(50292u32.into(), 10000u32.into());
+                *num *= Rational::new(50292u32, 10000u32);
             },
             from: |num| {
-                *num /= BigRational::new(50292u32.into(), 10000u32.into());
+                *num /= Rational::new(50292u32, 10000u32);
             },
         }),
     },
@@ -139,10 +139,10 @@ pub static THOU: Derived = Derived {
         format: |f, _| write!(f, "th"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(254u32.into(), 10000000u32.into());
+                *num *= Rational::new(254u32, 10000000u32);
             },
             from: |num| {
-                *num /= BigRational::new(254u32.into(), 10000000u32.into());
+                *num /= Rational::new(254u32, 10000000u32);
             },
         }),
     },
@@ -158,10 +158,10 @@ pub static BARLEYCORN: Derived = Derived {
         format: |f, _| write!(f, "Bc"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(254u32.into(), 30000u32.into());
+                *num *= Rational::new(254u32, 30000u32);
             },
             from: |num| {
-                *num /= BigRational::new(254u32.into(), 30000u32.into());
+                *num /= Rational::new(254u32, 30000u32);
             },
         }),
     },
@@ -177,10 +177,10 @@ pub static INCH: Derived = Derived {
         format: |f, _| write!(f, "in"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(254u32.into(), 10000u32.into());
+                *num *= Rational::new(254u32, 10000u32);
             },
             from: |num| {
-                *num /= BigRational::new(254u32.into(), 10000u32.into());
+                *num /= Rational::new(254u32, 10000u32);
             },
         }),
     },
@@ -196,10 +196,10 @@ pub static HAND: Derived = Derived {
         format: |f, _| write!(f, "hand"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1016.into(), 10000u32.into());
+                *num *= Rational::new(1016, 10000u32);
             },
             from: |num| {
-                *num /= BigRational::new(1016.into(), 10000u32.into());
+                *num /= Rational::new(1016, 10000u32);
             },
         }),
     },
@@ -215,10 +215,10 @@ pub static FOOT: Derived = Derived {
         format: |f, _| write!(f, "ft"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(3048u32.into(), 10000u32.into());
+                *num *= Rational::new(3048u32, 10000u32);
             },
             from: |num| {
-                *num /= BigRational::new(3048u32.into(), 10000u32.into());
+                *num /= Rational::new(3048u32, 10000u32);
             },
         }),
     },
@@ -234,10 +234,10 @@ pub static YARD: Derived = Derived {
         format: |f, _| write!(f, "yd"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(9144u32.into(), 10000u32.into());
+                *num *= Rational::new(9144u32, 10000u32);
             },
             from: |num| {
-                *num /= BigRational::new(9144u32.into(), 10000u32.into());
+                *num /= Rational::new(9144u32, 10000u32);
             },
         }),
     },
@@ -253,10 +253,10 @@ pub static CHAIN: Derived = Derived {
         format: |f, _| write!(f, "ch"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(201168u32.into(), 10000u32.into());
+                *num *= Rational::new(201168u32, 10000u32);
             },
             from: |num| {
-                *num /= BigRational::new(201168u32.into(), 10000u32.into());
+                *num /= Rational::new(201168u32, 10000u32);
             },
         }),
     },
@@ -272,10 +272,10 @@ pub static FURLONG: Derived = Derived {
         format: |f, _| write!(f, "fur"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(201168u32.into(), 1000u32.into());
+                *num *= Rational::new(201168u32, 1000u32);
             },
             from: |num| {
-                *num /= BigRational::new(201168u32.into(), 1000u32.into());
+                *num /= Rational::new(201168u32, 1000u32);
             },
         }),
     },
@@ -291,10 +291,10 @@ pub static MILE: Derived = Derived {
         format: |f, _| write!(f, "mi"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1609344u32.into(), 1000u32.into());
+                *num *= Rational::new(1609344u32, 1000u32);
             },
             from: |num| {
-                *num /= BigRational::new(1609344u32.into(), 1000u32.into());
+                *num /= Rational::new(1609344u32, 1000u32);
             },
         }),
     },
@@ -310,10 +310,10 @@ pub static LEAGUE: Derived = Derived {
         format: |f, _| write!(f, "lea"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(4828032u32.into(), 1000u32.into());
+                *num *= Rational::new(4828032u32, 1000u32);
             },
             from: |num| {
-                *num /= BigRational::new(4828032u32.into(), 1000u32.into());
+                *num /= Rational::new(4828032u32, 1000u32);
             },
         }),
     },

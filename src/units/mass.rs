@@ -1,7 +1,7 @@
 //! Special mass units.
 
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use num::BigRational;
+use rational::Rational;
 
 /// Tonne (metric ton) or `1000kg`.
 pub static TONNE: Derived = Derived {
@@ -19,10 +19,10 @@ pub static TONNE: Derived = Derived {
         },
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1000u32.into(), 1u32.into());
+                *num *= Rational::new(1000u32, 1u32);
             },
             from: |num| {
-                *num /= BigRational::new(1000u32.into(), 1u32.into());
+                *num /= Rational::new(1000u32, 1u32);
             },
         }),
     },
@@ -38,10 +38,10 @@ pub static DALTON: Derived = Derived {
         format: |f, _| write!(f, "Da"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(332107813321u64.into(), 200000000000u64.into());
+                *num *= Rational::new(332107813321u64, 200000000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(332107813321u64.into(), 200000000000u64.into());
+                *num /= Rational::new(332107813321u64, 200000000000u64);
             },
         }),
     },
@@ -57,10 +57,10 @@ pub static GRAIN: Derived = Derived {
         format: |f, _| write!(f, "gr"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(6479891u32.into(), 100000000000u64.into());
+                *num *= Rational::new(6479891u32, 100000000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(6479891u32.into(), 100000000000u64.into());
+                *num /= Rational::new(6479891u32, 100000000000u64);
             },
         }),
     },
@@ -76,10 +76,10 @@ pub static DRACHM: Derived = Derived {
         format: |f, _| write!(f, "dr"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(17718451953125u64.into(), 10000000000000000u64.into());
+                *num *= Rational::new(17718451953125u64, 10000000000000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(17718451953125u64.into(), 10000000000000000u64.into());
+                *num /= Rational::new(17718451953125u64, 10000000000000000u64);
             },
         }),
     },
@@ -95,10 +95,10 @@ pub static OUNCE: Derived = Derived {
         format: |f, _| write!(f, "oz"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(28349523125u64.into(), 1000000000000u64.into());
+                *num *= Rational::new(28349523125u64, 1000000000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(28349523125u64.into(), 1000000000000u64.into());
+                *num /= Rational::new(28349523125u64, 1000000000000u64);
             },
         }),
     },
@@ -114,10 +114,10 @@ pub static POUND: Derived = Derived {
         format: |f, _| write!(f, "lb"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(45359237u32.into(), 100000000u64.into());
+                *num *= Rational::new(45359237u32, 100000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(45359237u32.into(), 100000000u64.into());
+                *num /= Rational::new(45359237u32, 100000000u64);
             },
         }),
     },
@@ -133,10 +133,10 @@ pub static STONE: Derived = Derived {
         format: |f, _| write!(f, "st"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(635029318u64.into(), 100000000u64.into());
+                *num *= Rational::new(635029318u64, 100000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(635029318u64.into(), 100000000u64.into());
+                *num /= Rational::new(635029318u64, 100000000u64);
             },
         }),
     },
@@ -152,10 +152,10 @@ pub static QUARTER: Derived = Derived {
         format: |f, _| write!(f, "qr"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1270058636u64.into(), 100000000u64.into());
+                *num *= Rational::new(1270058636u64, 100000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(1270058636u64.into(), 100000000u64.into());
+                *num /= Rational::new(1270058636u64, 100000000u64);
             },
         }),
     },
@@ -171,10 +171,10 @@ pub static HUNDREDWEIGHT: Derived = Derived {
         format: |f, _| write!(f, "hundredweight"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(5080234544u64.into(), 100000000u64.into());
+                *num *= Rational::new(5080234544u64, 100000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(5080234544u64.into(), 100000000u64.into());
+                *num /= Rational::new(5080234544u64, 100000000u64);
             },
         }),
     },
@@ -190,10 +190,10 @@ pub static TON: Derived = Derived {
         format: |f, _| write!(f, "t"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(10160469088u64.into(), 10000000u64.into());
+                *num *= Rational::new(10160469088u64, 10000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(10160469088u64.into(), 10000000u64.into());
+                *num /= Rational::new(10160469088u64, 10000000u64);
             },
         }),
     },
@@ -209,10 +209,10 @@ pub static SLUG: Derived = Derived {
         format: |f, _| write!(f, "slug"),
         conversion: Some(Conversion {
             to: |num| {
-                *num *= BigRational::new(1459390294u64.into(), 100000000u64.into());
+                *num *= Rational::new(1459390294u64, 100000000u64);
             },
             from: |num| {
-                *num /= BigRational::new(1459390294u64.into(), 100000000u64.into());
+                *num /= Rational::new(1459390294u64, 100000000u64);
             },
         }),
     },

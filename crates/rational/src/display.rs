@@ -1,32 +1,37 @@
 use num::{BigInt, BigRational, Signed, ToPrimitive, Zero};
+use std::fmt;
 use std::fmt::Write;
-use std::{fmt, mem};
-
-#[cfg(test)]
-mod tests;
+use std::mem;
 
 /// Perform formatting of a big rational.
-pub struct FormatRatio<'a> {
-    ratio: &'a BigRational,
+pub struct Display<'a> {
+    rational: &'a BigRational,
     limit: usize,
     exponent_limit: i32,
+    cap: bool,
 }
 
-impl<'a> FormatRatio<'a> {
-    pub fn new(ratio: &'a BigRational, limit: usize, exponent_limit: i32) -> Self {
+impl<'a> Display<'a> {
+    pub(crate) fn new(
+        rational: &'a BigRational,
+        limit: usize,
+        exponent_limit: i32,
+        cap: bool,
+    ) -> Self {
         Self {
-            ratio,
+            rational,
             limit,
             exponent_limit,
+            cap,
         }
     }
 }
 
-impl fmt::Display for FormatRatio<'_> {
+impl fmt::Display for Display<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let neg = self.ratio.is_negative();
-        let mut rem = self.ratio.numer().abs();
-        let den = self.ratio.denom().abs();
+        let neg = self.rational.is_negative();
+        let mut rem = self.rational.numer().abs();
+        let den = self.rational.denom().abs();
 
         let div = &rem / &den;
         rem -= &den * &div;
@@ -50,7 +55,7 @@ impl fmt::Display for FormatRatio<'_> {
                 }
             }
 
-            if !rem.is_zero() {
+            if !rem.is_zero() && self.cap {
                 f.write_char('…')?;
             }
 
@@ -104,7 +109,7 @@ impl fmt::Display for FormatRatio<'_> {
             }
         }
 
-        if !rem.is_zero() {
+        if !rem.is_zero() && self.cap {
             f.write_char('…')?;
         }
 

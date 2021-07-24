@@ -1,7 +1,7 @@
 use crate::compound::Compound;
 use crate::db::LookupError;
-use crate::numeric::ParseNumericError;
 use crate::syntax::parser::SyntaxKind;
+use rational::ParseRationalError;
 use rowan::TextRange;
 use std::num::ParseIntError;
 use std::ops::Range;
@@ -47,7 +47,7 @@ pub(crate) enum ErrorKind {
     #[error("cannot cast `{from}` to `{to}`")]
     IllegalCast { from: Compound, to: Compound },
     #[error("bad decimal number: {error}")]
-    ParseNumericError { error: ParseNumericError },
+    ParseRationalError { error: ParseRationalError },
     #[error("bad number: {error}")]
     ParseIntError { error: ParseIntError },
     #[error("unexpected syntax `{kind:?}` (internal error)")]

@@ -2,7 +2,7 @@
 
 use crate::powers::Powers;
 use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use num::BigRational;
+use rational::Rational;
 
 fn time_powers(powers: &mut Powers, power: i32) {
     powers.insert(Unit::Second, power);
@@ -18,10 +18,10 @@ macro_rules! time {
                 format: $f,
                 conversion: Some(Conversion {
                     to: |num| {
-                        *num *= BigRational::new($num.into(), $den.into());
+                        *num *= Rational::new($num, $den);
                     },
                     from: |num| {
-                        *num /= BigRational::new($num.into(), $den.into());
+                        *num /= Rational::new($num, $den);
                     }
                 }),
             },

@@ -2,13 +2,20 @@ use assets::db::Db;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let mut db = Db {
-        constants: Vec::new(),
-    };
+    let analyzer = assets::analyzer::Analyzer::new();
 
-    assets::planets::download(&mut db).await?;
-    assets::satellites::download(&mut db).await?;
+    {
+        let mut db = Db::new();
+        assets::planets::download(&mut db).await?;
+        assets::satellites::download(&mut db).await?;
+        db.to_path("db/astronomics.toml")?;
+    }
 
-    db.write_to("db/astronomics.toml")?;
+    {
+        let mut db = Db::new();
+        assets::populations::download(&analyzer, &mut db).await?;
+        db.to_path("db/populations.toml")?;
+    }
+
     Ok(())
 }

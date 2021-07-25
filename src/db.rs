@@ -63,6 +63,7 @@ impl Db {
 
     fn open_inner(in_memory: bool) -> Result<Self> {
         let mut config = crate::config::open()?;
+
         let hash = config.hash_assets();
 
         let mut rebuild = match config.meta.database_hash.as_deref() {
@@ -134,7 +135,7 @@ impl Db {
 
         let query_parser = QueryParser::for_index(&self.index, vec![self.field_name]);
         let query = query_parser.parse_query(query)?;
-        let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
+        let top_docs = searcher.search(&query, &TopDocs::with_limit(1))?;
 
         for (_score, id) in top_docs {
             let doc = searcher.doc(id)?;

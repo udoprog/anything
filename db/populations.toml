@@ -1,11 +1,3035 @@
 [[constants]]
-names = ["population", "stockholm", "sweden"]
-value = "975551"
+names = [
+    'population',
+    'world',
+]
+value = [
+    '523100087811833875',
+    '67108864',
+]
 
 [[constants]]
-names = ["population", "sweden"]
-value = "10.23e6"
+names = [
+    'population',
+    'developed',
+    'regions',
+]
+value = [
+    '21362500620517375',
+    '16777216',
+]
 
 [[constants]]
-names = ["population", "new york", "new", "york", "usa"]
-value = "8.419e6"
+names = [
+    'population',
+    'developed',
+    'regions',
+]
+value = [
+    '437650085329764375',
+    '67108864',
+]
+
+[[constants]]
+names = [
+    'population',
+    'developed',
+    'countries',
+]
+value = [
+    '567707790953414625',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'developed',
+    'regions,',
+    'excluding',
+    'developed',
+    'countries',
+]
+value = [
+    '91671652865146875',
+    '16777216',
+]
+
+[[constants]]
+names = [
+    'population',
+    'developed',
+    'regions,',
+    'excluding',
+    'china',
+]
+value = [
+    '338913694261968875',
+    '67108864',
+]
+
+[[constants]]
+names = [
+    'population',
+    'land',
+    'locked',
+    'developing',
+    'countries',
+    '(lldc)',
+]
+value = [
+    '35778647788879875',
+    '67108864',
+]
+
+[[constants]]
+names = [
+    'population',
+    'small',
+    'island',
+    'developing',
+    'states',
+    '(sids)',
+]
+value = [
+    '38695560466661375',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'high',
+    'income',
+    'countries',
+]
+value = [
+    '339058927708667875',
+    '268435456',
+]
+
+[[constants]]
+names = [
+    'population',
+    'middle',
+    'income',
+    'countries',
+]
+value = [
+    '386080758416015375',
+    '67108864',
+]
+
+[[constants]]
+names = [
+    'population',
+    'upper',
+    'middle',
+    'income',
+    'countries',
+]
+value = [
+    '712646832408231875',
+    '268435456',
+]
+
+[[constants]]
+names = [
+    'population',
+    'lower',
+    'middle',
+    'income',
+    'countries',
+]
+value = [
+    '207919050313957375',
+    '67108864',
+]
+
+[[constants]]
+names = [
+    'population',
+    'low',
+    'income',
+    'countries',
+]
+value = [
+    '416456463712518125',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'income',
+    'group',
+    'available',
+]
+value = [
+    '404560905393668125',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'africa',
+]
+value = [
+    '89966016443973625',
+    '67108864',
+]
+
+[[constants]]
+names = [
+    'population',
+    'asia',
+]
+value = [
+    '311455914450223125',
+    '67108864',
+]
+
+[[constants]]
+names = [
+    'population',
+    'europe',
+]
+value = [
+    '802768090646446125',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'latin',
+    'america',
+    'caribbean',
+]
+value = [
+    '702186707188973625',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'northern',
+    'america',
+]
+value = [
+    '396070764366790625',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'oceania',
+]
+value = [
+    '733199175679737875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'sub',
+    'saharan',
+    'africa',
+]
+value = [
+    '293766530208890875',
+    '268435456',
+]
+
+[[constants]]
+names = [
+    'population',
+    'eastern',
+    'africa',
+]
+value = [
+    '239125298870747125',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'burundi',
+]
+value = [
+    '817128248302370875',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'comoros',
+]
+value = [
+    '478064906977935375',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'djibouti',
+]
+value = [
+    '271579921816485875',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'eritrea',
+]
+value = [
+    '974834430889689125',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'ethiopia',
+]
+value = [
+    '987529658431963125',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'kenya',
+]
+value = [
+    '461891949926809625',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'madagascar',
+]
+value = [
+    '118932020997914625',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'malawi',
+]
+value = [
+    '164325062197903375',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'mauritius',
+]
+value = [
+    '699161302160900125',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'mayotte',
+]
+value = [
+    '299961065708453875',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'mozambique',
+]
+value = [
+    '1073928569178030125',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'réunion',
+]
+value = [
+    '123050194555109375',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'rwanda',
+]
+value = [
+    '890069025055309875',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'seychelles',
+]
+value = [
+    '432503893901967375',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'somalia',
+]
+value = [
+    '1092173693330653125',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'south',
+    'sudan',
+]
+value = [
+    '192306799901147125',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'uganda',
+]
+value = [
+    '45741000',
+    '1',
+]
+
+[[constants]]
+names = [
+    'population',
+    'united',
+    'republic',
+    'tanzania',
+]
+value = [
+    '513112982574596125',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'zambia',
+]
+value = [
+    '315833959164411875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'zimbabwe',
+]
+value = [
+    '510686283102683125',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'middle',
+    'africa',
+]
+value = [
+    '179595125',
+    '1',
+]
+
+[[constants]]
+names = [
+    'population',
+    'angola',
+]
+value = [
+    '282319092403142625',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'cameroon',
+]
+value = [
+    '57006808862031875',
+    '2147483648',
+]
+
+[[constants]]
+names = [
+    'population',
+    'central',
+    'african',
+    'republic',
+]
+value = [
+    '663797709676740625',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'chad',
+]
+value = [
+    '564388217709658125',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'congo',
+]
+value = [
+    '758400789642215375',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'democratic',
+    'republic',
+    'congo',
+]
+value = [
+    '769326602327687125',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'equatorial',
+    'guinea',
+]
+value = [
+    '771299160547655625',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'gabon',
+]
+value = [
+    '305901727033327625',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'sao',
+    'tome',
+    'principe',
+]
+value = [
+    '481940135710031875',
+    '2199023255552',
+]
+
+[[constants]]
+names = [
+    'population',
+    'southern',
+    'africa',
+]
+value = [
+    '72481489056432125',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'botswana',
+]
+value = [
+    '2351625',
+    '1',
+]
+
+[[constants]]
+names = [
+    'population',
+    'eswatini',
+]
+value = [
+    '637806904063557625',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'lesotho',
+]
+value = [
+    '588857745906597875',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'namibia',
+]
+value = [
+    '349220835900260375',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'south',
+    'africa',
+]
+value = [
+    '127364441959301125',
+    '2147483648',
+]
+
+[[constants]]
+names = [
+    'population',
+    'western',
+    'africa',
+]
+value = [
+    '431495236938629125',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'benin',
+]
+value = [
+    '416549911463460875',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'burkina',
+    'faso',
+]
+value = [
+    '359115581556785125',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'cabo',
+    'verde',
+]
+value = [
+    '305657635451961375',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'côte',
+    '''d'ivoire''',
+]
+value = [
+    '453175313799577625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'gambia',
+]
+value = [
+    '664287542106914875',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'ghana',
+]
+value = [
+    '533829130261626875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'guinea',
+]
+value = [
+    '902478594322726875',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'guinea',
+    'bissau',
+]
+value = [
+    '540959171109978125',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'liberia',
+]
+value = [
+    '173780458469851125',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'mali',
+]
+value = [
+    '695813357973798875',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'mauritania',
+]
+value = [
+    '159761101100154875',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'niger',
+]
+value = [
+    '51983354983088125',
+    '2147483648',
+]
+
+[[constants]]
+names = [
+    'population',
+    'nigeria',
+]
+value = [
+    '442681392287973375',
+    '2147483648',
+]
+
+[[constants]]
+names = [
+    'population',
+    'saint',
+    'helena',
+]
+value = [
+    '427208645902598125',
+    '70368744177664',
+]
+
+[[constants]]
+names = [
+    'population',
+    'senegal',
+]
+value = [
+    '287658527026053125',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'sierra',
+    'leone',
+]
+value = [
+    '1096348470261841875',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'togo',
+]
+value = [
+    '568910474674962375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'northern',
+    'africa',
+    'western',
+    'asia',
+]
+value = [
+    '564647842040250375',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'northern',
+    'africa',
+]
+value = [
+    '1057560569072058375',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'algeria',
+]
+value = [
+    '753355182321958875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'egypt',
+]
+value = [
+    '879045828281368625',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'libya',
+]
+value = [
+    '236095623571439625',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'morocco',
+]
+value = [
+    '634118557948444625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'sudan',
+]
+value = [
+    '188331176308506625',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'tunisia',
+]
+value = [
+    '812169244702670875',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'western',
+    'sahara',
+]
+value = [
+    '656771280619438125',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'western',
+    'asia',
+]
+value = [
+    '150128849886117875',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'armenia',
+]
+value = [
+    '814527559705296875',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'azerbaijan',
+]
+value = [
+    '348379400267366375',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'bahrain',
+]
+value = [
+    '467727573531492375',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'cyprus',
+]
+value = [
+    '663753729211629625',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'georgia',
+]
+value = [
+    '548268037216665625',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'iraq',
+]
+value = [
+    '172754334948261875',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'israel',
+]
+value = [
+    '594804248386994125',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'jordan',
+]
+value = [
+    '87644305233018875',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'kuwait',
+]
+value = [
+    '293470854728122375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'lebanon',
+]
+value = [
+    '938081605463834625',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'oman',
+]
+value = [
+    '701848783457091625',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'qatar',
+]
+value = [
+    '791939742580080625',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'saudi',
+    'arabia',
+]
+value = [
+    '149524420212293625',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'state',
+    'palestine',
+]
+value = [
+    '701133276265316375',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'syrian',
+    'arab',
+    'republic',
+]
+value = [
+    '300658997894053875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'turkey',
+]
+value = [
+    '724467069080305625',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'united',
+    'arab',
+    'emirates',
+]
+value = [
+    '679663112709734375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'yemen',
+]
+value = [
+    '512406228526170125',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'central',
+    'southern',
+    'asia',
+]
+value = [
+    '540819203226075125',
+    '268435456',
+]
+
+[[constants]]
+names = [
+    'population',
+    'central',
+    'asia',
+]
+value = [
+    '319283255989764125',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'kazakhstan',
+]
+value = [
+    '645162739932594125',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'kyrgyzstan',
+]
+value = [
+    '896677983291441125',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'tajikistan',
+]
+value = [
+    '163855441883824125',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'turkmenistan',
+]
+value = [
+    '414460014736965625',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'uzbekistan',
+]
+value = [
+    '574996460513263625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'southern',
+    'asia',
+]
+value = [
+    '520863999726714875',
+    '268435456',
+]
+
+[[constants]]
+names = [
+    'population',
+    'afghanistan',
+]
+value = [
+    '334391902965071875',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'bangladesh',
+]
+value = [
+    '707335513983418375',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'bhutan',
+]
+value = [
+    '848396366131494875',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'india',
+]
+value = [
+    '740884212738949125',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'iran',
+    '(islamic',
+    'republic',
+    'of)',
+]
+value = [
+    '721493972458930125',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'maldives',
+]
+value = [
+    '594332214301294625',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'nepal',
+]
+value = [
+    '1001133099758649375',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'pakistan',
+]
+value = [
+    '118590667197775875',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'sri',
+    'lanka',
+]
+value = [
+    '21413250',
+    '1',
+]
+
+[[constants]]
+names = [
+    'population',
+    'eastern',
+    'south',
+    'eastern',
+    'asia',
+]
+value = [
+    '629940029631758375',
+    '268435456',
+]
+
+[[constants]]
+names = [
+    'population',
+    'eastern',
+    'asia',
+]
+value = [
+    '900917508465229875',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'china',
+]
+value = [
+    '772731067210661875',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'china,',
+    'hong',
+    'kong',
+    'sar',
+]
+value = [
+    '1030378184912142375',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'china,',
+    'macao',
+    'sar',
+]
+value = [
+    '713959079403323375',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'china,',
+    'taiwan',
+    'province',
+    'china',
+]
+value = [
+    '409169078884761625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'dem.',
+    '''people's''',
+    'republic',
+    'korea',
+]
+value = [
+    '885753338837073875',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'japan',
+]
+value = [
+    '1086424501647835125',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'mongolia',
+]
+value = [
+    '901130043311259625',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'republic',
+    'korea',
+]
+value = [
+    '880797857110556625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'south',
+    'eastern',
+    'asia',
+]
+value = [
+    '358962550798286875',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'brunei',
+    'darussalam',
+]
+value = [
+    '962035290908655625',
+    '2199023255552',
+]
+
+[[constants]]
+names = [
+    'population',
+    'cambodia',
+]
+value = [
+    '574459469342179375',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'indonesia',
+]
+value = [
+    '587387503439249375',
+    '2147483648',
+]
+
+[[constants]]
+names = [
+    'population',
+    'lao',
+    '''people's''',
+    'democratic',
+    'republic',
+]
+value = [
+    '999944802566930375',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'malaysia',
+]
+value = [
+    '556043611649605625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'myanmar',
+]
+value = [
+    '934753143248388125',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'philippines',
+]
+value = [
+    '941294352670392375',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'singapore',
+]
+value = [
+    '804065019372240875',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'thailand',
+]
+value = [
+    '74947155692879875',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'timor',
+    'leste',
+]
+value = [
+    '181205288693530625',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'viet',
+    'nam',
+]
+value = [
+    '836132061247963125',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'latin',
+    'america',
+    'caribbean',
+]
+value = [
+    '702186707188973625',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'caribbean',
+]
+value = [
+    '747880490588962875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'anguilla',
+]
+value = [
+    '1055671900153315375',
+    '70368744177664',
+]
+
+[[constants]]
+names = [
+    'population',
+    'antigua',
+    'barbuda',
+]
+value = [
+    '107672974684848125',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'aruba',
+]
+value = [
+    '939123667609059375',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'bahamas',
+]
+value = [
+    '864761497199312875',
+    '2199023255552',
+]
+
+[[constants]]
+names = [
+    'population',
+    'barbados',
+]
+value = [
+    '315967755985616875',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'bonaire,',
+    'sint',
+    'eustatius',
+    'saba',
+]
+value = [
+    '922569420541263875',
+    '35184372088832',
+]
+
+[[constants]]
+names = [
+    'population',
+    'british',
+    'virgin',
+    'islands',
+]
+value = [
+    '1063869858850013125',
+    '35184372088832',
+]
+
+[[constants]]
+names = [
+    'population',
+    'cayman',
+    'islands',
+]
+value = [
+    '289039616709754875',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'cuba',
+]
+value = [
+    '778359124709605375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'curaçao',
+]
+value = [
+    '721719432472166375',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'dominica',
+]
+value = [
+    '633239532761776125',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'dominican',
+    'republic',
+]
+value = [
+    '745462286562361375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'grenada',
+]
+value = [
+    '61857974422863875',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'guadeloupe',
+]
+value = [
+    '879888578174255125',
+    '2199023255552',
+]
+
+[[constants]]
+names = [
+    'population',
+    'haiti',
+]
+value = [
+    '391788050612486125',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'jamaica',
+]
+value = [
+    '50872358612762625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'martinique',
+]
+value = [
+    '412608230997360625',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'montserrat',
+]
+value = [
+    '703546704288284625',
+    '140737488355328',
+]
+
+[[constants]]
+names = [
+    'population',
+    'puerto',
+    'rico',
+]
+value = [
+    '98297713912709125',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'saint',
+    'barthélemy',
+]
+value = [
+    '695595036196208625',
+    '70368744177664',
+]
+
+[[constants]]
+names = [
+    'population',
+    'saint',
+    'kitts',
+    'nevis',
+]
+value = [
+    '935763560074575875',
+    '17592186044416',
+]
+
+[[constants]]
+names = [
+    'population',
+    'saint',
+    'lucia',
+]
+value = [
+    '807608882787516375',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'saint',
+    'martin',
+    '(french',
+    'part)',
+]
+value = [
+    '680096320291078125',
+    '17592186044416',
+]
+
+[[constants]]
+names = [
+    'population',
+    'saint',
+    'vincent',
+    'grenadines',
+]
+value = [
+    '121987516566863875',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'sint',
+    'maarten',
+    '(dutch',
+    'part)',
+]
+value = [
+    '754388121956646875',
+    '17592186044416',
+]
+
+[[constants]]
+names = [
+    'population',
+    'trinidad',
+    'tobago',
+]
+value = [
+    '96172289216741375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'turks',
+    'caicos',
+    'islands',
+]
+value = [
+    '340567129633849375',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'united',
+    'states',
+    'virgin',
+    'islands',
+]
+value = [
+    '57407151353626625',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'central',
+    'america',
+]
+value = [
+    '96459696617029625',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'belize',
+]
+value = [
+    '437188912947920875',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'costa',
+    'rica',
+]
+value = [
+    '350064848513531875',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'el',
+    'salvador',
+]
+value = [
+    '891456677449039875',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'guatemala',
+]
+value = [
+    '615574194834374625',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'honduras',
+]
+value = [
+    '170159869758799875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'mexico',
+]
+value = [
+    '553761957518245875',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'nicaragua',
+]
+value = [
+    '227617942244687875',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'panama',
+]
+value = [
+    '148254299598618625',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'south',
+    'america',
+]
+value = [
+    '462524783293104125',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'argentina',
+]
+value = [
+    '24264298016538625',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'bolivia',
+    '(plurinational',
+    'state',
+    'of)',
+]
+value = [
+    '802164444804153375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'brazil',
+]
+value = [
+    '912935710112088125',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'chile',
+]
+value = [
+    '656827939828006875',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'colombia',
+]
+value = [
+    '874161290824646625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'ecuador',
+]
+value = [
+    '606210925610926125',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'falkland',
+    'islands',
+    '(malvinas)',
+]
+value = [
+    '980377343883214875',
+    '281474976710656',
+]
+
+[[constants]]
+names = [
+    'population',
+    'french',
+    'guiana',
+]
+value = [
+    '164202166003695625',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'guyana',
+]
+value = [
+    '432415383215931375',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'paraguay',
+]
+value = [
+    '980287458807644125',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'peru',
+]
+value = [
+    '566452001034993625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'suriname',
+]
+value = [
+    '40313181515546625',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'uruguay',
+]
+value = [
+    '477425403527430125',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'venezuela',
+    '(bolivarian',
+    'republic',
+    'of)',
+]
+value = [
+    '122131445215920125',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'australia',
+    'new',
+    'zealand',
+]
+value = [
+    '65116243987791875',
+    '2147483648',
+]
+
+[[constants]]
+names = [
+    'population',
+    'australia',
+]
+value = [
+    '438084619787567125',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'new',
+    'zealand',
+]
+value = [
+    '82845332114767875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'oceania',
+    '(excluding',
+    'australia',
+    'new',
+    'zealand)',
+]
+value = [
+    '212269223777402875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'melanesia',
+]
+value = [
+    '764366052539760625',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'fiji',
+]
+value = [
+    '246412650412507125',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'new',
+    'caledonia',
+]
+value = [
+    '19618792132837375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'papua',
+    'new',
+    'guinea',
+]
+value = [
+    '614835013782863875',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'solomon',
+    'islands',
+]
+value = [
+    '755230347863523375',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'vanuatu',
+]
+value = [
+    '337714996471398375',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'micronesia',
+]
+value = [
+    '603551619300196375',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'guam',
+]
+value = [
+    '742315484283666375',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'kiribati',
+]
+value = [
+    '525329063565328375',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'marshall',
+    'islands',
+]
+value = [
+    '520675930356580375',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'micronesia',
+    '(fed.',
+    'states',
+    'of)',
+]
+value = [
+    '1011735415507386375',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'nauru',
+]
+value = [
+    '381187487210405875',
+    '35184372088832',
+]
+
+[[constants]]
+names = [
+    'population',
+    'northern',
+    'mariana',
+    'islands',
+]
+value = [
+    '506276726079225875',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'palau',
+]
+value = [
+    '159138914957787125',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'polynesia',
+]
+value = [
+    '375910930908708875',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'american',
+    'samoa',
+]
+value = [
+    '60689743318351875',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'cook',
+    'islands',
+]
+value = [
+    '308989155684122625',
+    '17592186044416',
+]
+
+[[constants]]
+names = [
+    'population',
+    'french',
+    'polynesia',
+]
+value = [
+    '77214303572197375',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'niue',
+]
+value = [
+    '910853024635682875',
+    '562949953421312',
+]
+
+[[constants]]
+names = [
+    'population',
+    'samoa',
+]
+value = [
+    '872616408268144625',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'tokelau',
+]
+value = [
+    '379991218559385625',
+    '281474976710656',
+]
+
+[[constants]]
+names = [
+    'population',
+    'tonga',
+]
+value = [
+    '116215080521039875',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'tuvalu',
+]
+value = [
+    '829788231343013875',
+    '70368744177664',
+]
+
+[[constants]]
+names = [
+    'population',
+    'wallis',
+    'futuna',
+    'islands',
+]
+value = [
+    '791366897022009375',
+    '70368744177664',
+]
+
+[[constants]]
+names = [
+    'population',
+    'europe',
+    'northern',
+    'america',
+]
+value = [
+    '599419427506618375',
+    '536870912',
+]
+
+[[constants]]
+names = [
+    'population',
+    'europe',
+]
+value = [
+    '802768090646446125',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'eastern',
+    'europe',
+]
+value = [
+    '629241077122990125',
+    '2147483648',
+]
+
+[[constants]]
+names = [
+    'population',
+    'belarus',
+]
+value = [
+    '324676197315248125',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'bulgaria',
+]
+value = [
+    '119373376132218875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'czechia',
+]
+value = [
+    '367957819707621375',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'hungary',
+]
+value = [
+    '663854197086617625',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'poland',
+]
+value = [
+    '650199722958520375',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'republic',
+    'moldova',
+]
+value = [
+    '1108847306129539125',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'romania',
+]
+value = [
+    '82625215040847875',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'russian',
+    'federation',
+]
+value = [
+    '626783733059420125',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'slovakia',
+]
+value = [
+    '187591905062682625',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'ukraine',
+]
+value = [
+    '751340258544582625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'northern',
+    'europe',
+]
+value = [
+    '912777367552786375',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'channel',
+    'islands',
+]
+value = [
+    '764639968374030375',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'denmark',
+]
+value = [
+    '796074318617378875',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'estonia',
+]
+value = [
+    '729272527599173625',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'faroe',
+    'islands',
+]
+value = [
+    '859642171060387875',
+    '17592186044416',
+]
+
+[[constants]]
+names = [
+    'population',
+    'finland',
+]
+value = [
+    '761510483403472875',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'iceland',
+]
+value = [
+    '341250',
+    '1',
+]
+
+[[constants]]
+names = [
+    'population',
+    'ireland',
+]
+value = [
+    '339322757349113875',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'isle',
+    'man',
+]
+value = [
+    '747949381864390625',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'latvia',
+]
+value = [
+    '1036950515667173375',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'lithuania',
+]
+value = [
+    '374148826086244375',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'norway',
+]
+value = [
+    '372544913499226125',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'sweden',
+]
+value = [
+    '347008274907791375',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'united',
+    'kingdom',
+]
+value = [
+    '583136334072250375',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'southern',
+    'europe',
+]
+value = [
+    '653759490637692875',
+    '4294967296',
+]
+
+[[constants]]
+names = [
+    'population',
+    'albania',
+]
+value = [
+    '395521820301721625',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'andorra',
+]
+value = [
+    '679630127360901125',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'bosnia',
+    'herzegovina',
+]
+value = [
+    '901823560270479375',
+    '274877906944',
+]
+
+[[constants]]
+names = [
+    'population',
+    'croatia',
+]
+value = [
+    '141055934410522625',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'gibraltar',
+]
+value = [
+    '148174585005604875',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'greece',
+]
+value = [
+    '358133477155012625',
+    '34359738368',
+]
+
+[[constants]]
+names = [
+    'population',
+    'holy',
+]
+value = [
+    '910853024635682875',
+    '1125899906842624',
+]
+
+[[constants]]
+names = [
+    'population',
+    'italy',
+]
+value = [
+    '1038726295665508375',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'malta',
+]
+value = [
+    '242738632308293625',
+    '549755813888',
+]
+
+[[constants]]
+names = [
+    'population',
+    'montenegro',
+]
+value = [
+    '690561471964250125',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'north',
+    'macedonia',
+]
+value = [
+    '286337566884495375',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'portugal',
+]
+value = [
+    '700712369470308375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'san',
+    'marino',
+]
+value = [
+    '298521804987695125',
+    '8796093022208',
+]
+
+[[constants]]
+names = [
+    'population',
+    'serbia',
+]
+value = [
+    '600427494448824375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'slovenia',
+]
+value = [
+    '285726238419451875',
+    '137438953472',
+]
+
+[[constants]]
+names = [
+    'population',
+    'spain',
+]
+value = [
+    '803241055666307125',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'western',
+    'europe',
+]
+value = [
+    '52652627120357375',
+    '268435456',
+]
+
+[[constants]]
+names = [
+    'population',
+    'austria',
+]
+value = [
+    '618915095275110375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'belgium',
+]
+value = [
+    '796432347091173375',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'france',
+]
+value = [
+    '560695198670127125',
+    '8589934592',
+]
+
+[[constants]]
+names = [
+    'population',
+    'germany',
+]
+value = [
+    '179924651852431375',
+    '2147483648',
+]
+
+[[constants]]
+names = [
+    'population',
+    'liechtenstein',
+]
+value = [
+    '83864149896986625',
+    '2199023255552',
+]
+
+[[constants]]
+names = [
+    'population',
+    'luxembourg',
+]
+value = [
+    '688267890708709375',
+    '1099511627776',
+]
+
+[[constants]]
+names = [
+    'population',
+    'monaco',
+]
+value = [
+    '172596937281765375',
+    '4398046511104',
+]
+
+[[constants]]
+names = [
+    'population',
+    'netherlands',
+]
+value = [
+    '294374876624453625',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'switzerland',
+]
+value = [
+    '594740820309966875',
+    '68719476736',
+]
+
+[[constants]]
+names = [
+    'population',
+    'northern',
+    'america',
+]
+value = [
+    '396070764366790625',
+    '1073741824',
+]
+
+[[constants]]
+names = [
+    'population',
+    'bermuda',
+]
+value = [
+    '1095518201543917625',
+    '17592186044416',
+]
+
+[[constants]]
+names = [
+    'population',
+    'canada',
+]
+value = [
+    '648405319981989875',
+    '17179869184',
+]
+
+[[constants]]
+names = [
+    'population',
+    'greenland',
+]
+value = [
+    '998743586113585125',
+    '17592186044416',
+]
+
+[[constants]]
+names = [
+    'population',
+    'saint',
+    'pierre',
+    'miquelon',
+]
+value = [
+    '407786872509562875',
+    '70368744177664',
+]
+
+[[constants]]
+names = [
+    'population',
+    'united',
+    'states',
+    'america',
+]
+value = [
+    '355411385938608125',
+    '1073741824',
+]

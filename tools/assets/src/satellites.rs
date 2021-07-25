@@ -1,4 +1,7 @@
-use crate::db::{Constant, Db};
+use crate::{
+    cache,
+    db::{Constant, Db},
+};
 use anyhow::Result;
 use rational::Rational;
 use serde::Deserialize;
@@ -24,9 +27,7 @@ pub struct Satellite {
 
 /// Download and format planetary constants.
 pub async fn download(db: &mut Db) -> Result<()> {
-    let res = reqwest::get(URL).await?;
-    let satellites = res.bytes().await?;
-
+    let satellites = cache::get("satellites", URL).await?;
     let satellites: Vec<Satellite> = serde_json::from_slice(&satellites)?;
 
     let big_g = str::parse::<Rational>("6.6743015e-11")?;

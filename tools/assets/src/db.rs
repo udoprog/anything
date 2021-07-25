@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rational::Rational;
 use serde::Serialize;
-use std::io::Write;
+use std::io;
 use std::path::Path;
 
 #[derive(Serialize)]
@@ -23,14 +23,28 @@ pub struct Db {
 }
 
 impl Db {
-    /// Write to the given path.
-    pub fn write_to(self, path: impl AsRef<Path>) -> Result<()> {
-        let path = path.as_ref();
-        let string = toml::to_string_pretty(&self)?;
+    /// Construct a new empty database file.
+    pub fn new() -> Self {
+        Self {
+            constants: Vec::new(),
+        }
+    }
 
+    /// Write to the given path.
+    pub fn to_path(self, path: impl AsRef<Path>) -> Result<()> {
+        let path = path.as_ref();
         println!("Writing database to: {}", path.display());
         let mut f = std::fs::File::create(path)?;
-        f.write_all(string.as_bytes())?;
+        self.to_writer(&mut f)
+    }
+
+    /// Write to the given writer.
+    pub fn to_writer<W>(self, out: &mut W) -> Result<()>
+    where
+        W: io::Write,
+    {
+        let string = toml::to_string_pretty(&self)?;
+        out.write_all(string.as_bytes())?;
         Ok(())
     }
 }

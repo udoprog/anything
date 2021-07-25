@@ -99,7 +99,7 @@ fn value(p: &mut Parser<'_>) -> bool {
             let mut skip = p.count_skip();
             let mut is_sentence = false;
 
-            while let WORD = p.nth(skip, 0) {
+            while let WORD | NUMBER = p.nth(skip, 0) {
                 p.skip(skip);
                 p.bump_node(WORD);
                 skip = p.count_skip();

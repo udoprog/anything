@@ -31,37 +31,37 @@ macro_rules! time {
 
 time! {
     /// A minute `m` (`60s`) in [Unit::Second].
-    pub static MINUTE = (0x3cea0000, 60u32 / 1u32), |f, _| f.write_str("min")
+    pub static MINUTE = (crate::generated::ids::MINUTE, 60u32 / 1u32), |f, _| f.write_str("min")
 }
 
 time! {
     /// An hour `H` (`3600s`) in [Unit::Second].
-    pub static HOUR = (0x3cea0001, 3600u32 / 1u32), |f, _| f.write_str("hr")
+    pub static HOUR = (crate::generated::ids::HOUR, 3600u32 / 1u32), |f, _| f.write_str("hr")
 }
 
 time! {
     /// A day `dy` (`86400s`) in [Unit::Second].
-    pub static DAY = (0x3cea0003, 86400u32 / 1u32), |f, _| f.write_str("dy")
+    pub static DAY = (crate::generated::ids::DAY, 86400u32 / 1u32), |f, _| f.write_str("dy")
 }
 
 time! {
     /// A week `wk` (`604800s`) in [Unit::Second].
-    pub static WEEK = (0x3cea0004, 604800u32 / 1u32), |f, _| f.write_str("wk")
+    pub static WEEK = (crate::generated::ids::WEEK, 604800u32 / 1u32), |f, _| f.write_str("wk")
 }
 
 time! {
     /// A month in [Unit::Second] defined as `1/12` of [YEAR].
-    pub static MONTH = (0x3cea0005, 31557600u32 / 12u32), |f, _| f.write_str("mth")
+    pub static MONTH = (crate::generated::ids::MONTH, 31557600u32 / 12u32), |f, _| f.write_str("mth")
 }
 
 time! {
     /// A year `yr` (`31557600s`) in [Unit::Second].
-    pub static YEAR = (0x3cea1000, 31557600u32 / 1u32), |f, _| f.write_str("yr")
+    pub static YEAR = (crate::generated::ids::YEAR, 31557600u32 / 1u32), |f, _| f.write_str("yr")
 }
 
 time! {
     /// A Century (`10yr`) in [Unit::Second] defined as `10` times [YEAR].
-    pub static DECADE = (0x3cea2000, 315576000u32 / 1u32), |f, pluralize| if pluralize {
+    pub static DECADE = (crate::generated::ids::DECADE, 315576000u32 / 1u32), |f, pluralize| if pluralize {
         f.write_str("decades")
     } else {
         f.write_str("decade")
@@ -70,7 +70,7 @@ time! {
 
 time! {
     /// A Century (`100yr`) in [Unit::Second] defined as `100` times [YEAR].
-    pub static CENTURY = (0x3cea3000, 3155760000u32 / 1u32), |f, pluralize| if pluralize {
+    pub static CENTURY = (crate::generated::ids::CENTURY, 3155760000u32 / 1u32), |f, pluralize| if pluralize {
         f.write_str("centuries")
     } else {
         f.write_str("century")
@@ -79,7 +79,7 @@ time! {
 
 time! {
     /// A Millenium (`1000yr`) in [Unit::Second] defined as `1000` times [YEAR].
-    pub static MILLENIUM = (0x3cea4000, 31557600000u64 / 1u32), |f, pluralize| if pluralize {
+    pub static MILLENIUM = (crate::generated::ids::MILLENIUM, 31557600000u64 / 1u32), |f, pluralize| if pluralize {
         f.write_str("millenia")
     } else {
         f.write_str("millenium")

@@ -47,10 +47,12 @@ dependencies = [
  "anyhow",
  "bytes",
  "calamine",
+ "facts",
  "flate2",
  "rational",
  "reqwest",
  "serde",
+ "serde_cbor",
  "serde_json",
  "tokio",
  "toml",
@@ -81,9 +83,9 @@ checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 
 [[package]]
 name = "beef"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6736e2428df2ca2848d846c43e88745121a6654696e349ce0054a420815a7409"
+checksum = "bed554bd50246729a1ec158d08aa3235d1b69d94ad120ebe187e28894787e736"
 
 [[package]]
 name = "bitflags"
@@ -364,6 +366,7 @@ dependencies = [
  "anyhow",
  "codespan-reporting",
  "directories",
+ "flate2",
  "hashbrown 0.11.2",
  "log",
  "logos",
@@ -377,7 +380,6 @@ dependencies = [
  "serde_json",
  "tantivy",
  "thiserror",
- "toml",
  "twox-hash",
 ]
 

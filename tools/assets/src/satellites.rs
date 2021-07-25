@@ -1,3 +1,4 @@
+use crate::helpers;
 use crate::{
     cache,
     db::{Constant, Db},
@@ -15,13 +16,18 @@ pub struct Satellite {
     #[serde(rename = "planetId")]
     planet_id: u32,
     name: String,
+    #[serde(deserialize_with = "helpers::deserialize_number")]
     gm: Rational,
+    #[serde(deserialize_with = "helpers::deserialize_number")]
     radius: Rational,
     #[serde(default)]
+    #[serde(deserialize_with = "helpers::deserialize_option_number")]
     density: Option<Rational>,
     #[serde(default)]
+    #[serde(deserialize_with = "helpers::deserialize_option_number")]
     magnitude: Option<Rational>,
     #[serde(default)]
+    #[serde(deserialize_with = "helpers::deserialize_option_number")]
     albedo: Option<Rational>,
 }
 
@@ -39,19 +45,19 @@ pub async fn download(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             names: vec![name.clone(), String::from("mass")],
-            unit: Some(String::from("kg")),
+            unit: str::parse("kg")?,
             value: s.gm * &kmc_to_mc / &big_g,
         });
 
         db.constants.push(Constant {
             names: vec![name.clone(), String::from("radius")],
-            unit: Some(String::from("km")),
+            unit: str::parse("km")?,
             value: s.radius.clone(),
         });
 
         db.constants.push(Constant {
             names: vec![name.clone(), String::from("diameter")],
-            unit: Some(String::from("km")),
+            unit: str::parse("km")?,
             value: &s.radius * &two,
         });
     }

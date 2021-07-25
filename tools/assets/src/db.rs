@@ -1,4 +1,5 @@
 use anyhow::Result;
+use facts::Compound;
 use rational::Rational;
 use serde::Serialize;
 use std::io;
@@ -9,8 +10,7 @@ pub struct Constant {
     /// Names of the constant.
     pub names: Vec<String>,
     /// The unit associated with the constant.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub unit: Option<String>,
+    pub unit: Compound,
     /// The value of a constant.
     pub value: Rational,
 }
@@ -43,8 +43,9 @@ impl Db {
     where
         W: io::Write,
     {
-        let string = toml::to_string_pretty(&self)?;
-        out.write_all(string.as_bytes())?;
+        let mut out = flate2::write::GzEncoder::new(out, Default::default());
+        serde_cbor::to_writer(&mut out, &self)?;
+        out.finish()?;
         Ok(())
     }
 }

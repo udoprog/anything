@@ -2,13 +2,14 @@ use crate::compound::State;
 use crate::powers::Powers;
 use crate::prefix::Prefix;
 use rational::Rational;
+use serde::de;
+use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::fmt;
 use std::hash;
 
 /// A base unit.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum Unit {
     /// A custom derived unit.
     ///
@@ -216,6 +217,32 @@ impl cmp::Eq for Derived {}
 impl hash::Hash for Derived {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         state.write_u32(self.id);
+    }
+}
+
+impl Serialize for Derived {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.id.serialize(serializer)
+    }
+}
+
+impl<'de> de::Deserialize<'de> for Derived {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let id = u32::deserialize(deserializer)?;
+
+        match crate::generated::ids::id_to_derived(id) {
+            Some(derived) => Ok(derived),
+            None => Err(<D::Error as de::Error>::custom(format!(
+                "{} is not the identifier for a derived unit",
+                id
+            ))),
+        }
     }
 }
 

@@ -5,7 +5,7 @@ use rational::Rational;
 
 /// Hectare `ha` or `10000m^2`.
 pub static HECTARE: Derived = Derived {
-    id: 0xbf2e000f,
+    id: crate::generated::ids::HECTARE,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p * 2);
@@ -24,7 +24,7 @@ pub static HECTARE: Derived = Derived {
 
 /// Perch `perch` (`1rd^2`) or `25.29285264m^2`.
 pub static PERCH: Derived = Derived {
-    id: 0xf153d092,
+    id: crate::generated::ids::PERCH,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p * 2);
@@ -49,7 +49,7 @@ pub static PERCH: Derived = Derived {
 
 /// Rood `rood` (`1fur * 1rd`) or `1011.7141056m^2`.
 pub static ROOD: Derived = Derived {
-    id: 0x20541ce3,
+    id: crate::generated::ids::ROOD,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p * 2);
@@ -74,7 +74,7 @@ pub static ROOD: Derived = Derived {
 
 /// Acre `acre` (`1fur * 1chain`) or `4046.8564224m^2`.
 pub static ACRE: Derived = Derived {
-    id: 0xe44777d2,
+    id: crate::generated::ids::ACRE,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p * 2);

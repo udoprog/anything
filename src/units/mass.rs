@@ -5,7 +5,7 @@ use rational::Rational;
 
 /// Tonne (metric ton) or `1000kg`.
 pub static TONNE: Derived = Derived {
-    id: 0x7b15d4d8,
+    id: crate::generated::ids::TONNE,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -30,7 +30,7 @@ pub static TONNE: Derived = Derived {
 
 /// Dalton.
 pub static DALTON: Derived = Derived {
-    id: 0x95583f60,
+    id: crate::generated::ids::DALTON,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -49,7 +49,7 @@ pub static DALTON: Derived = Derived {
 
 /// Grain `gr` (`1⁄7000lb`).
 pub static GRAIN: Derived = Derived {
-    id: 0xf4321939,
+    id: crate::generated::ids::GRAIN,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -68,7 +68,7 @@ pub static GRAIN: Derived = Derived {
 
 /// Drachm `dr` (`1⁄256lb`).
 pub static DRACHM: Derived = Derived {
-    id: 0xa3592b8c,
+    id: crate::generated::ids::DRACHM,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -87,7 +87,7 @@ pub static DRACHM: Derived = Derived {
 
 /// Ounce `oz` (`1⁄16lb`) (`0.028349523125kg`).
 pub static OUNCE: Derived = Derived {
-    id: 0x7c3b47da,
+    id: crate::generated::ids::OUNCE,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -106,7 +106,7 @@ pub static OUNCE: Derived = Derived {
 
 /// Pound `lb` (`16oz`) or (`0.45359237kg`).
 pub static POUND: Derived = Derived {
-    id: 0xe0482a36,
+    id: crate::generated::ids::POUND,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -125,7 +125,7 @@ pub static POUND: Derived = Derived {
 
 /// Stone `st` (`14lb`) or (`6.35029318kg`).
 pub static STONE: Derived = Derived {
-    id: 0xc827fd0d,
+    id: crate::generated::ids::STONE,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -144,7 +144,7 @@ pub static STONE: Derived = Derived {
 
 /// Stone `qr` (`28lb`) or (`12.70058636kg`).
 pub static QUARTER: Derived = Derived {
-    id: 0x20f6787b,
+    id: crate::generated::ids::QUARTER,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -163,7 +163,7 @@ pub static QUARTER: Derived = Derived {
 
 /// Hundredweight `hundredweight` (`4qr`) or (`50.80234544kg`).
 pub static HUNDREDWEIGHT: Derived = Derived {
-    id: 0xf97a5980,
+    id: crate::generated::ids::HUNDREDWEIGHT,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -182,7 +182,7 @@ pub static HUNDREDWEIGHT: Derived = Derived {
 
 /// Ton `t` (`20hundredweights`) or (`1016.0469088kg`).
 pub static TON: Derived = Derived {
-    id: 0xccbb6466,
+    id: crate::generated::ids::TON,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -201,7 +201,7 @@ pub static TON: Derived = Derived {
 
 /// Slug `slug` or (`14.59390294kg`).
 pub static SLUG: Derived = Derived {
-    id: 0x28eaf41b,
+    id: crate::generated::ids::SLUG,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);

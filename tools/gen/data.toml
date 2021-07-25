@@ -1,330 +1,476 @@
 [[units]]
+type = "base"
 variant = "Second"
 names = ["s", "sec", "second", "seconds"]
 unit = "Unit::Second"
 [[units]]
+type = "base"
 variant = "Meter"
 names = ["m", "metre", "meter", "meters"]
 unit = "Unit::Meter"
 [[units]]
+type = "base"
 variant = "Gram"
 names = ["g", "gram"]
 unit = "Unit::KiloGram"
 prefix_bias = -3
 [[units]]
+type = "base"
 variant = "Ampere"
 names = ["A", "ampere", "amperes"]
 unit = "Unit::Ampere"
 [[units]]
+type = "base"
 variant = "Kelvin"
 names = ["K", "kelvin", "kelvins"]
 unit = "Unit::Kelvin"
 [[units]]
+type = "base"
 variant = "Mole"
 names = ["mol", "mols", "mole", "moles"]
 unit = "Unit::Mole"
 [[units]]
+type = "base"
 variant = "Candela"
 names = ["cd", "candela", "candelas"]
 unit = "Unit::Candela"
 [[units]]
+type = "base"
 variant = "Byte"
 names = ["B", "byte"]
 unit = "Unit::Byte"
 
 [[units]]
+type = "derived"
+id = "0x3cea0000"
 variant = "Minute"
 names = ["minute", "minutes", "min", "mins"]
-unit = "Unit::Derived(units::time::MINUTE)"
+name = "time::MINUTE"
 [[units]]
+type = "derived"
+id = "0x3cea0001"
 variant = "Hour"
 names = ["h", "hr", "hour", "hours"]
-unit = "Unit::Derived(units::time::HOUR)"
+name = "time::HOUR"
 [[units]]
+type = "derived"
+id = "0x3cea0003"
 variant = "Day"
 names = ["dy", "day", "days"]
-unit = "Unit::Derived(units::time::DAY)"
+name = "time::DAY"
 [[units]]
+type = "derived"
+id = "0x3cea0004"
 variant = "Week"
 names = ["wk", "week", "weeks"]
-unit = "Unit::Derived(units::time::WEEK)"
+name = "time::WEEK"
 [[units]]
+type = "derived"
+id = "0x3cea0005"
 variant = "Month"
 names = ["mth", "mths", "month", "months"]
-unit = "Unit::Derived(units::time::MONTH)"
+name = "time::MONTH"
 [[units]]
+type = "derived"
+id = "0x3cea1000"
 variant = "Year"
 names = ["y", "yr", "yrs", "year", "years"]
-unit = "Unit::Derived(units::time::YEAR)"
+name = "time::YEAR"
 [[units]]
+type = "derived"
+id = "0x3cea2000"
 variant = "Decade"
 names = ["decade", "decades"]
-unit = "Unit::Derived(units::time::DECADE)"
+name = "time::DECADE"
 [[units]]
+type = "derived"
+id = "0x3cea3000"
 variant = "Century"
 names = ["century", "centuries"]
-unit = "Unit::Derived(units::time::CENTURY)"
+name = "time::CENTURY"
 [[units]]
+type = "derived"
+id = "0x3cea4000"
 variant = "Millenium"
 names = ["M", "millenium", "milleniums", "millenia"]
-unit = "Unit::Derived(units::time::MILLENIUM)"
+name = "time::MILLENIUM"
 
 [[units]]
+type = "derived"
+id = "0x7b15d4d8"
 variant = "Tonne"
 names = ["ton", "tons", "tonne", "tonnes"]
-unit = "Unit::Derived(units::mass::TONNE)"
+name = "mass::TONNE"
 [[units]]
+type = "derived"
+id = "0x95583f60"
 variant = "Dalton"
 names = ["Da", "dalton", "daltons"]
-unit = "Unit::Derived(units::mass::DALTON)"
+name = "mass::DALTON"
 
 [[units]]
-variant = "Au"
-names = ["au"]
-unit = "Unit::Derived(units::length::AU)"
-[[units]]
-variant = "Fathom"
-names = ["ftm", "fathom", "fathoms"]
-unit = "Unit::Derived(units::length::FATHOM)"
-[[units]]
-variant = "Cable"
-names = ["cable", "cables"]
-unit = "Unit::Derived(units::length::CABLE)"
-[[units]]
-variant = "NauticalMile"
-names = ["NM", "nmi"]
-unit = "Unit::Derived(units::length::NAUTICAL_MILE)"
-[[units]]
-variant = "Link"
-names = ["link", "links"]
-unit = "Unit::Derived(units::length::LINK)"
-[[units]]
-variant = "Rod"
-names = ["rd", "rod", "rods"]
-unit = "Unit::Derived(units::length::ROD)"
-
-[[units]]
-variant = "Hectare"
-names = ["ha", "hectare", "hectares"]
-unit = "Unit::Derived(units::area::HECTARE)"
-
-[[units]]
+type = "derived"
+id = "0x1c108ba2"
 variant = "Litre"
 names = ["l", "L", "litre", "litres"]
-unit = "Unit::Derived(units::volume::LITRE)"
+name = "volume::LITRE"
 [[units]]
+type = "derived"
+id = "0xb36964a0"
 variant = "CubicCentimetre"
 names = ["cc"]
-unit = "Unit::Derived(units::volume::CUBIC_CENTIMETER)"
+name = "volume::CUBIC_CENTIMETER"
 
 [[units]]
+type = "derived"
+id = "0xbf2e000f"
+variant = "Hectare"
+names = ["ha", "hectare", "hectares"]
+name = "area::HECTARE"
+[[units]]
+type = "derived"
+id = "0xf153d092"
 variant = "Perch"
 names = ["perch", "perches"]
-unit = "Unit::Derived(units::area::PERCH)"
+name = "area::PERCH"
 [[units]]
+type = "derived"
+id = "0x20541ce3"
 variant = "Rood"
 names = ["rood", "roods"]
-unit = "Unit::Derived(units::area::ROOD)"
+name = "area::ROOD"
 [[units]]
+type = "derived"
+id = "0xe44777d2"
 variant = "Acre"
 names = ["acre", "acres"]
-unit = "Unit::Derived(units::area::ACRE)"
+name = "area::ACRE"
 
 [[units]]
+type = "derived"
+id = "0xaab4f36c"
 variant = "Acceleration"
 names = ["a", "acc", "acceleration"]
-unit = "Unit::Derived(units::ACCELERATION)"
+name = "ACCELERATION"
 [[units]]
+type = "derived"
+id = "0x47dd35dc"
 variant = "Velocity"
 names = ["v", "vel", "velocity"]
-unit = "Unit::Derived(units::VELOCITY)"
+name = "VELOCITY"
 [[units]]
+type = "derived"
+id = "0xb82b2151"
 variant = "Gforce"
 names = ["gforce", "g-force"]
-unit = "Unit::Derived(units::GFORCE)"
+name = "GFORCE"
 [[units]]
+type = "derived"
+id = "0x150ab031"
 variant = "Newton"
 names = ["N", "newton", "newtons"]
-unit = "Unit::Derived(units::NEWTON)"
+name = "NEWTON"
 [[units]]
+type = "derived"
+id = "0xd575976d"
 variant = "Pascal"
 names = ["Pa", "pascal", "pascals"]
-unit = "Unit::Derived(units::PASCAL)"
+name = "PASCAL"
 
 [[units]]
+type = "derived"
+id = "0xe0796773"
 variant = "Joule"
 names = ["J", "joule"]
-unit = "Unit::Derived(units::energy::JOULE)"
+name = "energy::JOULE"
 [[units]]
+type = "derived"
+id = "0xcf847a94"
 variant = "Btu"
 names = ["btu"]
-unit = "Unit::Derived(units::energy::BTU)"
+name = "energy::BTU"
 [[units]]
+type = "derived"
+id = "0x007adc81"
 variant = "Electronvolt"
 names = ["eV", "electronvolt", "electronvolts"]
-unit = "Unit::Derived(units::energy::ELECTRONVOLT)"
+name = "energy::ELECTRONVOLT"
 
 [[units]]
+type = "derived"
+id = "0xa977f890"
 variant = "Watt"
 names = ["W", "watt", "watts"]
-unit = "Unit::Derived(units::WATT)"
+name = "WATT"
 [[units]]
+type = "derived"
+id = "0xf57d5095"
 variant = "Coulomb"
 names = ["C", "coulomb", "coulombs"]
-unit = "Unit::Derived(units::COULOMB)"
+name = "COULOMB"
 [[units]]
+type = "derived"
+id = "0x27475ce0"
 variant = "Volt"
 names = ["V", "volt", "volts"]
-unit = "Unit::Derived(units::VOLT)"
+name = "VOLT"
 [[units]]
+type = "derived"
+id = "0xcea46875"
 variant = "Farad"
 names = ["F", "farad", "farads"]
-unit = "Unit::Derived(units::FARAD)"
+name = "FARAD"
 [[units]]
+type = "derived"
+id = "0x4c6815d9"
 variant = "Ohm"
 names = ["Ω", "ohm", "ohms"]
-unit = "Unit::Derived(units::OHM)"
+name = "OHM"
 [[units]]
+type = "derived"
+id = "0xd87739a9"
 variant = "Siemens"
 names = ["S", "siemens"]
-unit = "Unit::Derived(units::SIEMENS)"
+name = "SIEMENS"
 [[units]]
+type = "derived"
+id = "0x69ca6c0a"
 variant = "Weber"
 names = ["Wb", "weber", "webers"]
-unit = "Unit::Derived(units::WEBER)"
+name = "WEBER"
 [[units]]
+type = "derived"
+id = "0x731514a7"
 variant = "Tesla"
 names = ["T", "tesla", "teslas"]
-unit = "Unit::Derived(units::TESLA)"
+name = "TESLA"
 [[units]]
+type = "derived"
+id = "0xef26a9d5"
 variant = "Henry"
 names = ["H", "henry", "henrys", "henries"]
-unit = "Unit::Derived(units::HENRY)"
+name = "HENRY"
 [[units]]
+type = "derived"
+id = "0x359318c2"
 variant = "Lumen"
 names = ["lm", "lumen", "lumens"]
-unit = "Unit::Derived(units::LUMEN)"
+name = "LUMEN"
 [[units]]
+type = "derived"
+id = "0xad603e6d"
 variant = "Lux"
 names = ["lx", "lux"]
-unit = "Unit::Derived(units::LUX)"
+name = "LUX"
 [[units]]
+type = "derived"
+id = "0x7c25d25c"
 variant = "Becquerel"
 names = ["Bq", "becquerel", "becquerels"]
-unit = "Unit::Derived(units::BECQUEREL)"
+name = "BECQUEREL"
 [[units]]
+type = "derived"
+id = "0x6008fcb5"
 variant = "Gray"
 names = ["Gy", "gray", "grays"]
-unit = "Unit::Derived(units::GRAY)"
+name = "GRAY"
 [[units]]
+type = "derived"
+id = "0xcd0fdf3b"
 variant = "Sievert"
 names = ["Sv", "sievert", "sieverts"]
-unit = "Unit::Derived(units::SIEVERT)"
+name = "SIEVERT"
 [[units]]
+type = "derived"
+id = "0x9645d02f"
 variant = "Katal"
 names = ["kat", "katal", "katals"]
-unit = "Unit::Derived(units::KATAL)"
+name = "KATAL"
 
 [[units]]
+type = "derived"
+id = "0x8e8393e6"
 variant = "LightSpeed"
 names = ["c"]
-unit = "Unit::Derived(units::velocity::LIGHT_SPEED)"
+name = "velocity::LIGHT_SPEED"
 [[units]]
+type = "derived"
+id = "0xc8545958"
 variant = "Knot"
 names = ["kt", "knot", "knots"]
-unit = "Unit::Derived(units::velocity::KNOT)"
+name = "velocity::KNOT"
 
 [[units]]
+type = "derived"
+id = "0xc790db55"
+variant = "Au"
+names = ["au"]
+name = "length::AU"
+[[units]]
+type = "derived"
+id = "0x50d53fb0"
+variant = "Fathom"
+names = ["ftm", "fathom", "fathoms"]
+name = "length::FATHOM"
+[[units]]
+type = "derived"
+id = "0xd9192122"
+variant = "Cable"
+names = ["cable", "cables"]
+name = "length::CABLE"
+[[units]]
+type = "derived"
+id = "0xd767fd82"
+variant = "NauticalMile"
+names = ["NM", "nmi"]
+name = "length::NAUTICAL_MILE"
+[[units]]
+type = "derived"
+id = "0x9618566f"
+variant = "Link"
+names = ["link", "links"]
+name = "length::LINK"
+[[units]]
+type = "derived"
+id = "0x7ad5cf6d"
+variant = "Rod"
+names = ["rd", "rod", "rods"]
+name = "length::ROD"
+[[units]]
+type = "derived"
+id = "0xd3c90010"
 variant = "Thou"
 names = ["th", "thou", "thous"]
-unit = "Unit::Derived(units::length::THOU)"
+name = "length::THOU"
 [[units]]
+type = "derived"
+id = "0xd3c90020"
 variant = "Barleycorn"
 names = ["Bc", "barleycorn", "barleycorns"]
-unit = "Unit::Derived(units::length::BARLEYCORN)"
+name = "length::BARLEYCORN"
 [[units]]
+type = "derived"
+id = "0xd3c90000"
 variant = "Inch"
 names = ["in", "inch", "inches"]
-unit = "Unit::Derived(units::length::INCH)"
+name = "length::INCH"
 [[units]]
+type = "derived"
+id = "0xd3c90030"
 variant = "Hand"
 names = ["hand", "hands"]
-unit = "Unit::Derived(units::length::HAND)"
+name = "length::HAND"
 [[units]]
+type = "derived"
+id = "0xd3c90001"
 variant = "Feet"
 names = ["ft", "feet", "feets"]
-unit = "Unit::Derived(units::length::FOOT)"
+name = "length::FOOT"
 [[units]]
+type = "derived"
+id = "0xd3c90002"
 variant = "Yard"
 names = ["yd", "yard", "yards"]
-unit = "Unit::Derived(units::length::YARD)"
+name = "length::YARD"
 [[units]]
+type = "derived"
+id = "0xe8db8915"
 variant = "Chain"
 names = ["ch", "chain", "chains"]
-unit = "Unit::Derived(units::length::CHAIN)"
+name = "length::CHAIN"
 [[units]]
+type = "derived"
+id = "0xd3c90040"
 variant = "Furlong"
 names = ["fur", "furlong", "furlongs"]
-unit = "Unit::Derived(units::length::FURLONG)"
+name = "length::FURLONG"
 [[units]]
+type = "derived"
+id = "0xd3c90003"
 variant = "Mile"
 names = ["mi", "mile", "miles"]
-unit = "Unit::Derived(units::length::MILE)"
+name = "length::MILE"
 [[units]]
+type = "derived"
+id = "0xd3c90004"
 variant = "League"
 names = ["lea", "league", "leagues"]
-unit = "Unit::Derived(units::length::LEAGUE)"
+name = "length::LEAGUE"
 
 [[units]]
+type = "derived"
+id = "0xf4321939"
 variant = "Grain"
 names = ["gr", "grain", "grains"]
-unit = "Unit::Derived(units::mass::GRAIN)"
+name = "mass::GRAIN"
 [[units]]
+type = "derived"
+id = "0xa3592b8c"
 variant = "Drachm"
 names = ["dr", "drachm", "drachms"]
-unit = "Unit::Derived(units::mass::DRACHM)"
+name = "mass::DRACHM"
 [[units]]
+type = "derived"
+id = "0x7c3b47da"
 variant = "Ounce"
 names = ["oz", "ounce", "ounces"]
-unit = "Unit::Derived(units::mass::OUNCE)"
+name = "mass::OUNCE"
 [[units]]
+type = "derived"
+id = "0xe0482a36"
 variant = "Pound"
 names = ["lb", "pound", "pounds"]
-unit = "Unit::Derived(units::mass::POUND)"
+name = "mass::POUND"
 [[units]]
+type = "derived"
+id = "0xc827fd0d"
 variant = "Stone"
 names = ["st", "stone", "stones"]
-unit = "Unit::Derived(units::mass::STONE)"
+name = "mass::STONE"
 [[units]]
+type = "derived"
+id = "0x20f6787b"
 variant = "Quarter"
 names = ["qr", "qtr", "quarter", "quarters"]
-unit = "Unit::Derived(units::mass::QUARTER)"
+name = "mass::QUARTER"
 [[units]]
+type = "derived"
+id = "0xf97a5980"
 variant = "Hundredweight"
 names = ["cwt", "hundredweight", "hundredweights"]
-unit = "Unit::Derived(units::mass::HUNDREDWEIGHT)"
+name = "mass::HUNDREDWEIGHT"
 [[units]]
+type = "derived"
+id = "0xccbb6466"
 variant = "ImperialTon"
 names = ["t"]
-unit = "Unit::Derived(units::mass::TON)"
+name = "mass::TON"
 [[units]]
+type = "derived"
+id = "0x28eaf41b"
 variant = "Slug"
 names = ["slug", "slugs"]
-unit = "Unit::Derived(units::mass::SLUG)"
+name = "mass::SLUG"
 
 [[units]]
+type = "derived"
+id = "0xde39ff06"
 variant = "Celsius"
 names = ["°C", "celsius"]
-unit = "Unit::Derived(units::temperature::CELSIUS)"
+name = "temperature::CELSIUS"
 [[units]]
+type = "derived"
+id = "0x3a824baa"
 variant = "Fahrenheit"
 names = ["°F","fahrenheit"]
-unit = "Unit::Derived(units::temperature::FAHRENHEIT)"
+name = "temperature::FAHRENHEIT"
 
 [[units]]
+type = "derived"
+id = "0x445f9706"
 variant = "SpecificImpulse"
 names = ["sp"]
-unit = "Unit::Derived(units::SPECIFIC_IMPULSE)"
+name = "SPECIFIC_IMPULSE"
 
 [[prefixes]]
 variant = "Yotta"

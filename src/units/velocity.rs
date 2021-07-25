@@ -7,7 +7,7 @@ use rational::Rational;
 ///
 /// See [VELOCITY].
 pub static LIGHT_SPEED: Derived = Derived {
-    id: 0x8e8393e6,
+    id: crate::generated::ids::LIGHT_SPEED,
     vtable: &DerivedVtable {
         powers: crate::units::VELOCITY.vtable.powers,
         format: |f, _| write!(f, "c"),
@@ -24,7 +24,7 @@ pub static LIGHT_SPEED: Derived = Derived {
 
 /// Knot (`kt`) as `m/s`.
 pub static KNOT: Derived = Derived {
-    id: 0xc8545958,
+    id: crate::generated::ids::KNOT,
     vtable: &DerivedVtable {
         powers: crate::units::VELOCITY.vtable.powers,
         format: |f, _| write!(f, "kt"),

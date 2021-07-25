@@ -2,12 +2,13 @@ use crate::powers::Powers;
 use crate::syntax::parser::Parser;
 use crate::unit::{Conversion, Unit};
 use rational::Rational;
+use serde::{Deserialize, Serialize};
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
 use std::iter::FromIterator;
 
 /// The data for a base.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct State {
     /// The current power.
     pub power: i32,
@@ -34,7 +35,7 @@ impl From<(i32, i32)> for State {
 /// let b = Compound::from_iter([(Unit::Meter, (1, -2)), (Unit::Second, (-2, 0))]);
 /// assert_eq!(b.to_string(), "cm/s²");
 /// ```
-#[derive(Default, Clone, PartialEq, Eq)]
+#[derive(Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Compound {
     names: BTreeMap<Unit, State>,
 }

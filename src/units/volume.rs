@@ -5,7 +5,7 @@ use rational::Rational;
 
 /// Litre `l` or `0.001m^3`.
 pub static LITRE: Derived = Derived {
-    id: 0x1c108ba2,
+    id: crate::generated::ids::LITRE,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p * 3);
@@ -24,7 +24,7 @@ pub static LITRE: Derived = Derived {
 
 /// Cubic centimetre `cc` or `1cm^3`.
 pub static CUBIC_CENTIMETER: Derived = Derived {
-    id: 0x1c108ba2,
+    id: crate::generated::ids::CUBIC_CENTIMETER,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p * 3);

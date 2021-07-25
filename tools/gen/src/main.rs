@@ -1,17 +1,86 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use genco::prelude::*;
 use genco::{fmt, quote_in};
-use serde::Deserialize;
+use serde::{de, Deserialize};
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize)]
-struct Unit {
+struct Base {
     variant: String,
     names: Vec<String>,
     unit: String,
     prefix_bias: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Derived {
+    #[serde(deserialize_with = "id_deserializer")]
+    id: u32,
+    variant: String,
+    names: Vec<String>,
+    name: String,
+    prefix_bias: Option<i32>,
+}
+
+impl Derived {
+    /// The name of the constant to use when generating stuff.
+    fn constant_name(&self) -> &str {
+        if let Some((_, last)) = self.name.rsplit_once("::") {
+            last
+        } else {
+            &self.name
+        }
+    }
+}
+
+fn id_deserializer<'de, D>(deserializer: D) -> Result<u32, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let s = Cow::<'de, str>::deserialize(deserializer)?;
+    u32::from_str_radix(&s.as_ref()[2..], 16).map_err(<D::Error as de::Error>::custom)
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type")]
+enum Unit {
+    #[serde(rename = "base")]
+    Base(Base),
+    #[serde(rename = "derived")]
+    Derived(Derived),
+}
+
+impl Unit {
+    fn names(&self) -> &[String] {
+        match self {
+            Unit::Base(base) => &base.names,
+            Unit::Derived(derived) => &derived.names,
+        }
+    }
+
+    fn variant(&self) -> &str {
+        match self {
+            Unit::Base(base) => &base.variant,
+            Unit::Derived(derived) => &derived.variant,
+        }
+    }
+
+    fn prefix_bias(&self) -> Option<i32> {
+        match self {
+            Unit::Base(base) => base.prefix_bias,
+            Unit::Derived(derived) => derived.prefix_bias,
+        }
+    }
+
+    fn display(&self) -> String {
+        match self {
+            Unit::Base(base) => base.unit.clone(),
+            Unit::Derived(derived) => format!("Unit::Derived(units::{})", derived.name),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -27,7 +96,41 @@ struct Doc {
     prefixes: Vec<Prefix>,
 }
 
-fn write(doc: Doc) -> rust::Tokens {
+fn write_ids(doc: &Doc) -> Result<rust::Tokens> {
+    let mut seen = HashMap::new();
+    let mut derived = Vec::new();
+
+    for unit in &doc.units {
+        if let Unit::Derived(d) = unit {
+            if let Some(old) = seen.insert(d.id, d) {
+                bail!(
+                    "tried to register `{}` which has a conflicting id with `{}`",
+                    d.variant,
+                    old.variant
+                )
+            }
+
+            derived.push(d);
+        }
+    }
+
+    let unit_derived = &rust::import("crate::unit", "Derived");
+    let units = &rust::import("crate", "units");
+
+    Ok(quote! {
+        #(for d in derived.iter().copied() => pub const #(d.constant_name()): u32 = #(d.id);#<push>)
+
+        #("/// Match the given id to the corresponding derived unit")
+        pub fn id_to_derived(id: u32) -> Option<#unit_derived> {
+            match id {
+                #(for d in derived.iter().copied() => #(d.id) => Some(#units::#(&d.name)),#<push>)
+                _ => None,
+            }
+        }
+    })
+}
+
+fn write_parser(doc: &Doc) -> rust::Tokens {
     let prefixes = doc
         .prefixes
         .iter()
@@ -37,7 +140,7 @@ fn write(doc: Doc) -> rust::Tokens {
     let mut suffix_units = HashMap::new();
 
     for unit in &doc.units {
-        for name in &unit.names {
+        for name in unit.names() {
             if let Some(prefix) = prefixes.get(name) {
                 suffix_units.insert(prefix.variant.clone(), unit);
             }
@@ -47,7 +150,7 @@ fn write(doc: Doc) -> rust::Tokens {
     let mut productive_units = Vec::new();
 
     for unit in &doc.units {
-        if !unit.names.iter().all(|name| prefixes.contains_key(name)) {
+        if !unit.names().iter().all(|name| prefixes.contains_key(name)) {
             productive_units.push(unit);
         }
     }
@@ -68,13 +171,13 @@ fn write(doc: Doc) -> rust::Tokens {
         #[derive(#logos, Debug, Clone, Copy, PartialEq, Eq)]
         enum Combined {
             #(for unit in &productive_units => #(ref t {
-                for name in &unit.names {
+                for name in unit.names() {
                     if !prefixes.contains_key(name) {
                         quote_in!(*t => #[token(#(quoted(name)))]#<push>);
                     }
                 }
 
-                quote_in!(*t => #(&unit.variant),#<push>);
+                quote_in!(*t => #(unit.variant()),#<push>);
             }))
             #("/// Prefixes")
             #(for unit in &doc.prefixes => #(ref t {
@@ -93,11 +196,11 @@ fn write(doc: Doc) -> rust::Tokens {
         #[derive(#logos, Debug, Clone, Copy, PartialEq, Eq)]
         enum Units {
             #(for unit in &doc.units => #(ref t {
-                for name in &unit.names {
+                for name in unit.names() {
                     quote_in!(*t => #[token(#(quoted(name)))]#<push>);
                 }
 
-                quote_in!(*t => #(&unit.variant),#<push>);
+                quote_in!(*t => #(unit.variant()),#<push>);
             }))
             #[token("-")]
             Separator,
@@ -115,17 +218,17 @@ fn write(doc: Doc) -> rust::Tokens {
 
                 let unit = match token {
                     #(for unit in &productive_units join(#<push>) =>
-                        Combined::#(&unit.variant) => {
-                            #(if let Some(bias) = unit.prefix_bias => prefix += #bias;)
-                            #(&unit.unit)
+                        Combined::#(unit.variant()) => {
+                            #(if let Some(bias) = unit.prefix_bias() => prefix += #bias;)
+                            #(unit.display())
                         }
                     )
                     #(for p in &doc.prefixes join(#<push>) =>
                         Combined::#(&p.variant) => {
                             #(if let Some(unit) = suffix_units.get(&p.variant) {
                                 if lexer.remainder().is_empty() {
-                                    #(if let Some(bias) = unit.prefix_bias => prefix += #bias;)
-                                    return Some(("", prefix, #(&unit.unit)));
+                                    #(if let Some(bias) = unit.prefix_bias() => prefix += #bias;)
+                                    return Some(("", prefix, #(unit.display())));
                                 }#<line>
                             })
                             prefix += #(&p.prefix);
@@ -150,9 +253,9 @@ fn write(doc: Doc) -> rust::Tokens {
 
                 match token {
                     #(for unit in &doc.units join(#<push>) =>
-                        Units::#(&unit.variant) => {
-                            #(if let Some(bias) = unit.prefix_bias => prefix += #bias;)
-                            break #(&unit.unit);
+                        Units::#(unit.variant()) => {
+                            #(if let Some(bias) = unit.prefix_bias() => prefix += #bias;)
+                            break #(unit.display());
                         }
                     )
                     Units::Separator => {
@@ -172,19 +275,33 @@ fn write(doc: Doc) -> rust::Tokens {
 }
 
 fn main() -> Result<()> {
-    let out = Path::new("src").join("generated").join("unit.rs");
     let units_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?).join("data.toml");
     let units = fs::read(units_path)?;
     let doc: Doc = toml::from_slice(&units)?;
 
-    let t = write(doc);
+    {
+        let parser = write_parser(&doc);
 
-    let out = fs::File::create(out)?;
+        let out = Path::new("src").join("generated").join("unit.rs");
+        let out = fs::File::create(out)?;
+        let mut w = fmt::IoWriter::new(out);
+        let fmt = fmt::Config::from_lang::<Rust>().with_indentation(fmt::Indentation::Space(4));
+        let config = rust::Config::default();
 
-    let mut w = fmt::IoWriter::new(out);
-    let fmt = fmt::Config::from_lang::<Rust>().with_indentation(fmt::Indentation::Space(4));
-    let config = rust::Config::default();
+        parser.format_file(&mut w.as_formatter(&fmt), &config)?;
+    }
 
-    t.format_file(&mut w.as_formatter(&fmt), &config)?;
+    {
+        let ids = write_ids(&doc)?;
+
+        let out = Path::new("src").join("generated").join("ids.rs");
+        let out = fs::File::create(out)?;
+        let mut w = fmt::IoWriter::new(out);
+        let fmt = fmt::Config::from_lang::<Rust>().with_indentation(fmt::Indentation::Space(4));
+        let config = rust::Config::default();
+
+        ids.format_file(&mut w.as_formatter(&fmt), &config)?;
+    }
+
     Ok(())
 }

@@ -1,5 +1,5 @@
-use num::Num;
-use num::{traits::Pow, BigInt, BigRational, One, ToPrimitive, Zero};
+use num::traits::Pow;
+use num::{BigInt, BigRational, One, ToPrimitive, Zero};
 use serde::{de, ser};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -398,63 +398,14 @@ enum Number<'a> {
     Number(serde_json::Number),
 }
 
-impl Number<'_> {
-    fn into_bigint(self) -> Option<BigInt> {
-        let s = match self {
-            Number::Str(s) => s,
-            Number::Number(n) => n.to_string().into(),
-        };
-
-        BigInt::from_str_radix(s.as_ref(), 10).ok()
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-enum Repr<'a> {
-    Str(Cow<'a, str>),
-    Number(serde_json::Number),
-    Ratio([Number<'a>; 2]),
-}
-
 impl<'de> de::Deserialize<'de> for Rational {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        let s = match Repr::<'de>::deserialize(deserializer)? {
-            Repr::Str(s) => s,
-            Repr::Number(n) => n.to_string().into(),
-            Repr::Ratio([a, b]) => {
-                let a = a
-                    .into_bigint()
-                    .ok_or_else(|| <D::Error as de::Error>::custom("invalid numerator"))?;
+        let rational = BigRational::deserialize(deserializer)?;
 
-                let b = b
-                    .into_bigint()
-                    .ok_or_else(|| <D::Error as de::Error>::custom("invalid denominator"))?;
-
-                return Ok(Self {
-                    rational: BigRational::new(a, b),
-                });
-            }
-        };
-
-        /*let s: Cow<str> = match serde_json::Value::deserialize(deserializer)? {
-            serde_json::Value::String(s) => s.into(),
-            serde_json::Value::Number(number) => Cow::Owned(number.to_string()),
-            value => {
-                return Err(<D::Error as de::Error>::custom(format!(
-                    "expected string or number but got `{}`",
-                    value
-                )))
-            }
-        };*/
-
-        return match Self::from_str(s.as_ref()) {
-            Ok(ratio) => Ok(ratio),
-            Err(e) => Err(<D::Error as de::Error>::custom(e)),
-        };
+        Ok(Self { rational })
     }
 }
 
@@ -463,7 +414,7 @@ impl ser::Serialize for Rational {
     where
         S: serde::Serializer,
     {
-        (&self.numer().to_string(), &self.denom().to_string()).serialize(serializer)
+        self.rational.serialize(serializer)
     }
 }
 

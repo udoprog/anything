@@ -14,7 +14,7 @@ pub mod volume;
 
 /// Velocity in `m*s` with the `v` suffix.
 pub static VELOCITY: Derived = Derived {
-    id: 0x47dd35dc,
+    id: crate::generated::ids::VELOCITY,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p);
@@ -27,7 +27,7 @@ pub static VELOCITY: Derived = Derived {
 
 /// Acceleration in `m*s^-2` with the `a` suffix.
 pub static ACCELERATION: Derived = Derived {
-    id: 0x47dd35dc,
+    id: crate::generated::ids::ACCELERATION,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p);
@@ -46,7 +46,7 @@ pub static ACCELERATION: Derived = Derived {
 ///
 /// See [ACCELERATION].
 pub static GFORCE: Derived = Derived {
-    id: 0xb82b2151,
+    id: crate::generated::ids::GFORCE,
     vtable: &DerivedVtable {
         powers: ACCELERATION.vtable.powers,
         format: |f, _| write!(f, "g"),
@@ -63,7 +63,7 @@ pub static GFORCE: Derived = Derived {
 
 /// A Newton of force in `kh*m*s^-2` with the `N` suffix.
 pub static NEWTON: Derived = Derived {
-    id: 0x150ab031,
+    id: crate::generated::ids::NEWTON,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -77,7 +77,7 @@ pub static NEWTON: Derived = Derived {
 
 /// A pascal of pressure in `kg*m^-1*s^-2`.
 pub static PASCAL: Derived = Derived {
-    id: 0xd575976d,
+    id: crate::generated::ids::PASCAL,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -91,7 +91,7 @@ pub static PASCAL: Derived = Derived {
 
 /// Watt as `J/s` with the `W` suffix (`kg* m^2 * s^-3`).
 pub static WATT: Derived = Derived {
-    id: 0xa977f890,
+    id: crate::generated::ids::WATT,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -105,7 +105,7 @@ pub static WATT: Derived = Derived {
 
 /// Coulomb as `s*A` with the `C` suffix.
 pub static COULOMB: Derived = Derived {
-    id: 0xf57d5095,
+    id: crate::generated::ids::COULOMB,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Second, p);
@@ -118,7 +118,7 @@ pub static COULOMB: Derived = Derived {
 
 /// Volt as `W/A` with the `V` suffix (`kg * m^2 * s^-3 * A^-1`).
 pub static VOLT: Derived = Derived {
-    id: 0x27475ce0,
+    id: crate::generated::ids::VOLT,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -133,7 +133,7 @@ pub static VOLT: Derived = Derived {
 
 /// Farad as `C/V` with the `F` suffix (`kg^-1 * m^-2 * s^4 * A^2`).
 pub static FARAD: Derived = Derived {
-    id: 0xcea46875,
+    id: crate::generated::ids::FARAD,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p * -1);
@@ -148,7 +148,7 @@ pub static FARAD: Derived = Derived {
 
 /// Ohm as `V/A` with the `Ω` suffix (`kg * m^2 * s^-3 * A^-2`).
 pub static OHM: Derived = Derived {
-    id: 0x4c6815d9,
+    id: crate::generated::ids::OHM,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -163,7 +163,7 @@ pub static OHM: Derived = Derived {
 
 /// Siemens as `Ω^-1` with the `S` suffix.
 pub static SIEMENS: Derived = Derived {
-    id: 0xd87739a9,
+    id: crate::generated::ids::SIEMENS,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p * -1);
@@ -178,7 +178,7 @@ pub static SIEMENS: Derived = Derived {
 
 /// Weber as `V*s` with the `Wb` suffix (`kg * m^2 * s^-2 * A^-1`).
 pub static WEBER: Derived = Derived {
-    id: 0x69ca6c0a,
+    id: crate::generated::ids::WEBER,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -193,7 +193,7 @@ pub static WEBER: Derived = Derived {
 
 /// Tesla as `Wb/m^2` with the `T` suffix (`kg * s^-2 * A ^ -1`).
 pub static TESLA: Derived = Derived {
-    id: 0x731514a7,
+    id: crate::generated::ids::TESLA,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -207,7 +207,7 @@ pub static TESLA: Derived = Derived {
 
 /// Henry as `Wb/A` with the `H` suffix (`kg * m^2 * s^-2 * A^-2`).
 pub static HENRY: Derived = Derived {
-    id: 0xef26a9d5,
+    id: crate::generated::ids::HENRY,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -222,7 +222,7 @@ pub static HENRY: Derived = Derived {
 
 /// Lumen as `cd*sr` with the `lm` suffix.
 pub static LUMEN: Derived = Derived {
-    id: 0x359318c2,
+    id: crate::generated::ids::LUMEN,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Candela, p);
@@ -234,7 +234,7 @@ pub static LUMEN: Derived = Derived {
 
 /// Lux as `lm/m^2` with the `lx` suffix.
 pub static LUX: Derived = Derived {
-    id: 0xad603e6d,
+    id: crate::generated::ids::LUX,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Candela, p);
@@ -247,7 +247,7 @@ pub static LUX: Derived = Derived {
 
 /// Becquerel as `s^-1` with the `Bq` suffix.
 pub static BECQUEREL: Derived = Derived {
-    id: 0x7c25d25c,
+    id: crate::generated::ids::BECQUEREL,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Second, p * -1);
@@ -259,7 +259,7 @@ pub static BECQUEREL: Derived = Derived {
 
 /// Gray as `m^2*s^-2` with the `Gy` suffix.
 pub static GRAY: Derived = Derived {
-    id: 0x6008fcb5,
+    id: crate::generated::ids::GRAY,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p * 2);
@@ -272,7 +272,7 @@ pub static GRAY: Derived = Derived {
 
 /// Sievert as `m^2*s^-2` with the `Sv` suffix.
 pub static SIEVERT: Derived = Derived {
-    id: 0xcd0fdf3b,
+    id: crate::generated::ids::SIEVERT,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Meter, p * 2);
@@ -285,7 +285,7 @@ pub static SIEVERT: Derived = Derived {
 
 /// Katal as `mol*s^-1` with the `kat` suffix.
 pub static KATAL: Derived = Derived {
-    id: 0x9645d02f,
+    id: crate::generated::ids::KATAL,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Mole, p);
@@ -298,7 +298,7 @@ pub static KATAL: Derived = Derived {
 
 /// Specific impulse as `s` with the `sp` suffix.
 pub static SPECIFIC_IMPULSE: Derived = Derived {
-    id: 0x445f9706,
+    id: crate::generated::ids::SPECIFIC_IMPULSE,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::Second, p);

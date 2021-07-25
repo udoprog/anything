@@ -1,7 +1,10 @@
 use crate::compound::Compound;
 use anyhow::{anyhow, Context, Result};
+use flate2::read::GzDecoder;
 use rational::Rational;
+use serde::{Deserialize, Serialize};
 use std::fs;
+use std::io::Cursor;
 use tantivy::collector::TopDocs;
 use tantivy::query::{QueryParser, QueryParserError};
 use tantivy::schema::{
@@ -35,11 +38,24 @@ pub(crate) enum Match {
 }
 
 /// A single constant.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Constant {
     pub(crate) names: Vec<Box<str>>,
     pub(crate) value: Rational,
     pub(crate) unit: Compound,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Doc {
+    #[serde(default)]
+    pub constants: Vec<RawConstant>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RawConstant {
+    pub names: Vec<Box<str>>,
+    #[serde(flatten)]
+    pub content: serde_cbor::Value,
 }
 
 /// The database of facts.
@@ -141,20 +157,9 @@ impl Db {
             let doc = searcher.doc(id)?;
 
             if let Some(Value::Bytes(data)) = doc.get_first(self.field_data) {
-                let c: serde::Constant = match serde_cbor::from_slice(data) {
+                let c: Constant = match serde_cbor::from_slice(data) {
                     Ok(c) => c,
                     Err(..) => continue,
-                };
-
-                let unit = match c.unit.as_deref().map(str::parse::<Compound>).transpose() {
-                    Ok(unit) => unit,
-                    Err(..) => continue,
-                };
-
-                let c = Constant {
-                    names: c.names,
-                    value: c.value,
-                    unit: unit.unwrap_or_default(),
                 };
 
                 return Ok(Some(Match::Constant(c)));
@@ -166,7 +171,8 @@ impl Db {
 
     /// Load a document from the given bytes.
     pub(crate) fn load_bytes(&mut self, writer: &mut IndexWriter, bytes: &[u8]) -> Result<()> {
-        let doc: self::serde::Doc = toml::de::from_slice(bytes)?;
+        let bytes = GzDecoder::new(Cursor::new(bytes));
+        let doc: Doc = serde_cbor::from_reader(bytes)?;
 
         for c in doc.constants {
             let mut doc = Document::default();
@@ -225,30 +231,4 @@ fn build_schema() -> Schema {
 
     schema.add_text_field("name", text_options);
     schema.build()
-}
-
-pub(crate) mod serde {
-    use rational::Rational;
-    use serde::{Deserialize, Serialize};
-
-    #[derive(Debug, Deserialize)]
-    pub struct Doc {
-        #[serde(default)]
-        pub constants: Vec<RawConstant>,
-    }
-
-    #[derive(Debug, Serialize, Deserialize)]
-    pub struct RawConstant {
-        pub names: Vec<Box<str>>,
-        #[serde(flatten)]
-        pub content: serde_cbor::Value,
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct Constant {
-        pub names: Vec<Box<str>>,
-        pub value: Rational,
-        #[serde(default)]
-        pub unit: Option<Box<str>>,
-    }
 }

@@ -5,7 +5,7 @@ use rational::Rational;
 
 /// Celsius (`°C`) in based on kelvin (`K`).
 pub static CELSIUS: Derived = Derived {
-    id: 0xde39ff06,
+    id: crate::generated::ids::CELSIUS,
     vtable: &DerivedVtable {
         powers: |powers, n| {
             powers.insert(Unit::Kelvin, n);
@@ -24,7 +24,7 @@ pub static CELSIUS: Derived = Derived {
 
 /// Fahrenheit (`°F`) in based on kelvin (`K`).
 pub static FAHRENHEIT: Derived = Derived {
-    id: 0x3a824baa,
+    id: crate::generated::ids::FAHRENHEIT,
     vtable: &DerivedVtable {
         powers: |powers, n| {
             powers.insert(Unit::Kelvin, n);

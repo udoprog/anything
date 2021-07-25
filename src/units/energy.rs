@@ -5,7 +5,7 @@ use rational::Rational;
 
 /// A Joule with the `J` suffix (`kg*m^2*s^-2`).
 pub static JOULE: Derived = Derived {
-    id: 0xe0796773,
+    id: crate::generated::ids::JOULE,
     vtable: &DerivedVtable {
         powers: |powers, p| {
             powers.insert(Unit::KiloGram, p);
@@ -23,7 +23,7 @@ pub static JOULE: Derived = Derived {
 ///
 /// [British Thermal Unit]: https://en.wikipedia.org/wiki/British_thermal_unit
 pub static BTU: Derived = Derived {
-    id: 0xcf847a94,
+    id: crate::generated::ids::BTU,
     vtable: &DerivedVtable {
         powers: JOULE.vtable.powers,
         format: |f, pluralize| {
@@ -46,7 +46,7 @@ pub static BTU: Derived = Derived {
 
 /// Electronvolt `eV`.
 pub static ELECTRONVOLT: Derived = Derived {
-    id: 0x007adc81,
+    id: crate::generated::ids::ELECTRONVOLT,
     vtable: &DerivedVtable {
         powers: JOULE.vtable.powers,
         format: |f, _| write!(f, "eV"),

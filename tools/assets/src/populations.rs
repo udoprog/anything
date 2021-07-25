@@ -68,7 +68,7 @@ pub async fn download(analyzer: &Analyzer, db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             names,
-            unit: None,
+            unit: Default::default(),
             value: population,
         });
     }

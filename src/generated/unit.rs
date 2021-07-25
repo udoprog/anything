@@ -83,29 +83,6 @@ enum Combined {
     #[token("dalton")]
     #[token("daltons")]
     Dalton,
-    #[token("au")]
-    Au,
-    #[token("ftm")]
-    #[token("fathom")]
-    #[token("fathoms")]
-    Fathom,
-    #[token("cable")]
-    #[token("cables")]
-    Cable,
-    #[token("NM")]
-    #[token("nmi")]
-    NauticalMile,
-    #[token("link")]
-    #[token("links")]
-    Link,
-    #[token("rd")]
-    #[token("rod")]
-    #[token("rods")]
-    Rod,
-    #[token("ha")]
-    #[token("hectare")]
-    #[token("hectares")]
-    Hectare,
     #[token("l")]
     #[token("L")]
     #[token("litre")]
@@ -113,6 +90,10 @@ enum Combined {
     Litre,
     #[token("cc")]
     CubicCentimetre,
+    #[token("ha")]
+    #[token("hectare")]
+    #[token("hectares")]
+    Hectare,
     #[token("perch")]
     #[token("perches")]
     Perch,
@@ -211,6 +192,25 @@ enum Combined {
     #[token("knot")]
     #[token("knots")]
     Knot,
+    #[token("au")]
+    Au,
+    #[token("ftm")]
+    #[token("fathom")]
+    #[token("fathoms")]
+    Fathom,
+    #[token("cable")]
+    #[token("cables")]
+    Cable,
+    #[token("NM")]
+    #[token("nmi")]
+    NauticalMile,
+    #[token("link")]
+    #[token("links")]
+    Link,
+    #[token("rd")]
+    #[token("rod")]
+    #[token("rods")]
+    Rod,
     #[token("th")]
     #[token("thou")]
     #[token("thous")]
@@ -443,29 +443,6 @@ enum Units {
     #[token("dalton")]
     #[token("daltons")]
     Dalton,
-    #[token("au")]
-    Au,
-    #[token("ftm")]
-    #[token("fathom")]
-    #[token("fathoms")]
-    Fathom,
-    #[token("cable")]
-    #[token("cables")]
-    Cable,
-    #[token("NM")]
-    #[token("nmi")]
-    NauticalMile,
-    #[token("link")]
-    #[token("links")]
-    Link,
-    #[token("rd")]
-    #[token("rod")]
-    #[token("rods")]
-    Rod,
-    #[token("ha")]
-    #[token("hectare")]
-    #[token("hectares")]
-    Hectare,
     #[token("l")]
     #[token("L")]
     #[token("litre")]
@@ -473,6 +450,10 @@ enum Units {
     Litre,
     #[token("cc")]
     CubicCentimetre,
+    #[token("ha")]
+    #[token("hectare")]
+    #[token("hectares")]
+    Hectare,
     #[token("perch")]
     #[token("perches")]
     Perch,
@@ -575,6 +556,25 @@ enum Units {
     #[token("knot")]
     #[token("knots")]
     Knot,
+    #[token("au")]
+    Au,
+    #[token("ftm")]
+    #[token("fathom")]
+    #[token("fathoms")]
+    Fathom,
+    #[token("cable")]
+    #[token("cables")]
+    Cable,
+    #[token("NM")]
+    #[token("nmi")]
+    NauticalMile,
+    #[token("link")]
+    #[token("links")]
+    Link,
+    #[token("rd")]
+    #[token("rod")]
+    #[token("rods")]
+    Rod,
     #[token("th")]
     #[token("thou")]
     #[token("thous")]
@@ -693,15 +693,9 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Combined::Millenium => Unit::Derived(units::time::MILLENIUM),
             Combined::Tonne => Unit::Derived(units::mass::TONNE),
             Combined::Dalton => Unit::Derived(units::mass::DALTON),
-            Combined::Au => Unit::Derived(units::length::AU),
-            Combined::Fathom => Unit::Derived(units::length::FATHOM),
-            Combined::Cable => Unit::Derived(units::length::CABLE),
-            Combined::NauticalMile => Unit::Derived(units::length::NAUTICAL_MILE),
-            Combined::Link => Unit::Derived(units::length::LINK),
-            Combined::Rod => Unit::Derived(units::length::ROD),
-            Combined::Hectare => Unit::Derived(units::area::HECTARE),
             Combined::Litre => Unit::Derived(units::volume::LITRE),
             Combined::CubicCentimetre => Unit::Derived(units::volume::CUBIC_CENTIMETER),
+            Combined::Hectare => Unit::Derived(units::area::HECTARE),
             Combined::Perch => Unit::Derived(units::area::PERCH),
             Combined::Rood => Unit::Derived(units::area::ROOD),
             Combined::Acre => Unit::Derived(units::area::ACRE),
@@ -729,6 +723,12 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Combined::Sievert => Unit::Derived(units::SIEVERT),
             Combined::Katal => Unit::Derived(units::KATAL),
             Combined::Knot => Unit::Derived(units::velocity::KNOT),
+            Combined::Au => Unit::Derived(units::length::AU),
+            Combined::Fathom => Unit::Derived(units::length::FATHOM),
+            Combined::Cable => Unit::Derived(units::length::CABLE),
+            Combined::NauticalMile => Unit::Derived(units::length::NAUTICAL_MILE),
+            Combined::Link => Unit::Derived(units::length::LINK),
+            Combined::Rod => Unit::Derived(units::length::ROD),
             Combined::Thou => Unit::Derived(units::length::THOU),
             Combined::Barleycorn => Unit::Derived(units::length::BARLEYCORN),
             Combined::Inch => Unit::Derived(units::length::INCH),
@@ -934,32 +934,14 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Units::Dalton => {
                 break Unit::Derived(units::mass::DALTON);
             }
-            Units::Au => {
-                break Unit::Derived(units::length::AU);
-            }
-            Units::Fathom => {
-                break Unit::Derived(units::length::FATHOM);
-            }
-            Units::Cable => {
-                break Unit::Derived(units::length::CABLE);
-            }
-            Units::NauticalMile => {
-                break Unit::Derived(units::length::NAUTICAL_MILE);
-            }
-            Units::Link => {
-                break Unit::Derived(units::length::LINK);
-            }
-            Units::Rod => {
-                break Unit::Derived(units::length::ROD);
-            }
-            Units::Hectare => {
-                break Unit::Derived(units::area::HECTARE);
-            }
             Units::Litre => {
                 break Unit::Derived(units::volume::LITRE);
             }
             Units::CubicCentimetre => {
                 break Unit::Derived(units::volume::CUBIC_CENTIMETER);
+            }
+            Units::Hectare => {
+                break Unit::Derived(units::area::HECTARE);
             }
             Units::Perch => {
                 break Unit::Derived(units::area::PERCH);
@@ -1044,6 +1026,24 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             }
             Units::Knot => {
                 break Unit::Derived(units::velocity::KNOT);
+            }
+            Units::Au => {
+                break Unit::Derived(units::length::AU);
+            }
+            Units::Fathom => {
+                break Unit::Derived(units::length::FATHOM);
+            }
+            Units::Cable => {
+                break Unit::Derived(units::length::CABLE);
+            }
+            Units::NauticalMile => {
+                break Unit::Derived(units::length::NAUTICAL_MILE);
+            }
+            Units::Link => {
+                break Unit::Derived(units::length::LINK);
+            }
+            Units::Rod => {
+                break Unit::Derived(units::length::ROD);
             }
             Units::Thou => {
                 break Unit::Derived(units::length::THOU);

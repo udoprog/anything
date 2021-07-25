@@ -39,11 +39,7 @@ impl Numeric {
 
 impl fmt::Display for Numeric {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.value.is_integer() {
-            write!(f, "{}", self.value.numer())?;
-        } else {
-            write!(f, "{}", self.value.display(8, -6, true))?;
-        }
+        write!(f, "{}", self.value.display(12, 12, true))?;
 
         if self.unit.has_numerator() {
             write!(f, " ")?;

@@ -1,13 +1,13 @@
 use num::{BigInt, BigRational, Signed, ToPrimitive, Zero};
-use std::fmt;
 use std::fmt::Write;
 use std::mem;
+use std::{fmt, ops};
 
 /// Perform formatting of a big rational.
 pub struct Display<'a> {
     rational: &'a BigRational,
     limit: usize,
-    exponent_limit: i32,
+    exponent_limit: usize,
     cap: bool,
 }
 
@@ -15,7 +15,7 @@ impl<'a> Display<'a> {
     pub(crate) fn new(
         rational: &'a BigRational,
         limit: usize,
-        exponent_limit: i32,
+        exponent_limit: usize,
         cap: bool,
     ) -> Self {
         Self {
@@ -24,6 +24,102 @@ impl<'a> Display<'a> {
             exponent_limit,
             cap,
         }
+    }
+
+    /// Format a big number.
+    fn format_big(
+        &self,
+        f: &mut fmt::Formatter<'_>,
+        neg: bool,
+        mut rem: BigInt,
+        div: BigInt,
+        den: &BigInt,
+    ) -> fmt::Result {
+        if neg {
+            f.write_char('-')?;
+        }
+
+        let string = div.to_string();
+        let mut it = string.chars().peekable();
+
+        if let Some(d) = it.next() {
+            fmt::Display::fmt(&d, f)?;
+        }
+
+        if it.peek().is_some() {
+            f.write_char('.')?;
+        }
+
+        let mut used = 0;
+
+        for d in (&mut it).take(self.limit) {
+            fmt::Display::fmt(&d, f)?;
+            used += 1;
+        }
+
+        let dot = if it.peek().is_some() {
+            true
+        } else {
+            let remaining = self.limit - used;
+
+            if remaining > 0 {
+                let mut it = emit(&mut rem, den);
+
+                for d in (&mut it).take(remaining) {
+                    fmt::Display::fmt(&d, f)?;
+                }
+
+                it.next().is_some()
+            } else {
+                false
+            }
+        };
+
+        if dot {
+            f.write_char('…')?;
+        }
+
+        let exp = it.count() + used;
+
+        if exp > 0 {
+            f.write_char('e')?;
+            fmt::Display::fmt(&exp, f)?;
+        }
+
+        Ok(())
+    }
+
+    fn format_whole(
+        &self,
+        f: &mut fmt::Formatter<'_>,
+        neg: bool,
+        mut rem: BigInt,
+        div: &BigInt,
+        den: &BigInt,
+    ) -> fmt::Result {
+        if neg {
+            f.write_char('-')?;
+        }
+
+        fmt::Display::fmt(div, f)?;
+
+        if rem.is_zero() {
+            return Ok(());
+        }
+
+        if self.limit > 0 {
+            f.write_char('.')?;
+
+            for d in emit(&mut rem, den).take(self.limit) {
+                fmt::Display::fmt(&d, f)?;
+            }
+        }
+
+        if !rem.is_zero() && self.cap {
+            f.write_char('…')?;
+        }
+
+        Ok(())
     }
 }
 
@@ -36,30 +132,12 @@ impl fmt::Display for Display<'_> {
         let div = &rem / &den;
         rem -= &den * &div;
 
+        if digits(div.clone()) >= self.exponent_limit {
+            return self.format_big(f, neg, rem, div, &den);
+        }
+
         if !div.is_zero() || rem.is_zero() {
-            if neg {
-                f.write_char('-')?;
-            }
-
-            div.fmt(f)?;
-
-            if rem.is_zero() {
-                return Ok(());
-            }
-
-            if self.limit > 0 {
-                f.write_char('.')?;
-
-                for d in emit(&mut rem, &den).take(self.limit) {
-                    d.fmt(f)?;
-                }
-            }
-
-            if !rem.is_zero() && self.cap {
-                f.write_char('…')?;
-            }
-
-            return Ok(());
+            return self.format_whole(f, neg, rem, &div, &den);
         }
 
         let mut exp = -1i32;
@@ -86,7 +164,7 @@ impl fmt::Display for Display<'_> {
                     f.write_char('-')?;
                 }
 
-                if exp <= self.exponent_limit {
+                if exp.abs() as usize >= self.exponent_limit {
                     d.fmt(f)?;
                     continue;
                 }
@@ -124,7 +202,12 @@ impl fmt::Display for Display<'_> {
 /// Internal helper to keep diving a value and emitting its values.
 ///
 /// Each emitted value is guaranteed to be smaller than 10.
-fn emit<'a>(rem: &'a mut BigInt, den: &'a BigInt) -> impl Iterator<Item = u8> + 'a {
+fn emit<'a, D>(rem: &'a mut BigInt, den: D) -> impl Iterator<Item = u8> + 'a
+where
+    for<'b> &'b BigInt: ops::Div<D, Output = BigInt>,
+    for<'c> D: ops::Mul<&'c BigInt, Output = BigInt>,
+    D: 'a + Copy,
+{
     std::iter::from_fn(move || {
         if rem.is_zero() {
             return None;
@@ -138,4 +221,17 @@ fn emit<'a>(rem: &'a mut BigInt, den: &'a BigInt) -> impl Iterator<Item = u8> + 
         debug_assert!(div < 10u8);
         Some(div)
     })
+}
+
+/// Count the number of digits.
+fn digits(mut rem: BigInt) -> usize {
+    let mut count = 0;
+    rem /= 10u32;
+
+    while !rem.is_zero() {
+        rem /= 10u32;
+        count += 1;
+    }
+
+    count
 }

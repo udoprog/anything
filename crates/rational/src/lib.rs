@@ -66,7 +66,7 @@ impl Rational {
     }
 
     /// Format this rational number.
-    pub fn display(&self, limit: usize, exponent_limit: i32, cap: bool) -> Display<'_> {
+    pub fn display(&self, limit: usize, exponent_limit: usize, cap: bool) -> Display<'_> {
         Display::new(&self.rational, limit, exponent_limit, cap)
     }
 
@@ -420,6 +420,6 @@ impl ser::Serialize for Rational {
 
 impl fmt::Debug for Rational {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.display(6, -8, true))
+        write!(f, "{}", self.display(6, 8, true))
     }
 }

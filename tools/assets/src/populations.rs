@@ -1,16 +1,24 @@
 use crate::analyzer::Analyzer;
 use crate::cache;
-use crate::db::Db;
+use crate::db::{Db, Sources};
 use anyhow::{anyhow, Result};
 use calamine::{DataType, Reader, Xlsx};
-use facts::Constant;
+use facts::{Constant, Source};
 use rational::Rational;
 use std::io::Cursor;
+
+const SOURCE: u64 = 0x23afb9ae5087db93;
 
 const URL: &str = "https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/EXCEL_FILES/1_Population/WPP2019_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xlsx";
 
 /// Download and format planetary constants.
-pub async fn download(analyzer: &Analyzer, db: &mut Db) -> Result<()> {
+pub async fn download(analyzer: &Analyzer, db: &mut Db, sources: &mut Sources) -> Result<()> {
+    sources.sources.push(Source {
+        id: SOURCE,
+        description: "Population data from the UN".into(),
+        url: Some("https://population.un.org/wpp/Download/Standard/Population/".into()),
+    });
+
     let bytes = cache::get("populations", URL).await?;
     let bytes = Cursor::new(&bytes[..]);
 
@@ -68,6 +76,7 @@ pub async fn download(analyzer: &Analyzer, db: &mut Db) -> Result<()> {
         names.extend(analyzer.filter(region));
 
         db.constants.push(Constant {
+            source: Some(SOURCE),
             names,
             description: format!("Population of {} in {}", region, last_year_number).into(),
             unit: Default::default(),

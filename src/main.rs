@@ -83,7 +83,17 @@ fn main() -> anyhow::Result<()> {
         for description in descriptions {
             match description {
                 facts::Description::Constant(query, c) => {
-                    writeln!(out, "{:?} => {}", query, c.description)?;
+                    write!(out, "{:?} => {}", query, c.description)?;
+
+                    if let Some(s) = c.source.and_then(|id| db.get_source(id)) {
+                        if let Some(url) = &s.url {
+                            write!(out, " ({}) <{}>", s.description, url)?;
+                        } else {
+                            write!(out, "({})", s.description)?;
+                        }
+                    }
+
+                    writeln!(out)?;
                 }
             }
         }

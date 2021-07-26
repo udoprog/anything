@@ -1,12 +1,26 @@
-use crate::cache;
 use crate::db::Db;
 use crate::helpers;
+use crate::{cache, db::Sources};
 use anyhow::Result;
-use facts::Constant;
+use facts::{Constant, Source};
 use rational::Rational;
 use serde::Deserialize;
 
-const URL: &str =
+const SOURCE: u64 = 0x2cf06db8998f8888;
+
+pub async fn download(db: &mut Db, sources: &mut Sources) -> Result<()> {
+    sources.sources.push(Source {
+        id: SOURCE,
+        description: "NASA factsheet about planets and satellites".into(),
+        url: Some("https://github.com/devstronomy/nasa-data-scraper".into()),
+    });
+
+    download_planets(db).await?;
+    download_satellites(db).await?;
+    Ok(())
+}
+
+const PLANETS_URL: &str =
     "https://raw.githubusercontent.com/devstronomy/nasa-data-scraper/master/data/json/planets.json";
 
 #[derive(Debug, Deserialize)]
@@ -68,9 +82,9 @@ pub struct Planet {
 }
 
 /// Download and format planetary constants.
-pub async fn download(db: &mut Db) -> Result<()> {
+async fn download_planets(db: &mut Db) -> Result<()> {
     println!("Downloading planets");
-    let planets = cache::get("planets", URL).await?;
+    let planets = cache::get("planets", PLANETS_URL).await?;
 
     println!("Deserializing planets");
     let planets: Vec<Planet> = serde_json::from_slice(&planets)?;
@@ -85,50 +99,120 @@ pub async fn download(db: &mut Db) -> Result<()> {
         let search_name = Box::<str>::from(p.name.to_lowercase());
 
         db.constants.push(Constant {
+            source: Some(SOURCE),
             names: vec![search_name.clone(), "orbit".into(), "distance".into()],
-            description: format!("Orbital distance of the planet `{}`", p.name).into(),
+            description: format!("Orbital distance of {}", p.name).into(),
             unit: str::parse("au")?,
             value: p.distance_from_sun / &mkm_in_au,
         });
 
         db.constants.push(Constant {
+            source: Some(SOURCE),
             names: vec![search_name.clone(), "orbital".into(), "period".into()],
-            description: format!("Orbital period of the planet `{}`", p.name).into(),
+            description: format!("Orbital period of {}", p.name).into(),
             unit: str::parse("yr")?,
             value: p.orbital_period / &days_in_year,
         });
 
         db.constants.push(Constant {
+            source: Some(SOURCE),
             names: vec![search_name.clone(), "mass".into()],
-            description: format!("Mass of the planet `{}`", p.name).into(),
+            description: format!("Mass of {}", p.name).into(),
             unit: str::parse("kg")?,
             value: p.mass * &mass_ratio,
         });
 
         db.constants.push(Constant {
+            source: Some(SOURCE),
             names: vec![
                 search_name.clone(),
                 "solar".into(),
                 "day".into(),
                 "length".into(),
             ],
-            description: format!("Length of a solar day of the planet `{}`", p.name).into(),
+            description: format!("Length of a solar day on {}", p.name).into(),
             unit: str::parse("dy")?,
             value: p.length_of_day / &hours_in_day,
         });
 
         db.constants.push(Constant {
+            source: Some(SOURCE),
             names: vec![search_name.clone(), "diameter".into()],
-            description: format!("Diameter of the planet `{}`", p.name).into(),
+            description: format!("Diameter of {}", p.name).into(),
             unit: str::parse("km")?,
             value: p.diameter.clone(),
         });
 
         db.constants.push(Constant {
+            source: Some(SOURCE),
             names: vec![search_name.clone(), "radius".into()],
-            description: format!("Radius of the planet `{}`", p.name).into(),
+            description: format!("Radius of {}", p.name).into(),
             unit: str::parse("km")?,
             value: &p.diameter / &two,
+        });
+    }
+
+    Ok(())
+}
+
+const SATELLITES_URL: &str =
+    "https://raw.githubusercontent.com/devstronomy/nasa-data-scraper/master/data/json/satellites.json";
+
+#[derive(Debug, Deserialize)]
+pub struct Satellite {
+    id: u64,
+    #[serde(rename = "planetId")]
+    planet_id: u32,
+    name: String,
+    #[serde(deserialize_with = "helpers::deserialize_number")]
+    gm: Rational,
+    #[serde(deserialize_with = "helpers::deserialize_number")]
+    radius: Rational,
+    #[serde(default)]
+    #[serde(deserialize_with = "helpers::deserialize_option_number")]
+    density: Option<Rational>,
+    #[serde(default)]
+    #[serde(deserialize_with = "helpers::deserialize_option_number")]
+    magnitude: Option<Rational>,
+    #[serde(default)]
+    #[serde(deserialize_with = "helpers::deserialize_option_number")]
+    albedo: Option<Rational>,
+}
+
+/// Download and format planetary constants.
+async fn download_satellites(db: &mut Db) -> Result<()> {
+    let satellites = cache::get("satellites", SATELLITES_URL).await?;
+    let satellites: Vec<Satellite> = serde_json::from_slice(&satellites)?;
+
+    let big_g = str::parse::<Rational>("6.6743015e-11")?;
+    let kmc_to_mc = str::parse::<Rational>("1e9")?;
+    let two = Rational::new(2u32, 1u32);
+
+    for s in satellites {
+        let search_name = Box::<str>::from(s.name.to_lowercase());
+
+        db.constants.push(Constant {
+            source: Some(SOURCE),
+            names: vec![search_name.clone(), "mass".into()],
+            description: format!("Mass of the satellite {}", s.name).into(),
+            unit: str::parse("kg")?,
+            value: s.gm * &kmc_to_mc / &big_g,
+        });
+
+        db.constants.push(Constant {
+            source: Some(SOURCE),
+            names: vec![search_name.clone(), "radius".into()],
+            description: format!("Radius of the satellite {}", s.name).into(),
+            unit: str::parse("km")?,
+            value: s.radius.clone(),
+        });
+
+        db.constants.push(Constant {
+            source: Some(SOURCE),
+            names: vec![search_name.clone(), "diameter".into()],
+            description: format!("Diameter of the satellite {}", s.name).into(),
+            unit: str::parse("km")?,
+            value: &s.radius * &two,
         });
     }
 

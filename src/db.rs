@@ -1,6 +1,7 @@
 use crate::compound::Compound;
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
+use hashbrown::HashMap;
 use rational::Rational;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -13,6 +14,8 @@ use tantivy::schema::{
 use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
 use tantivy::{Document, Index, IndexReader, IndexWriter, ReloadPolicy, TantivyError};
 use thiserror::Error;
+
+const SOURCES_BIN_GZ: &str = "sources.bin.gz";
 
 /// Error that can happen during lookup.
 #[derive(Debug, Error)]
@@ -40,7 +43,11 @@ pub(crate) enum Match {
 /// A single constant.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Constant {
+    /// The identifier of a source.
+    #[serde(default)]
+    pub source: Option<u64>,
     /// The query names of a constant.
+    #[serde(default)]
     pub names: Vec<Box<str>>,
     /// The description of a constant.
     pub description: Box<str>,
@@ -50,10 +57,57 @@ pub struct Constant {
     pub unit: Compound,
 }
 
+/// A single source.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Source {
+    /// The unique identifier of a source.
+    pub id: u64,
+    /// The description of a source.
+    pub description: Box<str>,
+    /// The URL that a source came from.
+    pub url: Option<Box<str>>,
+}
+
+#[derive(Debug, Default)]
+struct Sources {
+    /// Vector of sources.
+    sources: Vec<Source>,
+    /// Map of identifiers to source index.
+    map: HashMap<u64, usize>,
+}
+
+impl<'de> Deserialize<'de> for Sources {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct RawSources {
+            /// Vector of sources.
+            sources: Vec<Source>,
+        }
+
+        let sources = RawSources::deserialize(deserializer)?;
+
+        let mut map = HashMap::new();
+
+        for (index, source) in sources.sources.iter().enumerate() {
+            map.insert(source.id, index);
+        }
+
+        Ok(Self {
+            sources: sources.sources,
+            map,
+        })
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Doc {
     #[serde(default)]
     pub constants: Vec<RawConstant>,
+    #[serde(default)]
+    pub sources: Vec<Source>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -65,6 +119,7 @@ pub struct RawConstant {
 
 /// The database of facts.
 pub struct Db {
+    sources: Sources,
     index: Index,
     reader: IndexReader,
     field_data: Field,
@@ -72,6 +127,12 @@ pub struct Db {
 }
 
 impl Db {
+    /// Get information on the given source by Id.
+    pub fn get_source(&self, id: u64) -> Option<&Source> {
+        let index = self.sources.map.get(&id).copied()?;
+        self.sources.sources.get(index)
+    }
+
     /// Only open the database in-memory.
     pub fn in_memory() -> Result<Self> {
         Self::open_inner(true)
@@ -119,7 +180,13 @@ impl Db {
             .reload_policy(ReloadPolicy::Manual)
             .try_into()?;
 
+        let sources = match config.get_asset(SOURCES_BIN_GZ) {
+            Some(bytes) => load_bytes(bytes.as_ref())?,
+            None => Default::default(),
+        };
+
         let mut db = Self {
+            sources,
             index,
             reader,
             field_data,
@@ -133,6 +200,10 @@ impl Db {
             writer.delete_all_documents()?;
 
             for name in config.assets() {
+                if name == SOURCES_BIN_GZ {
+                    continue;
+                }
+
                 if let Some(content) = config.get_asset(name.as_ref()) {
                     db.load_bytes(&mut writer, content.as_ref())
                         .with_context(|| anyhow!("loading: {}", name))?;
@@ -176,8 +247,7 @@ impl Db {
 
     /// Load a document from the given bytes.
     pub(crate) fn load_bytes(&mut self, writer: &mut IndexWriter, bytes: &[u8]) -> Result<()> {
-        let bytes = GzDecoder::new(Cursor::new(bytes));
-        let doc: Doc = serde_cbor::from_reader(bytes)?;
+        let doc: Doc = load_bytes(bytes)?;
 
         for c in doc.constants {
             let mut doc = Document::default();
@@ -236,4 +306,12 @@ fn build_schema() -> Schema {
 
     schema.add_text_field("name", text_options);
     schema.build()
+}
+
+fn load_bytes<T>(bytes: &[u8]) -> Result<T, serde_cbor::Error>
+where
+    for<'de> T: Deserialize<'de>,
+{
+    let bytes = GzDecoder::new(Cursor::new(bytes));
+    serde_cbor::from_reader(bytes)
 }

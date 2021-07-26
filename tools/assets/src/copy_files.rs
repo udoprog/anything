@@ -40,6 +40,7 @@ pub async fn copy_files(db: &mut Db) -> Result<()> {
 
         for c in inner_db.constants {
             db.constants.push(Constant {
+                source: None,
                 names: c.names,
                 description: c.description,
                 value: c.value,

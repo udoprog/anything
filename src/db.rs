@@ -46,9 +46,9 @@ pub struct Constant {
     /// The identifier of a source.
     #[serde(default)]
     pub source: Option<u64>,
-    /// The query names of a constant.
+    /// Tokens that can be queried for.
     #[serde(default)]
-    pub names: Vec<Box<str>>,
+    pub tokens: Vec<Box<str>>,
     /// The description of a constant.
     pub description: Box<str>,
     /// The value of a constant.
@@ -105,14 +105,14 @@ impl<'de> Deserialize<'de> for Sources {
 #[derive(Debug, Deserialize)]
 pub struct Doc {
     #[serde(default)]
-    pub constants: Vec<RawConstant>,
+    pub constants: Vec<PartialConstant>,
     #[serde(default)]
     pub sources: Vec<Source>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct RawConstant {
-    pub names: Vec<Box<str>>,
+pub struct PartialConstant {
+    pub tokens: Vec<Box<str>>,
     #[serde(flatten)]
     pub content: serde_cbor::Value,
 }
@@ -253,8 +253,8 @@ impl Db {
             let mut doc = Document::default();
             doc.add_bytes(self.field_data, serde_cbor::to_vec(&c)?);
 
-            for name in &c.names {
-                doc.add_text(self.field_name, name.as_ref());
+            for token in &c.tokens {
+                doc.add_text(self.field_name, token.as_ref());
             }
 
             writer.add_document(doc);

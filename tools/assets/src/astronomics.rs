@@ -100,7 +100,7 @@ async fn download_planets(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names: vec![search_name.clone(), "orbit".into(), "distance".into()],
+            tokens: vec![search_name.clone(), "orbit".into(), "distance".into()],
             description: format!("Orbital distance of {}", p.name).into(),
             unit: str::parse("au")?,
             value: p.distance_from_sun / &mkm_in_au,
@@ -108,7 +108,7 @@ async fn download_planets(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names: vec![search_name.clone(), "orbital".into(), "period".into()],
+            tokens: vec![search_name.clone(), "orbital".into(), "period".into()],
             description: format!("Orbital period of {}", p.name).into(),
             unit: str::parse("yr")?,
             value: p.orbital_period / &days_in_year,
@@ -116,7 +116,7 @@ async fn download_planets(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names: vec![search_name.clone(), "mass".into()],
+            tokens: vec![search_name.clone(), "mass".into()],
             description: format!("Mass of {}", p.name).into(),
             unit: str::parse("kg")?,
             value: p.mass * &mass_ratio,
@@ -124,7 +124,7 @@ async fn download_planets(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names: vec![
+            tokens: vec![
                 search_name.clone(),
                 "solar".into(),
                 "day".into(),
@@ -137,7 +137,7 @@ async fn download_planets(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names: vec![search_name.clone(), "diameter".into()],
+            tokens: vec![search_name.clone(), "diameter".into()],
             description: format!("Diameter of {}", p.name).into(),
             unit: str::parse("km")?,
             value: p.diameter.clone(),
@@ -145,7 +145,7 @@ async fn download_planets(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names: vec![search_name.clone(), "radius".into()],
+            tokens: vec![search_name.clone(), "radius".into()],
             description: format!("Radius of {}", p.name).into(),
             unit: str::parse("km")?,
             value: &p.diameter / &two,
@@ -193,7 +193,7 @@ async fn download_satellites(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names: vec![search_name.clone(), "mass".into()],
+            tokens: vec![search_name.clone(), "mass".into()],
             description: format!("Mass of the satellite {}", s.name).into(),
             unit: str::parse("kg")?,
             value: s.gm * &kmc_to_mc / &big_g,
@@ -201,7 +201,7 @@ async fn download_satellites(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names: vec![search_name.clone(), "radius".into()],
+            tokens: vec![search_name.clone(), "radius".into()],
             description: format!("Radius of the satellite {}", s.name).into(),
             unit: str::parse("km")?,
             value: s.radius.clone(),
@@ -209,7 +209,7 @@ async fn download_satellites(db: &mut Db) -> Result<()> {
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names: vec![search_name.clone(), "diameter".into()],
+            tokens: vec![search_name.clone(), "diameter".into()],
             description: format!("Diameter of the satellite {}", s.name).into(),
             unit: str::parse("km")?,
             value: &s.radius * &two,

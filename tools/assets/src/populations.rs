@@ -77,7 +77,7 @@ pub async fn download(analyzer: &Analyzer, db: &mut Db, sources: &mut Sources) -
 
         db.constants.push(Constant {
             source: Some(SOURCE),
-            names,
+            tokens: names,
             description: format!("Population of {} in {}", region, last_year_number).into(),
             unit: Default::default(),
             value: population,

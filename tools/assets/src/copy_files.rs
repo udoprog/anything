@@ -9,7 +9,7 @@ use tokio::fs;
 
 #[derive(Debug, Deserialize)]
 struct InnerConstant {
-    names: Vec<Box<str>>,
+    tokens: Vec<Box<str>>,
     description: Box<str>,
     #[serde(deserialize_with = "deserialize_value")]
     value: Rational,
@@ -41,7 +41,7 @@ pub async fn copy_files(db: &mut Db) -> Result<()> {
         for c in inner_db.constants {
             db.constants.push(Constant {
                 source: None,
-                names: c.names,
+                tokens: c.names,
                 description: c.description,
                 value: c.value,
                 unit: c.unit.unwrap_or_default(),

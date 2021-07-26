@@ -1,9 +1,9 @@
 [[constants]]
-names = ["pi", "π"]
+tokens = ["pi", "π"]
 description = "The mathematical constant `π` (pi)"
 value = "3.1415926535"
 
 [[constants]]
-names = ["tau", "τ"]
+tokens = ["tau", "τ"]
 description = "The mathematical constant `τ` (tau)"
 value = "6.283185307"

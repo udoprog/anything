@@ -1,7 +1,8 @@
 use crate::cache;
-use crate::db::{Constant, Db};
+use crate::db::Db;
 use crate::helpers;
 use anyhow::Result;
+use facts::Constant;
 use rational::Rational;
 use serde::Deserialize;
 
@@ -81,53 +82,51 @@ pub async fn download(db: &mut Db) -> Result<()> {
     let two = Rational::new(2u32, 1u32);
 
     for p in planets {
-        let name = p.name.to_lowercase();
+        let search_name = Box::<str>::from(p.name.to_lowercase());
 
         db.constants.push(Constant {
-            names: vec![
-                name.clone(),
-                String::from("orbit"),
-                String::from("distance"),
-            ],
+            names: vec![search_name.clone(), "orbit".into(), "distance".into()],
+            description: format!("Orbital distance of the planet `{}`", p.name).into(),
             unit: str::parse("au")?,
             value: p.distance_from_sun / &mkm_in_au,
         });
 
         db.constants.push(Constant {
-            names: vec![
-                name.clone(),
-                String::from("orbital"),
-                String::from("period"),
-            ],
+            names: vec![search_name.clone(), "orbital".into(), "period".into()],
+            description: format!("Orbital period of the planet `{}`", p.name).into(),
             unit: str::parse("yr")?,
             value: p.orbital_period / &days_in_year,
         });
 
         db.constants.push(Constant {
-            names: vec![name.clone(), String::from("mass")],
+            names: vec![search_name.clone(), "mass".into()],
+            description: format!("Mass of the planet `{}`", p.name).into(),
             unit: str::parse("kg")?,
             value: p.mass * &mass_ratio,
         });
 
         db.constants.push(Constant {
             names: vec![
-                name.clone(),
-                String::from("solar"),
-                String::from("day"),
-                String::from("length"),
+                search_name.clone(),
+                "solar".into(),
+                "day".into(),
+                "length".into(),
             ],
+            description: format!("Length of a solar day of the planet `{}`", p.name).into(),
             unit: str::parse("dy")?,
             value: p.length_of_day / &hours_in_day,
         });
 
         db.constants.push(Constant {
-            names: vec![name.clone(), String::from("diameter")],
+            names: vec![search_name.clone(), "diameter".into()],
+            description: format!("Diameter of the planet `{}`", p.name).into(),
             unit: str::parse("km")?,
             value: p.diameter.clone(),
         });
 
         db.constants.push(Constant {
-            names: vec![name.clone(), String::from("radius")],
+            names: vec![search_name.clone(), "radius".into()],
+            description: format!("Radius of the planet `{}`", p.name).into(),
             unit: str::parse("km")?,
             value: &p.diameter / &two,
         });

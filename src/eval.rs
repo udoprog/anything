@@ -1,10 +1,11 @@
 use crate::compound::Compound;
-use crate::db;
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
+use crate::query::Description;
 use crate::syntax::parser::{SyntaxKind, SyntaxNode};
 use crate::unit::Unit;
 use crate::unit_parser::UnitParser;
+use crate::{db, Query};
 use hashbrown::HashMap;
 use num::bigint::Sign;
 use num::{Signed, ToPrimitive, Zero};
@@ -334,22 +335,16 @@ enum DelayedEval {
 }
 
 impl DelayedEval {
-    fn eval(self, ctx: &Context, source: &str, db: &db::Db, bias: Bias) -> Result<Numeric> {
+    fn eval(self, q: &mut Query<'_>, bias: Bias) -> Result<Numeric> {
         match self {
-            DelayedEval::Node(node) => eval(ctx, node, source, db, bias),
+            DelayedEval::Node(node) => eval(q, node, bias),
             DelayedEval::Numeric(numeric) => Ok(numeric),
         }
     }
 }
 
 /// Evaluate the given syntax node.
-pub fn eval(
-    ctx: &Context,
-    node: SyntaxNode,
-    source: &str,
-    db: &db::Db,
-    bias: Bias,
-) -> Result<Numeric> {
+pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> {
     match node.kind() {
         OPERATION => {
             let mut it = node.children();
@@ -371,14 +366,9 @@ pub fn eval(
                     OP_MUL | OP_IMPLICIT_MUL => mul,
                     OP_POWER => pow,
                     OP_CAST => {
-                        let rhs = unit(source, rhs, bias)?;
+                        let rhs = unit(q.source, rhs, bias)?;
 
-                        let b = base.eval(
-                            ctx,
-                            source,
-                            db,
-                            bias.with_acceleration_bias(rhs.is_acceleration()),
-                        )?;
+                        let b = base.eval(q, bias.with_acceleration_bias(rhs.is_acceleration()))?;
 
                         let (mut lhs, lhs_unit) = b.split();
 
@@ -402,18 +392,18 @@ pub fn eval(
                 };
 
                 let range = rhs.text_range();
-                let rhs = eval(ctx, rhs, source, db, bias)?;
-                let b = base.eval(ctx, source, db, bias)?;
+                let rhs = eval(q, rhs, bias)?;
+                let b = base.eval(q, bias)?;
 
                 let range = TextRange::new(start.start(), range.end());
                 base = DelayedEval::Numeric(op(range, b, rhs)?);
             }
 
-            let numeric = base.eval(ctx, source, db, bias)?;
+            let numeric = base.eval(q, bias)?;
             Ok(numeric)
         }
         NUMBER => {
-            let number = &source[node.text_range()];
+            let number = &q.source[node.text_range()];
             let number = match str::parse::<Rational>(number) {
                 Ok(number) => number,
                 Err(error) => {
@@ -435,14 +425,15 @@ pub fn eval(
                 None => return Err(Error::new(node.text_range(), MissingNode)),
             };
 
-            let value = eval(ctx, value_node, source, db, bias)?;
-            let unit = unit(source, unit_node, bias)?;
+            let value = eval(q, value_node, bias)?;
+            let unit = unit(q.source, unit_node, bias)?;
             Ok(Numeric::new(value.into_value(), unit))
         }
         SENTENCE | WORD => {
-            let s = &source[node.text_range()];
+            let s = &q.source[node.text_range()];
 
-            let m = match db
+            let m = match q
+                .db
                 .lookup(s)
                 .map_err(|error| Error::new(node.text_range(), LookupError { error }))?
             {
@@ -451,12 +442,19 @@ pub fn eval(
             };
 
             match m {
-                db::Match::Constant(c) => Ok(Numeric::new(c.value.clone(), c.unit.clone())),
+                db::Match::Constant(c) => {
+                    if q.options.describe {
+                        q.descriptions
+                            .push(Description::Constant(s.into(), c.clone()));
+                    }
+
+                    Ok(Numeric::new(c.value.clone(), c.unit.clone()))
+                }
             }
         }
         PERCENTAGE => {
             let number = node.first_token().expect("number of percentage");
-            let number = &source[number.text_range()];
+            let number = &q.source[number.text_range()];
             let number = match str::parse::<Rational>(number) {
                 Ok(number) => number,
                 Err(error) => {
@@ -483,15 +481,15 @@ pub fn eval(
                     ))
                 }
             };
-            let name = &source[name.text_range()];
+            let name = &q.source[name.text_range()];
 
             let mut args = Vec::new();
 
             for node in arguments.children() {
-                args.push(eval(ctx, node, source, db, bias)?);
+                args.push(eval(q, node, bias)?);
             }
 
-            if let Some(fun) = ctx.functions.get(name) {
+            if let Some(fun) = q.ctx.functions.get(name) {
                 match fun {
                     Function::BuiltIn(builtin) => Ok(builtin.call(node.text_range(), args)?),
                 }

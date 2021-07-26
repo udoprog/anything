@@ -38,11 +38,16 @@ pub(crate) enum Match {
 }
 
 /// A single constant.
-#[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct Constant {
-    pub(crate) names: Vec<Box<str>>,
-    pub(crate) value: Rational,
-    pub(crate) unit: Compound,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Constant {
+    /// The query names of a constant.
+    pub names: Vec<Box<str>>,
+    /// The description of a constant.
+    pub description: Box<str>,
+    /// The value of a constant.
+    pub value: Rational,
+    /// The unit of a constant.
+    pub unit: Compound,
 }
 
 #[derive(Debug, Deserialize)]

@@ -20,9 +20,9 @@ mod unit_parser;
 pub mod units;
 
 pub use self::compound::Compound;
-pub use self::db::Db;
+pub use self::db::{Constant, Db};
 pub use self::error::Error;
 pub use self::numeric::Numeric;
 pub use self::powers::Powers;
-pub use self::query::{query, Query};
+pub use self::query::{query, Description, Options, Query};
 pub use self::unit::Unit;

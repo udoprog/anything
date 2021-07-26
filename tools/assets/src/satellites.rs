@@ -1,9 +1,8 @@
+use crate::cache;
+use crate::db::Db;
 use crate::helpers;
-use crate::{
-    cache,
-    db::{Constant, Db},
-};
 use anyhow::Result;
+use facts::Constant;
 use rational::Rational;
 use serde::Deserialize;
 
@@ -41,22 +40,25 @@ pub async fn download(db: &mut Db) -> Result<()> {
     let two = Rational::new(2u32, 1u32);
 
     for s in satellites {
-        let name = s.name.to_lowercase();
+        let search_name = Box::<str>::from(s.name.to_lowercase());
 
         db.constants.push(Constant {
-            names: vec![name.clone(), String::from("mass")],
+            names: vec![search_name.clone(), "mass".into()],
+            description: format!("Mass of the satellite `{}`", s.name).into(),
             unit: str::parse("kg")?,
             value: s.gm * &kmc_to_mc / &big_g,
         });
 
         db.constants.push(Constant {
-            names: vec![name.clone(), String::from("radius")],
+            names: vec![search_name.clone(), "radius".into()],
+            description: format!("Radius of the satellite `{}`", s.name).into(),
             unit: str::parse("km")?,
             value: s.radius.clone(),
         });
 
         db.constants.push(Constant {
-            names: vec![name.clone(), String::from("diameter")],
+            names: vec![search_name.clone(), "diameter".into()],
+            description: format!("Diameter of the satellite `{}`", s.name).into(),
             unit: str::parse("km")?,
             value: &s.radius * &two,
         });

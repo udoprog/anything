@@ -1,19 +1,8 @@
 use anyhow::Result;
-use facts::Compound;
-use rational::Rational;
+use facts::Constant;
 use serde::Serialize;
 use std::io;
 use std::path::Path;
-
-#[derive(Serialize)]
-pub struct Constant {
-    /// Names of the constant.
-    pub names: Vec<String>,
-    /// The unit associated with the constant.
-    pub unit: Compound,
-    /// The value of a constant.
-    pub value: Rational,
-}
 
 #[derive(Serialize)]
 /// A database with constants.

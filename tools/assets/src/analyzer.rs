@@ -24,7 +24,7 @@ impl Analyzer {
     }
 
     /// Filter a word with the analyzer.
-    pub(crate) fn filter<'a>(&'a self, word: &'a str) -> impl Iterator<Item = String> + 'a {
+    pub(crate) fn filter<'a>(&'a self, word: &'a str) -> impl Iterator<Item = Box<str>> + 'a {
         let it = word.split(split_fn);
 
         return it.filter_map(move |word| {
@@ -33,7 +33,7 @@ impl Analyzer {
             if self.stop_words.contains(&word) {
                 None
             } else {
-                Some(word)
+                Some(word.into())
             }
         });
 

@@ -1,8 +1,9 @@
 use crate::analyzer::Analyzer;
 use crate::cache;
-use crate::db::{Constant, Db};
+use crate::db::Db;
 use anyhow::{anyhow, Result};
 use calamine::{DataType, Reader, Xlsx};
+use facts::Constant;
 use rational::Rational;
 use std::io::Cursor;
 
@@ -34,11 +35,11 @@ pub async fn download(analyzer: &Analyzer, db: &mut Db) -> Result<()> {
         if let DataType::String(year) = col {
             let year = str::parse::<u32>(year)?;
             years.push((year, n));
-            last_year = Some(n);
+            last_year = Some((year, n));
         }
     }
 
-    let last_year = match last_year {
+    let (last_year_number, last_year) = match last_year {
         Some(last_year) => last_year,
         None => return Err(anyhow!("missing last year")),
     };
@@ -63,11 +64,12 @@ pub async fn download(analyzer: &Analyzer, db: &mut Db) -> Result<()> {
         };
 
         let mut names = Vec::new();
-        names.push(String::from("population"));
+        names.push("population".into());
         names.extend(analyzer.filter(region));
 
         db.constants.push(Constant {
             names,
+            description: format!("Population of {} in {}", region, last_year_number).into(),
             unit: Default::default(),
             value: population,
         });

@@ -1,14 +1,17 @@
 [[constants]]
 names = ["c", "lightspeed", "speed", "light"]
+description = "The speed of light (1c)"
 unit = "c"
 value = "1"
 
 [[constants]]
 names = ["standard", "gravity", "g0"]
+description = "Standard gravity (g0) or the nominal gravitational acceleration at the surface of the Earth"
 unit = "m/s^2"
 value = "9.80665"
 
 [[constants]]
 names = ["G", "gravitational", "constant"]
+description = "The gravitational constant (G)"
 unit = "m^3/kgs^2"
 value = "6.6743015e-11"

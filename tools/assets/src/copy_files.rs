@@ -1,6 +1,6 @@
-use crate::db::{Constant, Db};
+use crate::db::Db;
 use anyhow::{anyhow, Result};
-use facts::Compound;
+use facts::{Compound, Constant};
 use rational::Rational;
 use serde::de;
 use serde::Deserialize;
@@ -9,7 +9,8 @@ use tokio::fs;
 
 #[derive(Debug, Deserialize)]
 struct InnerConstant {
-    names: Vec<String>,
+    names: Vec<Box<str>>,
+    description: Box<str>,
     #[serde(deserialize_with = "deserialize_value")]
     value: Rational,
     #[serde(default, deserialize_with = "deserialize_unit")]
@@ -40,6 +41,7 @@ pub async fn copy_files(db: &mut Db) -> Result<()> {
         for c in inner_db.constants {
             db.constants.push(Constant {
                 names: c.names,
+                description: c.description,
                 value: c.value,
                 unit: c.unit.unwrap_or_default(),
             });

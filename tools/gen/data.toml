@@ -120,6 +120,54 @@ id = "0xb36964a0"
 variant = "CubicCentimetre"
 names = ["cc"]
 name = "volume::CUBIC_CENTIMETER"
+[[units]]
+type = "derived"
+id = "0x1c108ba3"
+variant = "Gallon"
+names = ["gal", "gals", "gallon", "gallons"]
+name = "volume::GALLON"
+[[units]]
+type = "derived"
+id = "0x1c108ba4"
+variant = "Pint"
+names = ["pint", "pints"]
+name = "volume::PINT"
+[[units]]
+type = "derived"
+id = "0x1c108ba5"
+variant = "Quart"
+names = ["quart", "quarts"]
+name = "volume::QUART"
+[[units]]
+type = "derived"
+id = "0x1c108ba6"
+variant = "Cup"
+names = ["cup", "cups"]
+name = "volume::CUP"
+[[units]]
+type = "derived"
+id = "0x1c108ba7"
+variant = "Gill"
+names = ["gill", "gills"]
+name = "volume::GILL"
+[[units]]
+type = "derived"
+id = "0x1c108ba8"
+variant = "FuildOunce"
+names = ["floz", "flozs"]
+name = "volume::FLUID_OUNCE"
+[[units]]
+type = "derived"
+id = "0x1c108ba9"
+variant = "TableSpoon"
+names = ["tbsp", "tbsps", "tablespoon", "tablespoons"]
+name = "volume::TABLE_SPOON"
+[[units]]
+type = "derived"
+id = "0x1c108baa"
+variant = "TeaSpoon"
+names = ["tsp", "tsps", "teaspoon", "teaspoons"]
+name = "volume::TEA_SPOON"
 
 [[units]]
 type = "derived"

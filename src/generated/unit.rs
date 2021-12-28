@@ -90,6 +90,36 @@ enum Combined {
     Litre,
     #[token("cc")]
     CubicCentimetre,
+    #[token("gal")]
+    #[token("gals")]
+    #[token("gallon")]
+    #[token("gallons")]
+    Gallon,
+    #[token("pint")]
+    #[token("pints")]
+    Pint,
+    #[token("quart")]
+    #[token("quarts")]
+    Quart,
+    #[token("cup")]
+    #[token("cups")]
+    Cup,
+    #[token("gill")]
+    #[token("gills")]
+    Gill,
+    #[token("floz")]
+    #[token("flozs")]
+    FuildOunce,
+    #[token("tbsp")]
+    #[token("tbsps")]
+    #[token("tablespoon")]
+    #[token("tablespoons")]
+    TableSpoon,
+    #[token("tsp")]
+    #[token("tsps")]
+    #[token("teaspoon")]
+    #[token("teaspoons")]
+    TeaSpoon,
     #[token("ha")]
     #[token("hectare")]
     #[token("hectares")]
@@ -450,6 +480,36 @@ enum Units {
     Litre,
     #[token("cc")]
     CubicCentimetre,
+    #[token("gal")]
+    #[token("gals")]
+    #[token("gallon")]
+    #[token("gallons")]
+    Gallon,
+    #[token("pint")]
+    #[token("pints")]
+    Pint,
+    #[token("quart")]
+    #[token("quarts")]
+    Quart,
+    #[token("cup")]
+    #[token("cups")]
+    Cup,
+    #[token("gill")]
+    #[token("gills")]
+    Gill,
+    #[token("floz")]
+    #[token("flozs")]
+    FuildOunce,
+    #[token("tbsp")]
+    #[token("tbsps")]
+    #[token("tablespoon")]
+    #[token("tablespoons")]
+    TableSpoon,
+    #[token("tsp")]
+    #[token("tsps")]
+    #[token("teaspoon")]
+    #[token("teaspoons")]
+    TeaSpoon,
     #[token("ha")]
     #[token("hectare")]
     #[token("hectares")]
@@ -695,6 +755,14 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Combined::Dalton => Unit::Derived(units::mass::DALTON),
             Combined::Litre => Unit::Derived(units::volume::LITRE),
             Combined::CubicCentimetre => Unit::Derived(units::volume::CUBIC_CENTIMETER),
+            Combined::Gallon => Unit::Derived(units::volume::GALLON),
+            Combined::Pint => Unit::Derived(units::volume::PINT),
+            Combined::Quart => Unit::Derived(units::volume::QUART),
+            Combined::Cup => Unit::Derived(units::volume::CUP),
+            Combined::Gill => Unit::Derived(units::volume::GILL),
+            Combined::FuildOunce => Unit::Derived(units::volume::FLUID_OUNCE),
+            Combined::TableSpoon => Unit::Derived(units::volume::TABLE_SPOON),
+            Combined::TeaSpoon => Unit::Derived(units::volume::TEA_SPOON),
             Combined::Hectare => Unit::Derived(units::area::HECTARE),
             Combined::Perch => Unit::Derived(units::area::PERCH),
             Combined::Rood => Unit::Derived(units::area::ROOD),
@@ -939,6 +1007,30 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             }
             Units::CubicCentimetre => {
                 break Unit::Derived(units::volume::CUBIC_CENTIMETER);
+            }
+            Units::Gallon => {
+                break Unit::Derived(units::volume::GALLON);
+            }
+            Units::Pint => {
+                break Unit::Derived(units::volume::PINT);
+            }
+            Units::Quart => {
+                break Unit::Derived(units::volume::QUART);
+            }
+            Units::Cup => {
+                break Unit::Derived(units::volume::CUP);
+            }
+            Units::Gill => {
+                break Unit::Derived(units::volume::GILL);
+            }
+            Units::FuildOunce => {
+                break Unit::Derived(units::volume::FLUID_OUNCE);
+            }
+            Units::TableSpoon => {
+                break Unit::Derived(units::volume::TABLE_SPOON);
+            }
+            Units::TeaSpoon => {
+                break Unit::Derived(units::volume::TEA_SPOON);
             }
             Units::Hectare => {
                 break Unit::Derived(units::area::HECTARE);

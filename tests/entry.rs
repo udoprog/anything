@@ -7,7 +7,9 @@ use std::iter::FromIterator;
 macro_rules! query {
     ($expr:expr) => {{
         let db = facts::Db::in_memory().unwrap();
-        let mut values = facts::query($expr, &db);
+        let options = Default::default();
+        let mut descriptions = Vec::new();
+        let mut values = facts::query($expr, &db, options, &mut descriptions);
         let value = values.next().unwrap().unwrap();
         assert!(values.next().is_none());
         value

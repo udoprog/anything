@@ -267,30 +267,24 @@ impl Db {
 fn open_index(config: &crate::config::Config) -> Result<(bool, Index)> {
     let force_rebuild = match config.meta.version.as_deref() {
         Some(version) => version != config.this_version,
-        _ => false,
+        _ => true,
     };
 
-    if force_rebuild {
-        if config.index_path.is_dir() {
-            log::info!("removing index (outdated): {}", config.index_path.display());
-            fs::remove_dir_all(&config.index_path)?;
+    if !force_rebuild {
+        if let Some(index) = Index::open_in_dir(&config.index_path).ok() {
+            log::trace!("opened index: {}", config.index_path.display());
+            return Ok((false, index));
         }
     }
 
-    let index = if config.index_path.is_dir() {
-        log::trace!("opening index: {}", config.index_path.display());
-        Index::open_in_dir(&config.index_path).ok()
-    } else {
-        None
-    };
-
-    if let Some(index) = index {
-        Ok((false, index))
-    } else {
-        fs::create_dir_all(&config.index_path)?;
-        let schema = build_schema();
-        Ok((true, Index::create_in_dir(&config.index_path, schema)?))
+    if config.index_path.is_dir() {
+        log::info!("removing index: {}", config.index_path.display());
+        fs::remove_dir_all(&config.index_path)?;
     }
+
+    fs::create_dir_all(&config.index_path)?;
+    let schema = build_schema();
+    Ok((true, Index::create_in_dir(&config.index_path, schema)?))
 }
 
 fn build_schema() -> Schema {

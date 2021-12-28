@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use rust_embed::RustEmbed;
+use rust_embed::{EmbeddedFile, RustEmbed};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fs;
@@ -41,7 +41,7 @@ impl Config {
     }
 
     /// Get content for the given asset.
-    pub fn get_asset(&self, name: &str) -> Option<Cow<'static, [u8]>> {
+    pub fn get_asset(&self, name: &str) -> Option<EmbeddedFile> {
         Asset::get(name)
     }
 
@@ -49,7 +49,8 @@ impl Config {
     pub fn hash_assets(&self) -> String {
         use std::hash::Hasher;
         use twox_hash::xxh3::HasherExt;
-        const SEED: u64 = 0x9a7f42b11904b425;
+
+        const SEED: u64 = 0x9a7f42b11904b426;
 
         let mut hash = twox_hash::xxh3::Hash128::with_seed(SEED);
 
@@ -59,12 +60,11 @@ impl Config {
         for name in Asset::iter() {
             if let Some(content) = Asset::get(name.as_ref()) {
                 let name = name.as_ref().as_bytes();
-                let content = content.as_ref();
 
                 hash.write_usize(name.len());
                 hash.write(name);
-                hash.write_usize(content.len());
-                hash.write(content);
+                hash.write_usize(content.data.len());
+                hash.write(&content.metadata.sha256_hash()[..]);
             }
         }
 

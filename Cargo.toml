@@ -2,30 +2,28 @@
 name = "facts"
 version = "0.0.0"
 authors = ["John-John Tedro <udoprog@tedro.se>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2021"
 
 [dependencies]
-num = { version = "0.4.0" }
-anyhow = "1.0.42"
+num = "0.4.0"
+anyhow = "1.0.52"
 hashbrown = "0.11.2"
-serde = { version = "1.0.126", features = ["derive"] }
-rowan = "0.12.6"
+serde = { version = "1.0.132", features = ["derive"] }
+rowan = "0.15.2"
 logos = "0.12.0"
-thiserror = "1.0.26"
+thiserror = "1.0.30"
 codespan-reporting = "0.11.1"
-tantivy = "0.15.3"
-rust-embed = "5.9.0"
-directories = "3.0.2"
-twox-hash = "1.6.0"
-serde_json = "1.0.64"
+tantivy = "0.16.1"
+rust-embed = "6.3.0"
+directories = "4.0.1"
+twox-hash = "1.6.2"
+serde_json = "1.0.73"
 log = "0.4.14"
-serde_cbor = "0.11.1"
+serde_cbor = "0.11.2"
 pretty_env_logger = "0.4.0"
 
 rational = {path = "crates/rational"}
-flate2 = "1.0.20"
+flate2 = "1.0.22"
 
 [workspace]
 members = [

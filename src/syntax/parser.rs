@@ -12,7 +12,7 @@ impl Skip {
 }
 
 /// The kind of a token.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[allow(non_camel_case_types)]
 #[repr(u16)]
 pub enum SyntaxKind {

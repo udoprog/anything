@@ -181,7 +181,7 @@ impl Db {
             .try_into()?;
 
         let sources = match config.get_asset(SOURCES_BIN_GZ) {
-            Some(bytes) => load_bytes(bytes.as_ref())?,
+            Some(bytes) => load_bytes(bytes.data.as_ref())?,
             None => Default::default(),
         };
 
@@ -205,7 +205,7 @@ impl Db {
                 }
 
                 if let Some(content) = config.get_asset(name.as_ref()) {
-                    db.load_bytes(&mut writer, content.as_ref())
+                    db.load_bytes(&mut writer, content.data.as_ref())
                         .with_context(|| anyhow!("loading: {}", name))?;
                 }
             }

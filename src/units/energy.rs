@@ -1,7 +1,6 @@
 //! Energy units.
 
-use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use rational::Rational;
+use crate::unit::{Conversion, ConversionFraction, Derived, DerivedVtable, Unit};
 
 /// A Joule with the `J` suffix (`kg*m^2*s^-2`).
 pub static JOULE: Derived = Derived {
@@ -33,14 +32,10 @@ pub static BTU: Derived = Derived {
                 write!(f, "btu")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1055u32, 1u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1055u32, 1u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1055,
+            denom: 1,
+        })),
     },
 };
 
@@ -50,13 +45,9 @@ pub static ELECTRONVOLT: Derived = Derived {
     vtable: &DerivedVtable {
         powers: JOULE.vtable.powers,
         format: |f, _| write!(f, "eV"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(801088317u32, 5000000000000000000000000000u128);
-            },
-            from: |num| {
-                *num /= Rational::new(801088317u32, 5000000000000000000000000000u128);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 801088317,
+            denom: 5000000000000000000000000000,
+        })),
     },
 };

@@ -44,6 +44,8 @@ pub(crate) enum ErrorKind {
         lhs: Compound,
         rhs: Compound,
     },
+    #[error("conversion from {from} to {to} is not possible")]
+    ConversionNotPossible { from: Compound, to: Compound },
     #[error("cannot cast `{from}` to `{to}`")]
     IllegalCast { from: Compound, to: Compound },
     #[error("bad decimal number: {error}")]

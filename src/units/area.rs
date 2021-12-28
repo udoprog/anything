@@ -1,7 +1,6 @@
 //! Special area units.
 
-use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use rational::Rational;
+use crate::unit::{Conversion, ConversionFraction, Derived, DerivedVtable, Unit};
 
 /// Hectare `ha` or `10000m^2`.
 pub static HECTARE: Derived = Derived {
@@ -11,14 +10,10 @@ pub static HECTARE: Derived = Derived {
             powers.insert(Unit::Meter, p * 2);
         },
         format: |f, _| write!(f, "ha"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(10000u32, 1u32);
-            },
-            from: |num| {
-                *num /= Rational::new(10000u32, 1u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 10000,
+            denom: 1,
+        })),
     },
 };
 
@@ -36,14 +31,10 @@ pub static PERCH: Derived = Derived {
                 write!(f, "perch")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(2529285264u64, 100000000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(2529285264u64, 100000000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 2529285264,
+            denom: 100000000,
+        })),
     },
 };
 
@@ -61,14 +52,10 @@ pub static ROOD: Derived = Derived {
                 write!(f, "rood")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(10117141056u64, 10000000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(10117141056u64, 10000000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 10117141056,
+            denom: 10000000,
+        })),
     },
 };
 
@@ -86,13 +73,9 @@ pub static ACRE: Derived = Derived {
                 write!(f, "acre")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(40468564224u64, 10000000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(40468564224u64, 10000000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 40468564224,
+            denom: 10000000,
+        })),
     },
 };

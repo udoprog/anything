@@ -1,7 +1,6 @@
 //! Special distance units.
 
-use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use rational::Rational;
+use crate::unit::{Conversion, ConversionFraction, Derived, DerivedVtable, Unit};
 
 /// Astronomical unit (`au`) or `149597870700m`.
 pub static AU: Derived = Derived {
@@ -11,14 +10,10 @@ pub static AU: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "au"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(149597870700u64, 1u32);
-            },
-            from: |num| {
-                *num /= Rational::new(149597870700u64, 1u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 149597870700,
+            denom: 1,
+        })),
     },
 };
 
@@ -30,14 +25,10 @@ pub static FATHOM: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "ftm"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1852, 1000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1852, 1000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1852,
+            denom: 1000,
+        })),
     },
 };
 
@@ -55,14 +46,10 @@ pub static CABLE: Derived = Derived {
                 write!(f, "cable")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1852, 10u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1852, 10u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1852,
+            denom: 10,
+        })),
     },
 };
 
@@ -74,14 +61,10 @@ pub static NAUTICAL_MILE: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "NM"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1852, 1u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1852, 1u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1852,
+            denom: 1,
+        })),
     },
 };
 
@@ -99,14 +82,10 @@ pub static LINK: Derived = Derived {
                 write!(f, "link")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(201168u32, 1000000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(201168u32, 1000000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 201168,
+            denom: 1000000,
+        })),
     },
 };
 
@@ -118,14 +97,10 @@ pub static ROD: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "rd"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(50292u32, 10000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(50292u32, 10000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 50292,
+            denom: 10000,
+        })),
     },
 };
 
@@ -137,14 +112,10 @@ pub static THOU: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "th"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(254u32, 10000000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(254u32, 10000000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 254,
+            denom: 10000000,
+        })),
     },
 };
 
@@ -156,14 +127,10 @@ pub static BARLEYCORN: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "Bc"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(254u32, 30000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(254u32, 30000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 254,
+            denom: 30000,
+        })),
     },
 };
 
@@ -175,14 +142,10 @@ pub static INCH: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "in"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(254u32, 10000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(254u32, 10000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 254,
+            denom: 10000,
+        })),
     },
 };
 
@@ -194,14 +157,10 @@ pub static HAND: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "hand"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1016, 10000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1016, 10000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1016,
+            denom: 10000,
+        })),
     },
 };
 
@@ -213,14 +172,10 @@ pub static FOOT: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "ft"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(3048u32, 10000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(3048u32, 10000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 3048,
+            denom: 10000,
+        })),
     },
 };
 
@@ -232,14 +187,10 @@ pub static YARD: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "yd"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(9144u32, 10000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(9144u32, 10000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 9144,
+            denom: 10000,
+        })),
     },
 };
 
@@ -251,14 +202,10 @@ pub static CHAIN: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "ch"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(201168u32, 10000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(201168u32, 10000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 201168,
+            denom: 10000,
+        })),
     },
 };
 
@@ -270,14 +217,10 @@ pub static FURLONG: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "fur"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(201168u32, 1000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(201168u32, 1000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 201168,
+            denom: 1000,
+        })),
     },
 };
 
@@ -289,14 +232,10 @@ pub static MILE: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "mi"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1609344u32, 1000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1609344u32, 1000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1609344,
+            denom: 1000,
+        })),
     },
 };
 
@@ -308,13 +247,9 @@ pub static LEAGUE: Derived = Derived {
             powers.insert(Unit::Meter, p);
         },
         format: |f, _| write!(f, "lea"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(4828032u32, 1000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(4828032u32, 1000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 4828032,
+            denom: 1000,
+        })),
     },
 };

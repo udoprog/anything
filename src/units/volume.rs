@@ -1,7 +1,6 @@
 //! Special volume units.
 
-use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use rational::Rational;
+use crate::unit::{Conversion, ConversionFraction, Derived, DerivedVtable, Unit};
 
 /// Litre `l` or `0.001m^3`.
 pub static LITRE: Derived = Derived {
@@ -11,14 +10,10 @@ pub static LITRE: Derived = Derived {
             powers.insert(Unit::Meter, p * 3);
         },
         format: |f, _| write!(f, "l"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1u32, 1000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1u32, 1000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1,
+            denom: 1000,
+        })),
     },
 };
 
@@ -30,14 +25,10 @@ pub static CUBIC_CENTIMETER: Derived = Derived {
             powers.insert(Unit::Meter, p * 3);
         },
         format: |f, _| write!(f, "cc"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1u32, 1000000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1u32, 1000000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1,
+            denom: 1000000,
+        })),
     },
 };
 
@@ -55,14 +46,10 @@ pub static GALLON: Derived = Derived {
                 write!(f, "gallon")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(3785411784u64, 1000000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(3785411784u64, 1000000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 3785411784,
+            denom: 1000000000000,
+        })),
     },
 };
 
@@ -80,14 +67,10 @@ pub static PINT: Derived = Derived {
                 write!(f, "pint")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(473176473u64, 250000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(473176473u64, 250000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 473176473,
+            denom: 250000000000,
+        })),
     },
 };
 
@@ -105,14 +88,10 @@ pub static QUART: Derived = Derived {
                 write!(f, "quart")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(473176473u64, 500000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(473176473u64, 500000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 473176473,
+            denom: 500000000000,
+        })),
     },
 };
 
@@ -130,14 +109,10 @@ pub static CUP: Derived = Derived {
                 write!(f, "cup")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(473176473u64, 2000000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(473176473u64, 2000000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 473176473,
+            denom: 2000000000000,
+        })),
     },
 };
 
@@ -155,14 +130,10 @@ pub static GILL: Derived = Derived {
                 write!(f, "gill")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(473176473u64, 4000000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(473176473u64, 4000000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 473176473,
+            denom: 4000000000000,
+        })),
     },
 };
 
@@ -180,14 +151,10 @@ pub static FLUID_OUNCE: Derived = Derived {
                 write!(f, "fl oz")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(473176473u64, 16000000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(473176473u64, 16000000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 473176473,
+            denom: 16000000000000,
+        })),
     },
 };
 
@@ -205,14 +172,10 @@ pub static TABLE_SPOON: Derived = Derived {
                 write!(f, "tbsp")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(473176473u64, 32000000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(473176473u64, 32000000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 473176473,
+            denom: 32000000000000,
+        })),
     },
 };
 
@@ -230,13 +193,9 @@ pub static TEA_SPOON: Derived = Derived {
                 write!(f, "tsp")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(157725491u64, 32000000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(157725491u64, 32000000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 157725491,
+            denom: 32000000000000,
+        })),
     },
 };

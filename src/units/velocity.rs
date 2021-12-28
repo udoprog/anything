@@ -1,7 +1,6 @@
 //! Special velocity units.
 
-use crate::unit::{Conversion, Derived, DerivedVtable};
-use rational::Rational;
+use crate::unit::{Conversion, ConversionFraction, Derived, DerivedVtable};
 
 /// The speed of light in `m/s`.
 ///
@@ -11,14 +10,10 @@ pub static LIGHT_SPEED: Derived = Derived {
     vtable: &DerivedVtable {
         powers: crate::units::VELOCITY.vtable.powers,
         format: |f, _| write!(f, "c"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(299792458u32, 1u32);
-            },
-            from: |num| {
-                *num /= Rational::new(299792458u32, 1u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 299792458,
+            denom: 1,
+        })),
     },
 };
 
@@ -28,13 +23,9 @@ pub static KNOT: Derived = Derived {
     vtable: &DerivedVtable {
         powers: crate::units::VELOCITY.vtable.powers,
         format: |f, _| write!(f, "kt"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1852, 3600u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1852, 3600u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1852,
+            denom: 3600,
+        })),
     },
 };

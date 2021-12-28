@@ -1,7 +1,6 @@
 //! Special mass units.
 
-use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use rational::Rational;
+use crate::unit::{Conversion, ConversionFraction, Derived, DerivedVtable, Unit};
 
 /// Tonne (metric ton) or `1000kg`.
 pub static TONNE: Derived = Derived {
@@ -17,14 +16,10 @@ pub static TONNE: Derived = Derived {
                 write!(f, "ton")
             }
         },
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1000u32, 1u32);
-            },
-            from: |num| {
-                *num /= Rational::new(1000u32, 1u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1000,
+            denom: 1,
+        })),
     },
 };
 
@@ -36,14 +31,10 @@ pub static DALTON: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "Da"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(332107813321u64, 200000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(332107813321u64, 200000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 332107813321,
+            denom: 200000000000,
+        })),
     },
 };
 
@@ -55,14 +46,10 @@ pub static GRAIN: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "gr"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(6479891u32, 100000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(6479891u32, 100000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 6479891,
+            denom: 100000000000,
+        })),
     },
 };
 
@@ -74,14 +61,10 @@ pub static DRACHM: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "dr"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(17718451953125u64, 10000000000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(17718451953125u64, 10000000000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 17718451953125,
+            denom: 10000000000000000,
+        })),
     },
 };
 
@@ -93,14 +76,10 @@ pub static OUNCE: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "oz"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(28349523125u64, 1000000000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(28349523125u64, 1000000000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 28349523125,
+            denom: 1000000000000,
+        })),
     },
 };
 
@@ -112,14 +91,10 @@ pub static POUND: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "lb"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(45359237u32, 100000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(45359237u32, 100000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 45359237,
+            denom: 100000000,
+        })),
     },
 };
 
@@ -131,14 +106,10 @@ pub static STONE: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "st"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(635029318u64, 100000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(635029318u64, 100000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 635029318,
+            denom: 100000000,
+        })),
     },
 };
 
@@ -150,14 +121,10 @@ pub static QUARTER: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "qr"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1270058636u64, 100000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(1270058636u64, 100000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1270058636,
+            denom: 100000000,
+        })),
     },
 };
 
@@ -169,14 +136,10 @@ pub static HUNDREDWEIGHT: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "hundredweight"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(5080234544u64, 100000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(5080234544u64, 100000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 5080234544,
+            denom: 100000000,
+        })),
     },
 };
 
@@ -188,14 +151,10 @@ pub static TON: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "t"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(10160469088u64, 10000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(10160469088u64, 10000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 10160469088,
+            denom: 10000000,
+        })),
     },
 };
 
@@ -207,13 +166,9 @@ pub static SLUG: Derived = Derived {
             powers.insert(Unit::KiloGram, p);
         },
         format: |f, _| write!(f, "slug"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(1459390294u64, 100000000u64);
-            },
-            from: |num| {
-                *num /= Rational::new(1459390294u64, 100000000u64);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 1459390294,
+            denom: 100000000,
+        })),
     },
 };

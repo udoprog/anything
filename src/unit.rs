@@ -146,12 +146,27 @@ impl fmt::Display for Display<'_> {
     }
 }
 
+/// A custom conversion method.
 #[derive(Clone, Copy)]
-pub struct Conversion {
+pub struct ConversionMethods {
     /// A conversion to kelvin from a given unit.
     pub to: fn(&mut Rational),
     /// Perform a conversion from kelvin to a given unit.
     pub from: fn(&mut Rational),
+}
+
+/// A straigt up conversion factor.
+#[derive(Clone, Copy)]
+pub struct ConversionFraction {
+    pub(crate) numer: u128,
+    pub(crate) denom: u128,
+}
+
+#[derive(Clone, Copy)]
+pub enum Conversion {
+    Methods(ConversionMethods),
+    Factor(ConversionFraction),
+    Offset(ConversionFraction),
 }
 
 /// The vtable for a derived unit.

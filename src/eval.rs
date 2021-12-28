@@ -1,4 +1,4 @@
-use crate::compound::Compound;
+use crate::compound::{Compound, CompoundError};
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
 use crate::query::Description;
@@ -61,36 +61,52 @@ impl Bias {
 fn add(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     let (mut b, b_unit) = b.split();
 
-    if a.unit().factor(&b_unit, &mut b) {
-        let (value, unit) = a.split();
-        Ok(Numeric::new(value + b, unit))
-    } else {
-        Err(Error::new(
+    match a.unit().factor(&b_unit, &mut b) {
+        Ok(true) => {
+            let (value, unit) = a.split();
+            Ok(Numeric::new(value + b, unit))
+        }
+        Ok(false) => Err(Error::new(
             range,
             IllegalOperation {
                 op: "+",
                 lhs: a.unit().clone(),
                 rhs: b_unit,
             },
-        ))
+        )),
+        Err(CompoundError) => Err(Error::new(
+            range,
+            ConversionNotPossible {
+                from: a.unit().clone(),
+                to: b_unit,
+            },
+        )),
     }
 }
 
 fn sub(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     let (mut b, b_unit) = b.split();
 
-    if a.unit().factor(&b_unit, &mut b) {
-        let (value, unit) = a.split();
-        Ok(Numeric::new(value - b, unit))
-    } else {
-        Err(Error::new(
+    match a.unit().factor(&b_unit, &mut b) {
+        Ok(true) => {
+            let (value, unit) = a.split();
+            Ok(Numeric::new(value - b, unit))
+        }
+        Ok(false) => Err(Error::new(
             range,
             IllegalOperation {
                 op: "-",
                 lhs: a.unit().clone(),
                 rhs: b_unit,
             },
-        ))
+        )),
+        Err(CompoundError) => Err(Error::new(
+            range,
+            ConversionNotPossible {
+                from: a.unit().clone(),
+                to: b_unit,
+            },
+        )),
     }
 }
 
@@ -98,7 +114,18 @@ fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     let (mut a, a_unit) = a.split();
     let (mut b, b_unit) = b.split();
 
-    let unit = a_unit.mul(&b_unit, -1, &mut a, &mut b);
+    let unit = match a_unit.mul(&b_unit, -1, &mut a, &mut b) {
+        Ok(unit) => unit,
+        Err(CompoundError) => {
+            return Err(Error::new(
+                range,
+                ConversionNotPossible {
+                    from: a_unit,
+                    to: b_unit,
+                },
+            ))
+        }
+    };
 
     if a.denom().is_zero() || b.numer().is_zero() {
         return Err(Error::new(range, DivideByZero));
@@ -110,7 +137,18 @@ fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
 fn mul(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
     let (mut a, a_unit) = a.split();
     let (mut b, b_unit) = b.split();
-    let unit = a_unit.mul(&b_unit, 1, &mut a, &mut b);
+    let unit = match a_unit.mul(&b_unit, 1, &mut a, &mut b) {
+        Ok(unit) => unit,
+        Err(CompoundError) => {
+            return Err(Error::new(
+                range,
+                ConversionNotPossible {
+                    from: a_unit,
+                    to: b_unit,
+                },
+            ))
+        }
+    };
 
     if a.denom().is_zero() || b.denom().is_zero() {
         return Err(Error::new(range, DivideByZero));
@@ -310,15 +348,27 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
 
                         let (mut lhs, lhs_unit) = b.split();
 
-                        if !rhs.factor(&lhs_unit, &mut lhs) {
-                            return Err(Error::new(
-                                op.text_range(),
-                                IllegalCast {
-                                    from: lhs_unit,
-                                    to: rhs,
-                                },
-                            ));
-                        };
+                        match rhs.factor(&lhs_unit, &mut lhs) {
+                            Ok(true) => {}
+                            Ok(false) => {
+                                return Err(Error::new(
+                                    node.text_range(),
+                                    IllegalCast {
+                                        from: lhs_unit,
+                                        to: rhs,
+                                    },
+                                ));
+                            }
+                            Err(CompoundError) => {
+                                return Err(Error::new(
+                                    node.text_range(),
+                                    ConversionNotPossible {
+                                        from: lhs_unit,
+                                        to: rhs,
+                                    },
+                                ))
+                            }
+                        }
 
                         base = DelayedEval::Numeric(Numeric::new(lhs, rhs));
                         continue;

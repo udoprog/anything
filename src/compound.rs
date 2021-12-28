@@ -7,6 +7,9 @@ use std::collections::{btree_map, BTreeMap};
 use std::fmt;
 use std::iter::FromIterator;
 
+#[non_exhaustive]
+pub(crate) struct CompoundError;
+
 /// The data for a base.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct State {
@@ -126,26 +129,26 @@ impl Compound {
     }
 
     /// Calculate the factor for coercing one unit to another.
-    pub fn factor(&self, other: &Self, value: &mut Rational) -> bool {
+    pub(crate) fn factor(&self, other: &Self, value: &mut Rational) -> Result<bool, CompoundError> {
         if self.is_empty() || other.is_empty() {
-            return true;
+            return Ok(true);
         }
 
         let (_, lhs_bases) = self.base_units();
         let (_, rhs_bases) = other.base_units();
 
         if lhs_bases.len() != rhs_bases.len() {
-            return false;
+            return Ok(false);
         }
 
         for (name, rhs) in &rhs_bases {
             let lhs = match lhs_bases.get(name) {
                 Some(lhs) => lhs,
-                None => return false,
+                None => return Ok(false),
             };
 
             if lhs != rhs {
-                return false;
+                return Ok(false);
             }
         }
 
@@ -153,23 +156,29 @@ impl Compound {
             *value *= Rational::new(10u32, 1u32).pow(state.prefix * state.power);
 
             if let Some(conversion) = name.conversion() {
-                apply_conversion(state.power, value, conversion);
+                apply_conversion(state.power, value, conversion)?;
             }
         }
 
         for (name, state) in &self.names {
             if let Some(conversion) = name.conversion() {
-                apply_conversion(state.power * -1, value, conversion);
+                apply_conversion(state.power * -1, value, conversion)?;
             }
 
             *value /= Rational::new(10u32, 1u32).pow(state.prefix * state.power);
         }
 
-        true
+        Ok(true)
     }
 
     /// Calculate multiplication factors for the given multiplication.
-    pub fn mul(&self, other: &Self, n: i32, lhs: &mut Rational, rhs: &mut Rational) -> Self {
+    pub(crate) fn mul(
+        &self,
+        other: &Self,
+        n: i32,
+        lhs: &mut Rational,
+        rhs: &mut Rational,
+    ) -> Result<Self, CompoundError> {
         if self.is_empty() || other.is_empty() {
             let unit = if self.is_empty() {
                 other
@@ -181,7 +190,7 @@ impl Compound {
                 self.clone()
             };
 
-            return unit;
+            return Ok(unit);
         }
 
         let (lhs_der, lhs_bases) = self.base_units();
@@ -215,7 +224,7 @@ impl Compound {
             *lhs *= Rational::new(10u32, 1u32).pow(state.prefix * state.power);
 
             if let Some(conversion) = name.conversion() {
-                apply_conversion(state.power, lhs, conversion);
+                apply_conversion(state.power, lhs, conversion)?;
             }
         }
 
@@ -223,7 +232,7 @@ impl Compound {
             *rhs *= Rational::new(10u32, 1u32).pow(state.prefix * state.power);
 
             if let Some(conversion) = name.conversion() {
-                apply_conversion(state.power, rhs, conversion);
+                apply_conversion(state.power, rhs, conversion)?;
             }
         }
 
@@ -233,15 +242,15 @@ impl Compound {
             .map(|(u, p)| (u, p, 1))
             .chain(rhs_der.into_iter().map(|(u, p)| (u, p, n)));
 
-        reconstruct(der, lhs, &mut names);
-        return Compound::new(names);
+        reconstruct(der, lhs, &mut names)?;
+        return Ok(Compound::new(names));
 
         /// Reconstruct names.
         fn reconstruct(
             der: impl IntoIterator<Item = (Unit, i32, i32)>,
             out: &mut Rational,
             names: &mut BTreeMap<Unit, State>,
-        ) {
+        ) -> Result<(), CompoundError> {
             let mut powers = Powers::default();
 
             // Step where we try to reconstruct some of the deconstructed names.
@@ -285,9 +294,11 @@ impl Compound {
                     // original factor modifier, which we apply to mod_power to
                     // get the original power back. Then we multiply by `-1`
                     // because we want to shed the multiples here.
-                    apply_conversion(mod_power * -1, out, conversion);
+                    apply_conversion(mod_power * -1, out, conversion)?;
                 }
             }
+
+            Ok(())
         }
 
         fn bases_match(
@@ -462,12 +473,40 @@ impl fmt::Display for Compound {
     }
 }
 
-fn apply_conversion(pow: i32, ratio: &mut Rational, conversion: Conversion) {
-    for _ in pow..0 {
-        (conversion.from)(ratio);
+fn apply_conversion(
+    pow: i32,
+    ratio: &mut Rational,
+    conversion: Conversion,
+) -> Result<(), CompoundError> {
+    match conversion {
+        Conversion::Methods(methods) => {
+            if pow.abs() != 1 {
+                return Err(CompoundError);
+            }
+
+            for _ in pow..0 {
+                (methods.from)(ratio);
+            }
+
+            for _ in 0..pow {
+                (methods.to)(ratio);
+            }
+        }
+        Conversion::Factor(fraction) => {
+            if pow != 0 {
+                *ratio *= Rational::new(fraction.numer, fraction.denom).pow(pow);
+            }
+        }
+        Conversion::Offset(fraction) => {
+            if pow.abs() != 1 {
+                return Err(CompoundError);
+            }
+
+            if pow != 0 {
+                *ratio += Rational::new(fraction.numer, fraction.denom) * Rational::new(pow, 1);
+            }
+        }
     }
 
-    for _ in 0..pow {
-        (conversion.to)(ratio);
-    }
+    Ok(())
 }

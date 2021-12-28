@@ -1,7 +1,6 @@
 //! Available derived units.
 
-use crate::unit::{Conversion, Derived, DerivedVtable, Unit};
-use rational::Rational;
+use crate::unit::{Conversion, ConversionFraction, Derived, DerivedVtable, Unit};
 
 pub mod area;
 pub mod energy;
@@ -50,14 +49,10 @@ pub static GFORCE: Derived = Derived {
     vtable: &DerivedVtable {
         powers: ACCELERATION.vtable.powers,
         format: |f, _| write!(f, "g"),
-        conversion: Some(Conversion {
-            to: |num| {
-                *num *= Rational::new(980665u32, 100000u32);
-            },
-            from: |num| {
-                *num /= Rational::new(980665u32, 100000u32);
-            },
-        }),
+        conversion: Some(Conversion::Factor(ConversionFraction {
+            numer: 980665,
+            denom: 100000,
+        })),
     },
 };
 

@@ -87,6 +87,28 @@ impl Rational {
             rational: self.rational.round(),
         }
     }
+
+    /// Round this rational to its floor.
+    pub fn floor(&self) -> Rational {
+        let rational = if self.rational.denom().is_one() {
+            self.rational.clone()
+        } else {
+            self.rational.trunc()
+        };
+
+        Self { rational }
+    }
+
+    /// Round this rational to its ceilting.
+    pub fn ceil(&self) -> Rational {
+        let rational = if self.rational.denom().is_one() {
+            self.rational.clone()
+        } else {
+            (self.rational.clone() + BigRational::one()).trunc()
+        };
+
+        Self { rational }
+    }
 }
 
 impl ops::Add<Rational> for Rational {

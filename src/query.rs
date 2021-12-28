@@ -59,6 +59,7 @@ pub fn query<'a>(
 ///
 /// See [query].
 pub struct Query<'a> {
+    #[allow(unused)]
     pub(crate) ctx: Context,
     pub(crate) source: &'a str,
     pub(crate) db: &'a db::Db,

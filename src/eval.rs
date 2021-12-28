@@ -6,9 +6,8 @@ use crate::syntax::parser::{SyntaxKind, SyntaxNode};
 use crate::unit::Unit;
 use crate::unit_parser::UnitParser;
 use crate::{db, Query};
-use hashbrown::HashMap;
 use num::bigint::Sign;
-use num::{One, Signed, ToPrimitive, Zero};
+use num::{Signed, Zero};
 use rational::Rational;
 use rowan::TextRange;
 
@@ -17,145 +16,38 @@ use SyntaxKind::*;
 
 type Result<T, E = Error> = std::result::Result<T, E>;
 
-#[derive(Debug, Clone, Copy)]
-pub enum BuiltIn {
-    /// Sin function.
-    Sin,
-    /// Cos function.
-    Cos,
-    /// Round function.
-    Round,
-}
+mod builtin;
 
-impl BuiltIn {
-    fn call(&self, range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
-        match self {
-            BuiltIn::Sin => {
-                let actual = arguments.len();
-                let mut it = arguments.into_iter();
+/// Built-in function to use.
+pub(crate) type BuiltIn = fn(TextRange, Vec<Numeric>) -> Result<Numeric>;
 
-                let (value, unit) = match it.next() {
-                    Some(argument) if actual == 1 => argument.split(),
-                    _ => {
-                        return Err(Error::new(
-                            range,
-                            ArgumentMismatch {
-                                expected: 1,
-                                actual,
-                            },
-                        ));
-                    }
-                };
+/// Try to look up a built-in function.
+pub(crate) fn builtin(name: &str) -> Option<BuiltIn> {
+    let builtin: BuiltIn = match name {
+        "sin" => builtin::sin,
+        "cos" => builtin::cos,
+        "round" => builtin::round,
+        "floor" => builtin::floor,
+        "ceil" => builtin::ceil,
+        _ => return None,
+    };
 
-                let value = match value.to_f64() {
-                    Some(value) => value.sin(),
-                    None => return Err(Error::new(range, BadArgument { argument: 0 })),
-                };
-
-                Ok(Numeric::new(Rational::from_f64(value), unit))
-            }
-            BuiltIn::Cos => {
-                let actual = arguments.len();
-                let mut it = arguments.into_iter();
-
-                let (value, unit) = match it.next() {
-                    Some(argument) if actual == 1 => argument.split(),
-                    _ => {
-                        return Err(Error::new(
-                            range,
-                            ArgumentMismatch {
-                                expected: 1,
-                                actual,
-                            },
-                        ));
-                    }
-                };
-
-                let value = match value.to_f64() {
-                    Some(value) => value.cos(),
-                    None => return Err(Error::new(range, BadArgument { argument: 0 })),
-                };
-
-                Ok(Numeric::new(Rational::from_f64(value), unit))
-            }
-            BuiltIn::Round => {
-                let actual = arguments.len();
-                let mut it = arguments.into_iter();
-
-                let (first, second) = match (it.next(), it.next()) {
-                    (Some(first), None) if actual == 1 => (first, 0),
-                    (Some(first), Some(second)) if actual == 2 => (
-                        first,
-                        match second.split().0.to_i32() {
-                            Some(second) => second,
-                            None => return Err(Error::new(range, BadArgument { argument: 0 })),
-                        },
-                    ),
-                    _ => {
-                        return Err(Error::new(
-                            range,
-                            ArgumentMismatch {
-                                expected: if actual == 0 { 1 } else { 2 },
-                                actual,
-                            },
-                        ));
-                    }
-                };
-
-                let (mut first, unit) = first.split();
-
-                let first = if second >= 0 && first.denom().is_one() {
-                    first
-                } else {
-                    if second == 0 {
-                        first.round()
-                    } else {
-                        let ten = Rational::new(10u32, 1u32).pow(second);
-                        first *= &ten;
-                        let mut first = first.round();
-                        first /= &ten;
-                        first
-                    }
-                };
-
-                debug_assert!(first.denom().is_one());
-                Ok(Numeric::new(first, unit))
-            }
-        }
-    }
-}
-
-/// A function that can be called.
-pub enum Function {
-    /// A built-in function.
-    BuiltIn(BuiltIn),
-}
-
-/// Construct the default collection of functions.
-fn default_functions() -> HashMap<String, Function> {
-    let mut functions = HashMap::new();
-    functions.insert("sin".into(), Function::BuiltIn(BuiltIn::Sin));
-    functions.insert("cos".into(), Function::BuiltIn(BuiltIn::Cos));
-    functions.insert("round".into(), Function::BuiltIn(BuiltIn::Round));
-    functions
+    Some(builtin)
 }
 
 /// A context.
-pub struct Context {
-    functions: HashMap<String, Function>,
-}
+pub struct Context {}
 
 impl Context {
     /// Construct a new empty context.
     pub fn new() -> Self {
-        Self {
-            functions: default_functions(),
-        }
+        Self {}
     }
 }
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Bias {
+    #[allow(unused)]
     acceleration_bias: bool,
 }
 
@@ -535,16 +427,14 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
                 args.push(eval(q, node, bias)?);
             }
 
-            if let Some(fun) = q.ctx.functions.get(name) {
-                match fun {
-                    Function::BuiltIn(builtin) => Ok(builtin.call(node.text_range(), args)?),
-                }
-            } else {
-                return Err(Error::new(
-                    node.text_range(),
-                    MissingFunction { name: name.into() },
-                ));
+            if let Some(builtin) = builtin(name) {
+                return builtin(node.text_range(), args);
             }
+
+            Err(Error::new(
+                node.text_range(),
+                MissingFunction { name: name.into() },
+            ))
         }
         ERROR => Err(Error::new(node.text_range(), SyntaxError)),
         kind => Err(Error::new(node.text_range(), Unexpected { kind })),

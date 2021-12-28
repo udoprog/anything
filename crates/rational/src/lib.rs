@@ -80,6 +80,13 @@ impl Rational {
             rational: Pow::pow(&self.rational, expon),
         }
     }
+
+    /// Round the current rational to it's closest whole number.
+    pub fn round(&self) -> Rational {
+        Self {
+            rational: self.rational.round(),
+        }
+    }
 }
 
 impl ops::Add<Rational> for Rational {

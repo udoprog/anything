@@ -8,7 +8,7 @@ use crate::unit_parser::UnitParser;
 use crate::{db, Query};
 use hashbrown::HashMap;
 use num::bigint::Sign;
-use num::{Signed, ToPrimitive, Zero};
+use num::{One, Signed, ToPrimitive, Zero};
 use rational::Rational;
 use rowan::TextRange;
 
@@ -23,6 +23,8 @@ pub enum BuiltIn {
     Sin,
     /// Cos function.
     Cos,
+    /// Round function.
+    Round,
 }
 
 impl BuiltIn {
@@ -76,6 +78,49 @@ impl BuiltIn {
 
                 Ok(Numeric::new(Rational::from_f64(value), unit))
             }
+            BuiltIn::Round => {
+                let actual = arguments.len();
+                let mut it = arguments.into_iter();
+
+                let (first, second) = match (it.next(), it.next()) {
+                    (Some(first), None) if actual == 1 => (first, 0),
+                    (Some(first), Some(second)) if actual == 2 => (
+                        first,
+                        match second.split().0.to_i32() {
+                            Some(second) => second,
+                            None => return Err(Error::new(range, BadArgument { argument: 0 })),
+                        },
+                    ),
+                    _ => {
+                        return Err(Error::new(
+                            range,
+                            ArgumentMismatch {
+                                expected: if actual == 0 { 1 } else { 2 },
+                                actual,
+                            },
+                        ));
+                    }
+                };
+
+                let (mut first, unit) = first.split();
+
+                let first = if second >= 0 && first.denom().is_one() {
+                    first
+                } else {
+                    if second == 0 {
+                        first.round()
+                    } else {
+                        let ten = Rational::new(10u32, 1u32).pow(second);
+                        first *= &ten;
+                        let mut first = first.round();
+                        first /= &ten;
+                        first
+                    }
+                };
+
+                debug_assert!(first.denom().is_one());
+                Ok(Numeric::new(first, unit))
+            }
         }
     }
 }
@@ -91,6 +136,7 @@ fn default_functions() -> HashMap<String, Function> {
     let mut functions = HashMap::new();
     functions.insert("sin".into(), Function::BuiltIn(BuiltIn::Sin));
     functions.insert("cos".into(), Function::BuiltIn(BuiltIn::Cos));
+    functions.insert("round".into(), Function::BuiltIn(BuiltIn::Round));
     functions
 }
 

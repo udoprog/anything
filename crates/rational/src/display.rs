@@ -1,7 +1,7 @@
 use num::{BigInt, BigRational, Signed, ToPrimitive, Zero};
+use std::fmt;
 use std::fmt::Write;
 use std::mem;
-use std::{fmt, ops};
 
 /// Perform formatting of a big rational.
 pub struct Display<'a> {
@@ -199,15 +199,10 @@ impl fmt::Display for Display<'_> {
     }
 }
 
-/// Internal helper to keep diving a value and emitting its values.
+/// Internal helper to keep diving a value and emitting its digits.
 ///
 /// Each emitted value is guaranteed to be smaller than 10.
-fn emit<'a, D>(rem: &'a mut BigInt, den: D) -> impl Iterator<Item = u8> + 'a
-where
-    for<'b> &'b BigInt: ops::Div<D, Output = BigInt>,
-    for<'c> D: ops::Mul<&'c BigInt, Output = BigInt>,
-    D: 'a + Copy,
-{
+fn emit<'a>(rem: &'a mut BigInt, den: &'a BigInt) -> impl Iterator<Item = u8> + 'a {
     std::iter::from_fn(move || {
         if rem.is_zero() {
             return None;
@@ -218,7 +213,7 @@ where
         *rem -= den * &div;
 
         let div = div.to_u8()?;
-        debug_assert!(div < 10u8);
+        debug_assert!(div <= 9);
         Some(div)
     })
 }

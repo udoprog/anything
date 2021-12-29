@@ -1,8 +1,6 @@
 use num::traits::Pow;
 use num::{BigInt, BigRational, One, ToPrimitive, Zero};
 use serde::{de, ser};
-use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::str::FromStr;
 use std::{fmt, ops};
 use thiserror::Error;
@@ -418,13 +416,6 @@ impl FromStr for Rational {
         let out = if neg { -out } else { out };
         Ok(Rational { rational: out })
     }
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-enum Number<'a> {
-    Str(Cow<'a, str>),
-    Number(serde_json::Number),
 }
 
 impl<'de> de::Deserialize<'de> for Rational {

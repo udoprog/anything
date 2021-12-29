@@ -13,12 +13,17 @@ pub struct Token {
 pub struct Lexer<'a> {
     source: &'a str,
     pos: usize,
+    escape: bool,
 }
 
 impl<'a> Lexer<'a> {
     /// Construct a new lexer.
     pub fn new(source: &'a str) -> Self {
-        Self { source, pos: 0 }
+        Self {
+            source,
+            pos: 0,
+            escape: false,
+        }
     }
 
     /// Get the text for the given span.
@@ -30,19 +35,17 @@ impl<'a> Lexer<'a> {
 
     /// Peek the next character.
     fn peek(&self) -> Option<char> {
-        self.source[self.pos..].chars().next()
+        self.source.get(self.pos..)?.chars().next()
     }
 
     /// Peek the next next character.
     fn peek2(&mut self) -> Option<char> {
-        let mut it = self.source[self.pos..].chars();
-        it.next();
-        it.next()
+        self.source.get(self.pos..)?.chars().nth(1)
     }
 
     /// Step to the next character.
     fn step(&mut self) {
-        let mut it = self.source[self.pos..].chars();
+        let mut it = self.source.get(self.pos..).into_iter().flat_map(str::chars);
 
         self.pos = match it.next() {
             Some(c) => self.pos + c.len_utf8(),
@@ -102,6 +105,21 @@ impl<'a> Lexer<'a> {
         count
     }
 
+    fn consume_escaped_word(&mut self) -> usize {
+        let mut count = 0;
+
+        while let Some(c) = self.peek() {
+            if c.is_whitespace() || c == '}' {
+                break;
+            }
+
+            count += 1;
+            self.step();
+        }
+
+        count
+    }
+
     /// Consume until ws.
     fn consume_whitespace(&mut self) {
         while let Some(c) = self.peek() {
@@ -112,12 +130,9 @@ impl<'a> Lexer<'a> {
             self.step();
         }
     }
-}
 
-impl Iterator for Lexer<'_> {
-    type Item = Token;
-
-    fn next(&mut self) -> Option<Self::Item> {
+    /// Next escaped sequence.
+    fn next_escape(&mut self) -> Option<Token> {
         let start = self.pos;
         let c = self.peek()?;
 
@@ -125,6 +140,49 @@ impl Iterator for Lexer<'_> {
             c if c.is_whitespace() => {
                 self.consume_whitespace();
                 WHITESPACE
+            }
+            '}' => {
+                self.step();
+                self.escape = false;
+                CLOSE_BRACE
+            }
+            _ => {
+                if self.consume_escaped_word() > 0 {
+                    WORD
+                } else {
+                    self.step();
+                    ERROR
+                }
+            }
+        };
+
+        Some(Token {
+            span: Span::new(start as u32, self.pos as u32),
+            kind,
+        })
+    }
+}
+
+impl Iterator for Lexer<'_> {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.escape {
+            return self.next_escape();
+        }
+
+        let start = self.pos;
+        let c = self.peek()?;
+
+        let kind = match c {
+            c if c.is_whitespace() => {
+                self.consume_whitespace();
+                WHITESPACE
+            }
+            '{' => {
+                self.step();
+                self.escape = true;
+                OPEN_BRACE
             }
             '.' => {
                 self.step();
@@ -145,7 +203,13 @@ impl Iterator for Lexer<'_> {
             }
             '*' => {
                 self.step();
-                STAR
+
+                if matches!(self.peek(), Some('*')) {
+                    self.step();
+                    STARSTAR
+                } else {
+                    STAR
+                }
             }
             '/' => {
                 self.step();

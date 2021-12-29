@@ -178,6 +178,18 @@ impl<'a> Parser<'a> {
         true
     }
 
+    /// Bump until the given syntax kind has been reached (or the whole parses
+    /// has been consumed).
+    pub(crate) fn bump_until(&mut self, kind: SyntaxKind) {
+        while let Some(node) = self.get(0) {
+            self.bump();
+
+            if node.kind == kind {
+                break;
+            }
+        }
+    }
+
     pub(crate) fn checkpoint(&mut self) -> Checkpoint {
         self.builder.checkpoint()
     }

@@ -32,6 +32,7 @@ impl Options {
     }
 }
 
+/// A parsed node with associated source.
 pub struct Node<'a> {
     source: &'a str,
     node: SyntaxNode<FactsLang>,
@@ -47,6 +48,10 @@ impl Node<'_> {
         let mut queue = VecDeque::new();
         queue.extend(self.node.children_with_tokens().map(|c| (2usize, c)));
 
+        // Buffer used to append elements - since children can't be iterated in
+        // reverse as they are added to the front of the queue.
+        let mut append = Vec::new();
+
         while let Some((depth, n)) = queue.pop_front() {
             match n {
                 rowan::NodeOrToken::Node(node) => {
@@ -57,7 +62,12 @@ impl Node<'_> {
                         depth = depth,
                         kind = node.kind()
                     )?;
-                    queue.extend(node.children_with_tokens().map(|c| (depth + 2, c)));
+
+                    append.extend(node.children_with_tokens());
+
+                    for child in append.drain(..).rev() {
+                        queue.push_front((depth + 2, child));
+                    }
                 }
                 rowan::NodeOrToken::Token(tok) => {
                     writeln!(

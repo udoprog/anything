@@ -17,7 +17,7 @@ pub fn root(p: &mut Parser<'_>) {
                 p.skip(skip);
                 break;
             }
-            OPEN_PAREN | WORD | NUMBER => {
+            OPEN_BRACE | OPEN_PAREN | WORD | NUMBER => {
                 p.skip(skip);
 
                 if !expr(p) {
@@ -78,6 +78,33 @@ fn value(p: &mut Parser<'_>) -> bool {
     let skip = p.count_skip();
 
     match p.nth(skip, 0) {
+        // Escape sequence.
+        OPEN_BRACE => {
+            p.skip(skip);
+            p.bump();
+
+            let c = p.checkpoint();
+            let mut skip = p.count_skip();
+            let mut words = 0usize;
+
+            while let WORD = p.nth(skip, 0) {
+                p.skip(skip);
+                p.bump_node(WORD);
+                skip = p.count_skip();
+                words += 1;
+            }
+
+            if words > 1 {
+                p.finish_node_at(c, SENTENCE);
+            }
+
+            if !p.eat(skip, &[CLOSE_BRACE]) {
+                p.bump_until(CLOSE_BRACE);
+                return false;
+            }
+
+            true
+        }
         WORD => {
             p.skip(skip);
 

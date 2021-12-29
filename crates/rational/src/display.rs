@@ -9,7 +9,7 @@ use std::mem;
 pub struct DisplaySpec {
     pub limit: usize,
     pub exponent_limit: usize,
-    pub cap: bool,
+    pub show_continuation: bool,
 }
 
 impl Default for DisplaySpec {
@@ -17,7 +17,7 @@ impl Default for DisplaySpec {
         Self {
             limit: 6,
             exponent_limit: 8,
-            cap: true,
+            show_continuation: true,
         }
     }
 }
@@ -82,7 +82,7 @@ impl<'a> Display<'a> {
             }
         };
 
-        if dot {
+        if dot && self.spec.show_continuation {
             f.write_char('…')?;
         }
 
@@ -122,7 +122,7 @@ impl<'a> Display<'a> {
             }
         }
 
-        if !rem.is_zero() && self.spec.cap {
+        if !rem.is_zero() && self.spec.show_continuation {
             f.write_char('…')?;
         }
 
@@ -194,7 +194,7 @@ impl fmt::Display for Display<'_> {
             }
         }
 
-        if !rem.is_zero() && self.spec.cap {
+        if !rem.is_zero() && self.spec.show_continuation {
             f.write_char('…')?;
         }
 

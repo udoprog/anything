@@ -2,58 +2,33 @@ use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::files::{Files, SimpleFiles};
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
+use num::One;
+use rational::DisplaySpec;
 use std::io::Write;
+use structopt::StructOpt;
 
-#[derive(Default)]
+#[derive(Debug, StructOpt)]
+#[structopt(name = "facts", about = "Calculate facts about the world.")]
 struct Opts {
-    help: bool,
     /// Describe the looked up components in the expression.
+    #[structopt(long)]
     describe: bool,
+    /// Show the exact fractional result.
+    #[structopt(long)]
+    exact: bool,
     /// Dump syntax tree.
+    #[structopt(long)]
     syntax: bool,
+    /// The query to run.
     query: Vec<String>,
 }
 
 fn main() -> anyhow::Result<()> {
+    let opts = Opts::from_args();
+
     pretty_env_logger::init();
 
-    let mut it = std::env::args();
-    it.next();
-
-    let mut opts = Opts::default();
-
-    while let Some(arg) = it.next() {
-        match arg.as_str() {
-            "--" => break,
-            "--help" => {
-                opts.help = true;
-            }
-            "--describe" => {
-                opts.describe = true;
-            }
-            "--syntax" => {
-                opts.syntax = true;
-            }
-            _ => {
-                opts.query.push(arg);
-            }
-        }
-    }
-
     let mut out = StandardStream::stdout(ColorChoice::Auto);
-
-    if opts.help {
-        writeln!(out, "facts [--help] [--describe] [--] <query>")?;
-        writeln!(out)?;
-        writeln!(out, " --help     - Show this help.")?;
-        writeln!(
-            out,
-            " --describe - Describe the contents of the query (constants used)."
-        )?;
-        return Ok(());
-    }
-
-    opts.query.extend(it);
 
     let query = opts.query.join(" ");
 
@@ -82,7 +57,28 @@ fn main() -> anyhow::Result<()> {
     for value in facts::query(node, &db, options, &mut descriptions) {
         match value {
             Ok(value) => {
-                writeln!(out, "{}", value)?;
+                if opts.exact {
+                    if !value.value.denom().is_one() {
+                        write!(out, "{}/{}", value.value.numer(), value.value.denom())?;
+                    } else {
+                        write!(out, "{}", value.value.numer())?;
+                    }
+                } else {
+                    let mut spec = DisplaySpec::default();
+
+                    spec.limit = 12;
+                    spec.exponent_limit = 12;
+                    spec.show_continuation = true;
+
+                    write!(out, "{}", value.value.display(&spec))?;
+                }
+
+                if value.unit.has_numerator() {
+                    write!(out, " ")?;
+                }
+
+                let disp = value.unit.display(!value.value.is_one());
+                writeln!(out, "{}", disp)?;
             }
             Err(e) => {
                 let labels = vec![Label::primary(id, e.range()).with_message(e.to_string())];

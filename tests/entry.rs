@@ -77,8 +77,8 @@ fn test_queries() {
 
     let n = query!("12c");
 
-    assert_eq!(n.unit(), &c);
-    assert_eq!(n.value().to_u32(), Some(12));
+    assert_eq!(n.unit, c);
+    assert_eq!(n.value.to_u32(), Some(12));
 }
 
 #[test]
@@ -87,28 +87,28 @@ fn test_compound_division() {
 
     let n = query!("1V^3 / 1V^10");
 
-    assert_eq!(n.unit(), &c);
-    assert_eq!(n.value().to_u32(), Some(1));
+    assert_eq!(n.unit, c);
+    assert_eq!(n.value.to_u32(), Some(1));
 }
 
 #[test]
 fn test_compound_mul() {
     let n = query!("1Wb*V * 1V");
 
-    assert_eq!(n.unit(), &unit!("WbV^2"));
-    assert_eq!(n.value().to_u32(), Some(1));
+    assert_eq!(n.unit, unit!("WbV^2"));
+    assert_eq!(n.value.to_u32(), Some(1));
 }
 
 #[test]
 fn test_velocities() {
     let value = query!("10m / 10km/s");
-    assert_eq!(value.value(), &ratio!(10 / 10000));
+    assert_eq!(value.value, ratio!(10 / 10000));
 
     let value = query!("10km / 10km/s");
-    assert_eq!(value.value(), &ratio!(1 / 1));
+    assert_eq!(value.value, ratio!(1 / 1));
 
     let value = query!("10km / 1c");
-    assert_eq!(value.value(), &ratio!(5000 / 149896229));
+    assert_eq!(value.value, ratio!(5000 / 149896229));
 }
 
 #[test]
@@ -116,7 +116,7 @@ fn test_multiple_identity_sheds() {
     let expected = query!("0.05c / 500 years * mass of earth to N");
 
     assert_eq!(
-        expected.value().clone(),
+        expected.value.clone(),
         ratio!(223795069897000000000000000 / 39447)
     );
 

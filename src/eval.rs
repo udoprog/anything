@@ -58,140 +58,122 @@ impl Bias {
     }
 }
 
-fn add(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (mut b, b_unit) = b.split();
-
-    match a.unit().factor(&b_unit, &mut b) {
-        Ok(true) => {
-            let (value, unit) = a.split();
-            Ok(Numeric::new(value + b, unit))
-        }
+fn add(range: TextRange, a: Numeric, mut b: Numeric) -> Result<Numeric> {
+    match a.unit.factor(&b.unit, &mut b.value) {
+        Ok(true) => Ok(Numeric::new(a.value + b.value, a.unit)),
         Ok(false) => Err(Error::new(
             range,
             IllegalOperation {
                 op: "+",
-                lhs: a.unit().clone(),
-                rhs: b_unit,
+                lhs: a.unit,
+                rhs: b.unit,
             },
         )),
         Err(CompoundError) => Err(Error::new(
             range,
             ConversionNotPossible {
-                from: a.unit().clone(),
-                to: b_unit,
+                from: a.unit,
+                to: b.unit,
             },
         )),
     }
 }
 
-fn sub(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (mut b, b_unit) = b.split();
-
-    match a.unit().factor(&b_unit, &mut b) {
-        Ok(true) => {
-            let (value, unit) = a.split();
-            Ok(Numeric::new(value - b, unit))
-        }
+fn sub(range: TextRange, a: Numeric, mut b: Numeric) -> Result<Numeric> {
+    match a.unit.factor(&b.unit, &mut b.value) {
+        Ok(true) => Ok(Numeric::new(a.value - b.value, a.unit)),
         Ok(false) => Err(Error::new(
             range,
             IllegalOperation {
                 op: "-",
-                lhs: a.unit().clone(),
-                rhs: b_unit,
+                lhs: a.unit,
+                rhs: b.unit,
             },
         )),
         Err(CompoundError) => Err(Error::new(
             range,
             ConversionNotPossible {
-                from: a.unit().clone(),
-                to: b_unit,
+                from: a.unit,
+                to: b.unit,
             },
         )),
     }
 }
 
-fn div(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (mut a, a_unit) = a.split();
-    let (mut b, b_unit) = b.split();
-
-    let unit = match a_unit.mul(&b_unit, -1, &mut a, &mut b) {
+fn div(range: TextRange, mut a: Numeric, mut b: Numeric) -> Result<Numeric> {
+    let unit = match a.unit.mul(&b.unit, -1, &mut a.value, &mut b.value) {
         Ok(unit) => unit,
         Err(CompoundError) => {
             return Err(Error::new(
                 range,
                 ConversionNotPossible {
-                    from: a_unit,
-                    to: b_unit,
+                    from: a.unit,
+                    to: b.unit,
                 },
             ))
         }
     };
 
-    if a.denom().is_zero() || b.numer().is_zero() {
+    if a.value.denom().is_zero() || b.value.numer().is_zero() {
         return Err(Error::new(range, DivideByZero));
     }
 
-    Ok(Numeric::new(a / b, unit))
+    Ok(Numeric::new(a.value / b.value, unit))
 }
 
-fn mul(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (mut a, a_unit) = a.split();
-    let (mut b, b_unit) = b.split();
-    let unit = match a_unit.mul(&b_unit, 1, &mut a, &mut b) {
+fn mul(range: TextRange, mut a: Numeric, mut b: Numeric) -> Result<Numeric> {
+    let unit = match a.unit.mul(&b.unit, 1, &mut a.value, &mut b.value) {
         Ok(unit) => unit,
         Err(CompoundError) => {
             return Err(Error::new(
                 range,
                 ConversionNotPossible {
-                    from: a_unit,
-                    to: b_unit,
+                    from: a.unit,
+                    to: b.unit,
                 },
             ))
         }
     };
 
-    if a.denom().is_zero() || b.denom().is_zero() {
+    if a.value.denom().is_zero() || b.value.denom().is_zero() {
         return Err(Error::new(range, DivideByZero));
     }
 
-    Ok(Numeric::new(a * b, unit))
+    Ok(Numeric::new(a.value * b.value, unit))
 }
 
-fn pow(range: TextRange, a: Numeric, b: Numeric) -> Result<Numeric> {
-    let (base, unit) = a.split();
-    let (pow, pow_unit) = b.split();
-
-    if !pow_unit.is_empty() {
+fn pow(range: TextRange, base: Numeric, pow: Numeric) -> Result<Numeric> {
+    if !pow.unit.is_empty() {
         return Err(Error::new(range, IllegalPowerUnit));
     }
 
-    if !pow.is_integer() {
+    if !pow.value.is_integer() {
         return Err(Error::new(range, IllegalPowerNonInteger));
     }
 
-    if pow.is_zero() {
-        return Ok(Numeric::new(Rational::new(1, 1), unit));
+    if pow.value.is_zero() {
+        return Ok(Numeric::new(Rational::new(1, 1), base.unit));
     }
 
-    if base.is_zero() {
-        return Ok(Numeric::new(base, unit));
+    if base.value.is_zero() {
+        return Ok(Numeric::new(base.value, base.unit));
     }
 
     let mut value = Rational::new(1, 1);
-    let mut pow = pow.numer().clone();
+    let mut pow = pow.value.numer().clone();
     let sign = pow.signum();
 
-    let base = match sign.sign() {
-        Sign::Minus => base.recip(),
-        _ => base,
+    let b = match sign.sign() {
+        Sign::Minus => base.value.recip(),
+        _ => base.value,
     };
 
     while !pow.is_zero() {
-        value *= &base;
+        value *= &b;
         pow -= &sign;
     }
 
-    Ok(Numeric::new(value, unit))
+    Ok(Numeric::new(value, base.unit))
 }
 
 pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
@@ -342,17 +324,16 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
                     OP_CAST => {
                         let rhs = unit(q.source_as_str(), rhs, bias)?;
 
-                        let b = base.eval(q, bias.with_acceleration_bias(rhs.is_acceleration()))?;
+                        let mut lhs =
+                            base.eval(q, bias.with_acceleration_bias(rhs.is_acceleration()))?;
 
-                        let (mut lhs, lhs_unit) = b.split();
-
-                        match rhs.factor(&lhs_unit, &mut lhs) {
+                        match rhs.factor(&lhs.unit, &mut lhs.value) {
                             Ok(true) => {}
                             Ok(false) => {
                                 return Err(Error::new(
                                     node.text_range(),
                                     IllegalCast {
-                                        from: lhs_unit,
+                                        from: lhs.unit,
                                         to: rhs,
                                     },
                                 ));
@@ -361,14 +342,14 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
                                 return Err(Error::new(
                                     node.text_range(),
                                     ConversionNotPossible {
-                                        from: lhs_unit,
+                                        from: lhs.unit,
                                         to: rhs,
                                     },
                                 ))
                             }
                         }
 
-                        base = DelayedEval::Numeric(Numeric::new(lhs, rhs));
+                        base = DelayedEval::Numeric(Numeric::new(lhs.value, rhs));
                         continue;
                     }
                     ERROR => return Err(Error::new(op.text_range(), SyntaxError)),
@@ -411,7 +392,7 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
 
             let value = eval(q, value_node, bias)?;
             let unit = unit(q.source_as_str(), unit_node, bias)?;
-            Ok(Numeric::new(value.into_value(), unit))
+            Ok(Numeric::new(value.value, unit))
         }
         SENTENCE | WORD => {
             let s = q.source(node.text_range());

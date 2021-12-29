@@ -3,27 +3,34 @@ use std::fmt;
 use std::fmt::Write;
 use std::mem;
 
+/// A display specification for a rational number.
+#[derive(Debug, Clone)]
+#[non_exhaustive]
+pub struct DisplaySpec {
+    pub limit: usize,
+    pub exponent_limit: usize,
+    pub cap: bool,
+}
+
+impl Default for DisplaySpec {
+    fn default() -> Self {
+        Self {
+            limit: 6,
+            exponent_limit: 8,
+            cap: true,
+        }
+    }
+}
+
 /// Perform formatting of a big rational.
 pub struct Display<'a> {
     rational: &'a BigRational,
-    limit: usize,
-    exponent_limit: usize,
-    cap: bool,
+    spec: &'a DisplaySpec,
 }
 
 impl<'a> Display<'a> {
-    pub(crate) fn new(
-        rational: &'a BigRational,
-        limit: usize,
-        exponent_limit: usize,
-        cap: bool,
-    ) -> Self {
-        Self {
-            rational,
-            limit,
-            exponent_limit,
-            cap,
-        }
+    pub(crate) fn new(rational: &'a BigRational, spec: &'a DisplaySpec) -> Self {
+        Self { rational, spec }
     }
 
     /// Format a big number.
@@ -52,7 +59,7 @@ impl<'a> Display<'a> {
 
         let mut used = 0;
 
-        for d in (&mut it).take(self.limit) {
+        for d in (&mut it).take(self.spec.limit) {
             fmt::Display::fmt(&d, f)?;
             used += 1;
         }
@@ -60,7 +67,7 @@ impl<'a> Display<'a> {
         let dot = if it.peek().is_some() {
             true
         } else {
-            let remaining = self.limit - used;
+            let remaining = self.spec.limit - used;
 
             if remaining > 0 {
                 let mut it = emit(&mut rem, den);
@@ -107,15 +114,15 @@ impl<'a> Display<'a> {
             return Ok(());
         }
 
-        if self.limit > 0 {
+        if self.spec.limit > 0 {
             f.write_char('.')?;
 
-            for d in emit(&mut rem, den).take(self.limit) {
+            for d in emit(&mut rem, den).take(self.spec.limit) {
                 fmt::Display::fmt(&d, f)?;
             }
         }
 
-        if !rem.is_zero() && self.cap {
+        if !rem.is_zero() && self.spec.cap {
             f.write_char('…')?;
         }
 
@@ -132,7 +139,7 @@ impl fmt::Display for Display<'_> {
         let div = &rem / &den;
         rem -= &den * &div;
 
-        if digits(div.clone()) >= self.exponent_limit {
+        if digits(div.clone()) >= self.spec.exponent_limit {
             return self.format_big(f, neg, rem, div, &den);
         }
 
@@ -144,7 +151,7 @@ impl fmt::Display for Display<'_> {
         let mut init = true;
         let mut dot = true;
         let mut takes_exp = true;
-        let mut n = self.limit;
+        let mut n = self.spec.limit;
 
         for d in emit(&mut rem, &den) {
             if n == 0 {
@@ -164,7 +171,7 @@ impl fmt::Display for Display<'_> {
                     f.write_char('-')?;
                 }
 
-                if exp.abs() as usize >= self.exponent_limit {
+                if exp.abs() as usize >= self.spec.exponent_limit {
                     d.fmt(f)?;
                     continue;
                 }
@@ -187,7 +194,7 @@ impl fmt::Display for Display<'_> {
             }
         }
 
-        if !rem.is_zero() && self.cap {
+        if !rem.is_zero() && self.spec.cap {
             f.write_char('…')?;
         }
 

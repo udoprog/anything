@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::syntax::parser::{Parser, Skip, SyntaxKind};
 use rowan::Checkpoint;
 use SyntaxKind::*;
@@ -213,35 +215,34 @@ where
 
         let extra = stack.last().map(|e| e.2).unwrap_or_default();
 
-        let last = match operand(p, skip, extra) {
+        let c = match operand(p, skip, extra) {
             Some(last) => last,
             None => return false,
         };
 
         let skip = p.count_skip();
 
-        let (next, operator, steps, extra) = match op(p, skip) {
+        let (priority, operator, steps, extra) = match op(p, skip) {
             Some(n) => n,
             None => break,
         };
 
         if std::mem::take(&mut first) {
-            stack.push((start, next, extra));
+            stack.push((start, priority, extra));
         }
 
-        while let Some((pop_last, pop_current, pop_extra)) = stack.pop() {
-            match (pop_current - next).signum() {
-                -1 => {
-                    stack.push((pop_last, pop_current, pop_extra));
-                    stack.push((last, next, extra));
+        while let Some(prev) = stack.last_mut() {
+            match priority.cmp(&prev.1) {
+                Ordering::Less => {
+                    p.finish_node_at(prev.0, OPERATION);
+                    *prev = (prev.0, priority, extra);
+                    continue;
+                }
+                Ordering::Greater => {
+                    stack.push((c, priority, extra));
                     break;
                 }
-                1 => {
-                    p.finish_node_at(pop_last, OPERATION);
-                    stack.push((pop_last, next, extra));
-                }
-                _ => {
-                    stack.push((pop_last, pop_current, pop_extra));
+                Ordering::Equal => {
                     break;
                 }
             }

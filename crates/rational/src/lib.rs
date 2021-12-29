@@ -6,7 +6,7 @@ use std::{fmt, ops};
 use thiserror::Error;
 
 mod display;
-pub use self::display::Display;
+pub use self::display::{Display, DisplaySpec};
 
 #[cfg(test)]
 mod tests;
@@ -62,8 +62,8 @@ impl Rational {
     }
 
     /// Format this rational number.
-    pub fn display(&self, limit: usize, exponent_limit: usize, cap: bool) -> Display<'_> {
-        Display::new(&self.rational, limit, exponent_limit, cap)
+    pub fn display<'a>(&'a self, spec: &'a DisplaySpec) -> Display<'a> {
+        Display::new(&self.rational, spec)
     }
 
     /// Raises the `Ratio` to the power of an exponent.
@@ -438,6 +438,7 @@ impl ser::Serialize for Rational {
 
 impl fmt::Debug for Rational {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.display(6, 8, true))
+        let spec = Default::default();
+        write!(f, "{}", self.display(&spec))
     }
 }

@@ -74,13 +74,13 @@ fn call_arguments(p: &mut Parser<'_>) -> bool {
     true
 }
 
-fn value(p: &mut Parser<'_>) -> bool {
-    let skip = p.count_skip();
-
+fn value(p: &mut Parser<'_>, skip: Skip) -> Option<Checkpoint> {
     match p.nth(skip, 0) {
         // Escape sequence.
         OPEN_BRACE => {
             p.skip(skip);
+            let start = p.checkpoint();
+
             p.bump();
 
             let c = p.checkpoint();
@@ -100,13 +100,14 @@ fn value(p: &mut Parser<'_>) -> bool {
 
             if !p.eat(skip, &[CLOSE_BRACE]) {
                 p.bump_until(CLOSE_BRACE);
-                return false;
+                return None;
             }
 
-            true
+            Some(start)
         }
         WORD => {
             p.skip(skip);
+            let start = p.checkpoint();
 
             let c = p.checkpoint();
             p.bump_node(WORD);
@@ -116,11 +117,11 @@ fn value(p: &mut Parser<'_>) -> bool {
                 p.bump();
 
                 if !call_arguments(p) {
-                    return false;
+                    return None;
                 }
 
                 p.finish_node_at(c, FN_CALL);
-                return true;
+                return Some(start);
             }
 
             let mut skip = p.count_skip();
@@ -137,10 +138,11 @@ fn value(p: &mut Parser<'_>) -> bool {
                 p.finish_node_at(c, SENTENCE);
             }
 
-            true
+            Some(start)
         }
         NUMBER => {
             p.skip(skip);
+            let start = p.checkpoint();
 
             let c = p.checkpoint();
             p.bump_node(NUMBER);
@@ -167,25 +169,27 @@ fn value(p: &mut Parser<'_>) -> bool {
                 }
             }
 
-            true
+            Some(start)
         }
         OPEN_PAREN => {
             p.skip(skip);
+            let start = p.checkpoint();
+
             p.bump();
 
             if !expr(p) {
-                return false;
+                return None;
             }
 
             let skip = p.count_skip();
 
             if !p.eat(skip, &[CLOSE_PAREN]) {
-                return false;
+                return None;
             }
 
-            true
+            Some(start)
         }
-        _ => false,
+        _ => None,
     }
 }
 
@@ -193,8 +197,8 @@ fn value(p: &mut Parser<'_>) -> bool {
 /// priorities. These are called operations and are separated by operators.
 fn operations<T>(
     p: &mut Parser<'_>,
-    operand: fn(p: &mut Parser<'_>, T) -> bool,
-    op: fn(p: &mut Parser<'_>) -> Option<(i32, SyntaxKind, usize, T)>,
+    operand: fn(p: &mut Parser<'_>, Skip, T) -> Option<Checkpoint>,
+    op: fn(p: &mut Parser<'_>, Skip) -> Option<(i32, SyntaxKind, usize, T)>,
 ) -> bool
 where
     T: Copy + Default,
@@ -206,17 +210,17 @@ where
 
     loop {
         let skip = p.count_skip();
-        p.skip(skip);
-
-        let last = p.checkpoint();
 
         let extra = stack.last().map(|e| e.2).unwrap_or_default();
 
-        if !operand(p, extra) {
-            return false;
-        }
+        let last = match operand(p, skip, extra) {
+            Some(last) => last,
+            None => return false,
+        };
 
-        let (next, operator, steps, extra) = match op(p) {
+        let skip = p.count_skip();
+
+        let (next, operator, steps, extra) = match op(p, skip) {
             Some(n) => n,
             None => break,
         };
@@ -243,6 +247,10 @@ where
             }
         }
 
+        // Defer the skip as long as possible so it's not included in the
+        // OPERATION span.
+        p.skip(skip);
+
         let c = p.checkpoint();
 
         for _ in 0..steps {
@@ -263,20 +271,23 @@ where
 pub fn expr(p: &mut Parser<'_>) -> bool {
     return operations(p, operand, op);
 
-    fn operand(p: &mut Parser<'_>, is_unit: bool) -> bool {
+    fn operand(p: &mut Parser<'_>, skip: Skip, is_unit: bool) -> Option<Checkpoint> {
         if is_unit {
-            let skip = p.count_skip();
             p.skip(skip);
-            unit(p)
+            let c = p.checkpoint();
+
+            if unit(p) {
+                Some(c)
+            } else {
+                None
+            }
         } else {
-            value(p)
+            value(p, skip)
         }
     }
 
     /// Get the binding power of an operator.
-    fn op(p: &mut Parser<'_>) -> Option<(i32, SyntaxKind, usize, bool)> {
-        let skip = p.count_skip();
-
+    fn op(p: &mut Parser<'_>, skip: Skip) -> Option<(i32, SyntaxKind, usize, bool)> {
         let out = match p.nth(skip, 0) {
             TO => (1, OP_CAST, 1, true),
             PLUS => (2, OP_ADD, 1, false),
@@ -287,7 +298,6 @@ pub fn expr(p: &mut Parser<'_>) -> bool {
             _ => return None,
         };
 
-        p.skip(skip);
         Some(out)
     }
 }
@@ -296,22 +306,24 @@ pub fn expr(p: &mut Parser<'_>) -> bool {
 pub fn unit(p: &mut Parser<'_>) -> bool {
     return operations(p, operand, op);
 
-    fn operand(p: &mut Parser<'_>, (): ()) -> bool {
+    fn operand(p: &mut Parser<'_>, _: Skip, (): ()) -> Option<Checkpoint> {
         match p.nth(Skip::ZERO, 0) {
             NUMBER => {
+                let c = p.checkpoint();
                 p.bump_node(NUMBER);
-                true
+                Some(c)
             }
             WORD | TO => {
+                let c = p.checkpoint();
                 p.bump_node(WORD);
-                true
+                Some(c)
             }
-            _ => false,
+            _ => None,
         }
     }
 
     /// Get the binding power of an operator.
-    fn op(p: &mut Parser<'_>) -> Option<(i32, SyntaxKind, usize, ())> {
+    fn op(p: &mut Parser<'_>, _: Skip) -> Option<(i32, SyntaxKind, usize, ())> {
         let out = match p.nth(Skip::ZERO, 0) {
             STAR => (3, OP_MUL, 1, ()),
             SLASH => (3, OP_DIV, 1, ()),

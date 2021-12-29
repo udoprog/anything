@@ -45,11 +45,9 @@ impl Rational {
     }
 
     /// Construct from a 64-bit float.
-    pub fn from_f64(value: f64) -> Self {
-        let rational =
-            BigRational::from_float(value).unwrap_or_else(|| BigRational::new(1.into(), 1.into()));
-
-        Self { rational }
+    pub fn from_f64(value: f64) -> Option<Self> {
+        let rational = BigRational::from_float(value)?;
+        Some(Self { rational })
     }
 
     /// Returns the reciprocal.
@@ -124,7 +122,7 @@ impl ops::Sub<Rational> for Rational {
 
     fn sub(self, rhs: Rational) -> Self::Output {
         Self {
-            rational: self.rational + rhs.rational,
+            rational: self.rational - rhs.rational,
         }
     }
 }

@@ -64,6 +64,8 @@ pub(crate) enum ErrorKind {
     ArgumentMismatch { expected: usize, actual: usize },
     #[error("bad argument {argument}")]
     BadArgument { argument: usize },
+    #[error("non-finite number in calculation")]
+    NonFinite,
     #[error("missing expected node")]
     MissingNode,
     #[error("mismatching prefix for unit `{unit}`; expected {expected} but got {actual}")]

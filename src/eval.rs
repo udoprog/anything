@@ -330,8 +330,6 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
                 None => return Err(Error::new(node.text_range(), MissingNode)),
             };
 
-            let start = base.text_range();
-
             let mut base = DelayedEval::Node(base);
 
             while let (Some(op), Some(rhs)) = (it.next(), it.next()) {
@@ -379,12 +377,10 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
                     }
                 };
 
-                let range = rhs.text_range();
                 let rhs = eval(q, rhs, bias)?;
                 let b = base.eval(q, bias)?;
 
-                let range = TextRange::new(start.start(), range.end());
-                base = DelayedEval::Numeric(op(range, b, rhs)?);
+                base = DelayedEval::Numeric(op(node.text_range(), b, rhs)?);
             }
 
             let numeric = base.eval(q, bias)?;

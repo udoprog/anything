@@ -33,7 +33,8 @@ pub(crate) fn sin(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> 
         None => return Err(Error::new(range, BadArgument { argument: 0 })),
     };
 
-    Ok(Numeric::new(Rational::from_f64(value), unit))
+    let value = Rational::from_f64(value).ok_or_else(|| Error::new(range, NonFinite))?;
+    Ok(Numeric::new(value, unit))
 }
 
 /// Calculate the cosine of a number.
@@ -45,7 +46,8 @@ pub(crate) fn cos(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> 
         None => return Err(Error::new(range, BadArgument { argument: 0 })),
     };
 
-    Ok(Numeric::new(Rational::from_f64(value), unit))
+    let value = Rational::from_f64(value).ok_or_else(|| Error::new(range, NonFinite))?;
+    Ok(Numeric::new(value, unit))
 }
 
 /// Round a number with an optional power.

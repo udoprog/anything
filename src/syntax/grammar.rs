@@ -256,7 +256,7 @@ pub fn expr(p: &mut Parser<'_>) -> bool {
             DASH => (2, OP_SUB, 1, false),
             STAR => (3, OP_MUL, 1, false),
             SLASH => (3, OP_DIV, 1, false),
-            CARET => (10, OP_POWER, 1, false),
+            CARET | STARSTAR => (10, OP_POWER, 1, false),
             _ => return None,
         };
 
@@ -289,7 +289,7 @@ pub fn unit(p: &mut Parser<'_>) -> bool {
             STAR => (3, OP_MUL, 1, ()),
             SLASH => (3, OP_DIV, 1, ()),
             WORD => (3, OP_IMPLICIT_MUL, 0, ()),
-            CARET => (10, OP_POWER, 1, ()),
+            CARET | STARSTAR => (10, OP_POWER, 1, ()),
             _ => return None,
         };
 

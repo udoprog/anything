@@ -4,34 +4,45 @@ use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use std::io::Write;
 
+#[derive(Default)]
+struct Opts {
+    help: bool,
+    /// Describe the looked up components in the expression.
+    describe: bool,
+    /// Dump syntax tree.
+    syntax: bool,
+    query: Vec<String>,
+}
+
 fn main() -> anyhow::Result<()> {
     pretty_env_logger::init();
 
     let mut it = std::env::args();
     it.next();
 
-    let mut help = false;
-    let mut describe = false;
-    let mut query = Vec::new();
+    let mut opts = Opts::default();
 
     while let Some(arg) = it.next() {
         match arg.as_str() {
             "--" => break,
             "--help" => {
-                help = true;
+                opts.help = true;
             }
             "--describe" => {
-                describe = true;
+                opts.describe = true;
+            }
+            "--syntax" => {
+                opts.syntax = true;
             }
             _ => {
-                query.push(arg);
+                opts.query.push(arg);
             }
         }
     }
 
     let mut out = StandardStream::stdout(ColorChoice::Auto);
 
-    if help {
+    if opts.help {
         writeln!(out, "facts [--help] [--describe] [--] <query>")?;
         writeln!(out)?;
         writeln!(out, " --help     - Show this help.")?;
@@ -42,9 +53,9 @@ fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    query.extend(it);
+    opts.query.extend(it);
 
-    let query = query.join(" ");
+    let query = opts.query.join(" ");
 
     let db = facts::Db::open()?;
 
@@ -56,13 +67,19 @@ fn main() -> anyhow::Result<()> {
     let options = facts::Options::default();
     let mut descriptions = Vec::new();
 
-    let options = if describe {
+    let options = if opts.describe {
         options.describe()
     } else {
         options
     };
 
-    for value in facts::query(files.source(id)?, &db, options, &mut descriptions) {
+    let node = facts::parse(files.source(id)?);
+
+    if opts.syntax {
+        node.emit(&mut out)?;
+    }
+
+    for value in facts::query(node, &db, options, &mut descriptions) {
         match value {
             Ok(value) => {
                 writeln!(out, "{}", value)?;

@@ -24,5 +24,5 @@ pub use self::db::{Constant, Db, Source};
 pub use self::error::Error;
 pub use self::numeric::Numeric;
 pub use self::powers::Powers;
-pub use self::query::{query, Description, Options, Query};
+pub use self::query::{parse, query, Description, Options, Query};
 pub use self::unit::Unit;

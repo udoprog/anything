@@ -20,6 +20,8 @@ pub enum SyntaxKind {
     WHITESPACE = 0,
     /// `*`.
     STAR,
+    /// `**`.
+    STARSTAR,
     /// `/`.
     SLASH,
     /// `+`.

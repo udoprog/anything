@@ -342,7 +342,7 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
                     OP_MUL | OP_IMPLICIT_MUL => mul,
                     OP_POWER => pow,
                     OP_CAST => {
-                        let rhs = unit(q.source, rhs, bias)?;
+                        let rhs = unit(q.source_as_str(), rhs, bias)?;
 
                         let b = base.eval(q, bias.with_acceleration_bias(rhs.is_acceleration()))?;
 
@@ -391,7 +391,7 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
             Ok(numeric)
         }
         NUMBER => {
-            let number = &q.source[node.text_range()];
+            let number = q.source(node.text_range());
             let number = match str::parse::<Rational>(number) {
                 Ok(number) => number,
                 Err(error) => {
@@ -414,11 +414,11 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
             };
 
             let value = eval(q, value_node, bias)?;
-            let unit = unit(q.source, unit_node, bias)?;
+            let unit = unit(q.source_as_str(), unit_node, bias)?;
             Ok(Numeric::new(value.into_value(), unit))
         }
         SENTENCE | WORD => {
-            let s = &q.source[node.text_range()];
+            let s = q.source(node.text_range());
 
             let m = match q
                 .db
@@ -442,7 +442,7 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
         }
         PERCENTAGE => {
             let number = node.first_token().expect("number of percentage");
-            let number = &q.source[number.text_range()];
+            let number = q.source(number.text_range());
             let number = match str::parse::<Rational>(number) {
                 Ok(number) => number,
                 Err(error) => {
@@ -469,7 +469,7 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
                     ))
                 }
             };
-            let name = &q.source[name.text_range()];
+            let name = q.source(name.text_range());
 
             let mut args = Vec::new();
 

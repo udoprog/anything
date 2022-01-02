@@ -2,17 +2,23 @@
 name = "anything"
 version = "0.1.0"
 authors = ["John-John Tedro <udoprog@tedro.se>"]
+license = "MIT/Apache-2.0"
 edition = "2021"
-
-[[bin]]
-name = "any"
-path = "src/main.rs"
+readme = "README.md"
+repository = "https://github.com/udoprog/anything"
+homepage = "https://github.com/udoprog/anything"
+documentation = "https://docs.rs/anything"
+keywords = ["language", "scripting"]
+categories = []
+description = """
+Calculate everything and nothing with perfect precision.
+"""
 
 [dependencies]
-num = "0.4.0"
+num = { version = "0.4.0", features = ["serde"] }
 anyhow = "1.0.52"
 hashbrown = "0.11.2"
-serde = { version = "1.0.132", features = ["derive"] }
+serde = { version = "1.0.133", features = ["derive"] }
 rowan = "0.15.2"
 logos = "0.12.0"
 thiserror = "1.0.30"
@@ -21,17 +27,15 @@ tantivy = "0.16.1"
 rust-embed = "6.3.0"
 directories = "4.0.1"
 twox-hash = "1.6.2"
-serde_json = "1.0.73"
+serde_json = "1.0.74"
 log = "0.4.14"
 serde_cbor = "0.11.2"
 pretty_env_logger = "0.4.0"
 
-rational = {path = "crates/rational"}
 flate2 = "1.0.22"
 structopt = "0.3.25"
 
 [workspace]
 members = [
     "tools/*",
-    "crates/*",
 ]

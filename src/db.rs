@@ -1,8 +1,8 @@
 use crate::compound::Compound;
+use crate::rational::Rational;
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use hashbrown::HashMap;
-use rational::Rational;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Cursor;

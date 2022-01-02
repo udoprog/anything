@@ -16,5 +16,4 @@ bytes = "1.0.1"
 flate2 = "1.0.20"
 serde_cbor = "0.11.1"
 
-rational = { path = "../../crates/rational" }
-facts = { path = "../.." }
+anything = { path = "../.." }

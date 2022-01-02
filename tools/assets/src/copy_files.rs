@@ -1,7 +1,6 @@
 use crate::db::Db;
 use anyhow::{anyhow, Result};
-use facts::{Compound, Constant};
-use rational::Rational;
+use anything::{Compound, Constant, Rational};
 use serde::de;
 use serde::Deserialize;
 use std::{borrow::Cow, path::PathBuf};

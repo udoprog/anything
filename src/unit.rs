@@ -1,7 +1,7 @@
 use crate::compound::State;
 use crate::powers::Powers;
 use crate::prefix::Prefix;
-use rational::Rational;
+use crate::rational::Rational;
 use serde::de;
 use serde::{Deserialize, Serialize};
 use std::cmp;

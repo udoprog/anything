@@ -1,9 +1,9 @@
 //! Special temperature units (separate from Kelvin).
 
+use crate::rational::Rational;
 use crate::unit::{
     Conversion, ConversionFraction, ConversionMethods, Derived, DerivedVtable, Unit,
 };
-use rational::Rational;
 
 /// Celsius (`°C`) in based on kelvin (`K`).
 pub static CELSIUS: Derived = Derived {

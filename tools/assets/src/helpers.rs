@@ -1,4 +1,4 @@
-use rational::Rational;
+use anything::rational::Rational;
 use serde::de;
 use serde::Deserialize;
 

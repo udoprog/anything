@@ -13,6 +13,7 @@ mod numeric;
 mod powers;
 mod prefix;
 mod query;
+pub mod rational;
 #[doc(hidden)]
 pub mod syntax;
 mod unit;
@@ -25,4 +26,5 @@ pub use self::error::Error;
 pub use self::numeric::Numeric;
 pub use self::powers::Powers;
 pub use self::query::{parse, query, Description, Options, Query};
+pub use self::rational::Rational;
 pub use self::unit::Unit;

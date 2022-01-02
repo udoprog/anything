@@ -1,7 +1,7 @@
 use crate::powers::Powers;
+use crate::rational::Rational;
 use crate::syntax::parser::Parser;
 use crate::unit::{Conversion, Unit};
-use rational::Rational;
 use serde::{Deserialize, Serialize};
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;

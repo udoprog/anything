@@ -1,5 +1,5 @@
+use crate::rational::Rational;
 use num::{One, ToPrimitive};
-use rational::Rational;
 use rowan::TextRange;
 
 use crate::error::ErrorKind::*;

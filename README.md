@@ -1,6 +1,6 @@
 # anything
 
-Query engine capable of querying for anything and nothing.
+Calculate everything and nothing.
 
 Anything provides the `any` binary, which is a small flexible program intended
 to do calculations and query for numerical facts. Among other things it can do:
@@ -12,3 +12,5 @@ to do calculations and query for numerical facts. Among other things it can do:
 
 You can thing of `any` is a much simpler and local wolfram engine. Which I'm
 hoping to extend it as I go along.
+
+Driving the search is tantivy.

@@ -1,5 +1,5 @@
 use crate::compound::Compound;
-use rational::Rational;
+use crate::rational::Rational;
 
 /// A arbitrary precision numerical value with a unit.
 #[derive(Debug, Clone, PartialEq, Eq)]

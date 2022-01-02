@@ -7,8 +7,11 @@ use std::mem;
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct DisplaySpec {
+    /// The number of digits to limit.
     pub limit: usize,
+    /// The number of exponents to limit.
     pub exponent_limit: usize,
+    /// Whether or not to show a `...` continuation.
     pub show_continuation: bool,
 }
 

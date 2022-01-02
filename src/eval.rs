@@ -2,13 +2,13 @@ use crate::compound::{Compound, CompoundError};
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
 use crate::query::Description;
+use crate::rational::Rational;
 use crate::syntax::parser::{SyntaxKind, SyntaxNode};
 use crate::unit::Unit;
 use crate::unit_parser::UnitParser;
 use crate::{db, Query};
 use num::bigint::Sign;
 use num::{Signed, Zero};
-use rational::Rational;
 use rowan::TextRange;
 
 use ErrorKind::*;

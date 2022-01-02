@@ -1,14 +1,17 @@
+use anything::rational::DisplaySpec;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use codespan_reporting::files::{Files, SimpleFiles};
 use codespan_reporting::term;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use num::One;
-use rational::DisplaySpec;
 use std::io::Write;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "facts", about = "Calculate facts about the world.")]
+#[structopt(
+    name = "any",
+    about = "Calculate everything and nothing with perfect precision."
+)]
 struct Opts {
     /// Describe the looked up components in the expression.
     #[structopt(long)]

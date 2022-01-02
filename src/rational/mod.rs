@@ -1,3 +1,5 @@
+//! Helper module for calculating rational numbers.
+
 use num::traits::Pow;
 use num::{BigInt, BigRational, One, ToPrimitive, Zero};
 use serde::{de, ser};
@@ -44,7 +46,7 @@ impl Rational {
         self.rational.denom()
     }
 
-    /// Construct from a 64-bit float.
+    /// Construct from a 64-bit float. Returns `None` if the float is not a number.
     pub fn from_f64(value: f64) -> Option<Self> {
         let rational = BigRational::from_float(value)?;
         Some(Self { rational })

@@ -1,7 +1,7 @@
 use crate::compound::Compound;
 use crate::db::LookupError;
+use crate::rational::ParseRationalError;
 use crate::syntax::parser::SyntaxKind;
-use rational::ParseRationalError;
 use rowan::TextRange;
 use std::num::ParseIntError;
 use std::ops::Range;

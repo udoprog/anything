@@ -2,9 +2,8 @@ use crate::analyzer::Analyzer;
 use crate::cache;
 use crate::db::{Db, Sources};
 use anyhow::{anyhow, Result};
+use anything::{Constant, Rational, Source};
 use calamine::{DataType, Reader, Xlsx};
-use facts::{Constant, Source};
-use rational::Rational;
 use std::io::Cursor;
 
 const SOURCE: u64 = 0x23afb9ae5087db93;
@@ -64,7 +63,9 @@ pub async fn download(analyzer: &Analyzer, db: &mut Db, sources: &mut Sources) -
         };
 
         let population = match row.get(last_year) {
-            Some(DataType::Float(population)) => Rational::from_f64(*population) * &thousand,
+            Some(DataType::Float(population)) => {
+                Rational::from_f64(*population).unwrap_or_else(|| Rational::new(1, 1)) * &thousand
+            }
             Some(DataType::Int(population)) => Rational::new(*population, 1u32) * &thousand,
             _ => {
                 continue;

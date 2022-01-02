@@ -215,7 +215,10 @@ impl Db {
 
             config.meta.version = Some(config.this_version.to_owned());
             config.meta.database_hash = Some(hash);
-            config.write_meta()?;
+
+            if !in_memory {
+                config.write_meta()?;
+            }
         }
 
         Ok(db)

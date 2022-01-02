@@ -32,14 +32,14 @@ fn main() -> anyhow::Result<()> {
 
     let query = opts.query.join(" ");
 
-    let db = facts::Db::open()?;
+    let db = anything::Db::open()?;
 
     let mut files = SimpleFiles::new();
     let id = files.add("<in>", query);
 
     let config = codespan_reporting::term::Config::default();
 
-    let options = facts::Options::default();
+    let options = anything::Options::default();
     let mut descriptions = Vec::new();
 
     let options = if opts.describe {
@@ -48,13 +48,13 @@ fn main() -> anyhow::Result<()> {
         options
     };
 
-    let node = facts::parse(files.source(id)?);
+    let node = anything::parse(files.source(id)?);
 
     if opts.syntax {
         node.emit(&mut out)?;
     }
 
-    for value in facts::query(node, &db, options, &mut descriptions) {
+    for value in anything::query(node, &db, options, &mut descriptions) {
         match value {
             Ok(value) => {
                 if opts.exact {
@@ -95,7 +95,7 @@ fn main() -> anyhow::Result<()> {
 
         for description in descriptions {
             match description {
-                facts::Description::Constant(query, c) => {
+                anything::Description::Constant(query, c) => {
                     write!(out, "{:?} => {}", query, c.description)?;
 
                     if let Some(s) = c.source.and_then(|id| db.get_source(id)) {

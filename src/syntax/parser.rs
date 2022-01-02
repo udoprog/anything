@@ -4,7 +4,7 @@ use rowan::{Checkpoint, GreenNodeBuilder};
 use std::collections::VecDeque;
 
 /// Exact skip performed or to perform.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Skip(usize);
 
 impl Skip {
@@ -50,6 +50,8 @@ pub enum SyntaxKind {
     NUMBER,
     /// A number with a unit.
     WITH_UNIT,
+    /// A unit.
+    UNIT,
 
     /// The name of the function being called.
     FN_NAME,
@@ -150,7 +152,7 @@ impl<'a> Parser<'a> {
         } else {
             let c = self.checkpoint();
 
-            if !grammar::unit(&mut self) {
+            if !grammar::unit(&mut self, Skip::ZERO) {
                 self.bump();
                 self.finish_node_at(c, ERROR);
             }

@@ -158,9 +158,7 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Option<Checkpoint> {
                     p.finish_node_at(c, PERCENTAGE);
                 }
                 WORD | NUMBER => {
-                    p.skip(skip);
-
-                    if unit(p) {
+                    if unit(p, skip) {
                         p.finish_node_at(c, WITH_UNIT);
                     } else {
                         p.error_node_at(c);
@@ -199,7 +197,7 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Option<Checkpoint> {
 /// priorities. These are called operations and are separated by operators.
 fn operations<T>(
     p: &mut Parser<'_>,
-    operand: fn(p: &mut Parser<'_>, Skip, T) -> Option<Checkpoint>,
+    operand: fn(p: &mut Parser<'_>, Skip, T) -> Option<(Checkpoint, Skip)>,
     op: fn(p: &mut Parser<'_>, Skip) -> Option<(i32, SyntaxKind, usize, T)>,
 ) -> bool
 where
@@ -215,12 +213,10 @@ where
 
         let extra = stack.last().map(|e| e.2).unwrap_or_default();
 
-        let c = match operand(p, skip, extra) {
-            Some(last) => last,
+        let (c, skip) = match operand(p, skip, extra) {
+            Some((c, skip)) => (c, skip),
             None => return false,
         };
-
-        let skip = p.count_skip();
 
         let (priority, operator, steps, extra) = match op(p, skip) {
             Some(n) => n,
@@ -272,19 +268,21 @@ where
 pub fn expr(p: &mut Parser<'_>) -> bool {
     return operations(p, operand, op);
 
-    fn operand(p: &mut Parser<'_>, skip: Skip, is_unit: bool) -> Option<Checkpoint> {
-        if is_unit {
+    fn operand(p: &mut Parser<'_>, skip: Skip, is_unit: bool) -> Option<(Checkpoint, Skip)> {
+        let c = if is_unit {
             p.skip(skip);
             let c = p.checkpoint();
 
-            if unit(p) {
-                Some(c)
-            } else {
-                None
+            if !unit(p, Skip::ZERO) {
+                return None;
             }
+
+            c
         } else {
-            value(p, skip)
-        }
+            value(p, skip)?
+        };
+
+        Some((c, p.count_skip()))
     }
 
     /// Get the binding power of an operator.
@@ -304,35 +302,51 @@ pub fn expr(p: &mut Parser<'_>) -> bool {
 }
 
 /// Parse a unit.
-pub fn unit(p: &mut Parser<'_>) -> bool {
-    return operations(p, operand, op);
+pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> bool {
+    let mut start = None;
 
-    fn operand(p: &mut Parser<'_>, _: Skip, (): ()) -> Option<Checkpoint> {
-        match p.nth(Skip::ZERO, 0) {
+    loop {
+        // lead
+        match p.nth(skip, 0) {
             NUMBER => {
-                let c = p.checkpoint();
+                p.skip(skip);
+                start.get_or_insert_with(|| p.checkpoint());
                 p.bump_node(NUMBER);
-                Some(c)
             }
-            WORD | TO => {
-                let c = p.checkpoint();
+            WORD => {
+                p.skip(skip);
+                start.get_or_insert_with(|| p.checkpoint());
                 p.bump_node(WORD);
-                Some(c)
             }
-            _ => None,
+            TO if skip == Skip::ZERO => {
+                p.skip(skip);
+                start.get_or_insert_with(|| p.checkpoint());
+                p.bump_node(WORD);
+            }
+            _ => break,
         }
+
+        // trailing
+        loop {
+            let what = match p.nth(Skip::ZERO, 0) {
+                WORD | TO => WORD,
+                NUMBER => NUMBER,
+                STAR => OP_MUL,
+                SLASH => OP_DIV,
+                CARET | STARSTAR => OP_POWER,
+                _ => break,
+            };
+
+            p.bump_node(what);
+        }
+
+        skip = p.count_skip();
     }
 
-    /// Get the binding power of an operator.
-    fn op(p: &mut Parser<'_>, _: Skip) -> Option<(i32, SyntaxKind, usize, ())> {
-        let out = match p.nth(Skip::ZERO, 0) {
-            STAR => (3, OP_MUL, 1, ()),
-            SLASH => (3, OP_DIV, 1, ()),
-            WORD => (3, OP_IMPLICIT_MUL, 0, ()),
-            CARET | STARSTAR => (10, OP_POWER, 1, ()),
-            _ => return None,
-        };
-
-        Some(out)
+    if let Some(c) = start {
+        p.finish_node_at(c, UNIT);
+        true
+    } else {
+        false
     }
 }

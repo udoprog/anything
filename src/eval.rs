@@ -4,7 +4,6 @@ use crate::numeric::Numeric;
 use crate::query::Description;
 use crate::rational::Rational;
 use crate::syntax::parser::{SyntaxKind, SyntaxNode};
-use crate::unit::Unit;
 use crate::unit_parser::UnitParser;
 use crate::{db, Query};
 use num::bigint::Sign;
@@ -176,114 +175,89 @@ fn pow(range: TextRange, base: Numeric, pow: Numeric) -> Result<Numeric> {
     Ok(Numeric::new(value, base.unit))
 }
 
-pub fn unit(source: &str, node: SyntaxNode, bias: Bias) -> Result<Compound> {
+/// Parse a unit.
+pub fn unit(source: &str, node: SyntaxNode, _bias: Bias) -> Result<Compound> {
+    if node.kind() != UNIT {
+        return Ok(Compound::default());
+    }
+
+    let mut n = 1;
     let mut compound = Compound::default();
-    inner_unit(source, node, bias, &mut compound, 1)?;
-    Ok(compound)
-}
+    let mut last = None;
+    let mut it = node.children_with_tokens();
 
-fn inner_unit(
-    source: &str,
-    node: SyntaxNode,
-    bias: Bias,
-    compound: &mut Compound,
-    n: i32,
-) -> Result<Option<Unit>> {
-    let last = match node.kind() {
-        NUMBER => {
-            let range = node.text_range();
+    while let Some(node) = it.next() {
+        match node.kind() {
+            NUMBER => {
+                let range = node.text_range();
 
-            let number = match str::parse::<i32>(&source[range]) {
-                Ok(number) => number,
-                Err(error) => return Err(Error::new(range, ParseIntError { error })),
-            };
+                let power = match str::parse::<i32>(&source[range]) {
+                    Ok(power) => power,
+                    Err(error) => return Err(Error::new(range, ParseIntError { error })),
+                };
 
-            if number != 1 {
-                return Err(Error::new(range, IllegalUnitNumber));
+                if power != 1 {
+                    return Err(Error::new(range, IllegalUnitNumber));
+                }
             }
+            WORD => {
+                let range = node.text_range();
+                let unit = &source[range];
+                let mut parser = UnitParser::new(unit);
 
-            None
-        }
-        OPERATION => {
-            let range = node.text_range();
-            let mut it = node.children();
+                while let Some(result) = parser.next().transpose() {
+                    let (prefix, name) = match result {
+                        Ok(out) => out,
+                        Err(unit) => {
+                            return Err(Error::new(range, IllegalUnit { unit: unit.into() }));
+                        }
+                    };
 
-            let base = match it.next() {
-                Some(base) => base,
-                None => return Err(Error::new(range, MissingNode)),
-            };
-            let last = inner_unit(source, base, bias, compound, n)?;
-
-            while let (Some(op), Some(arg)) = (it.next(), it.next()) {
-                match (last, op.kind()) {
-                    (Some(last), OP_POWER) => {
-                        let power = match arg.kind() {
-                            NUMBER => match str::parse::<i32>(&source[arg.text_range()]) {
-                                Ok(power) => power,
-                                Err(error) => {
-                                    return Err(Error::new(
-                                        arg.text_range(),
-                                        ParseIntError { error },
-                                    ))
-                                }
+                    if let Err(expected) = compound.update(name, n, prefix) {
+                        return Err(Error::new(
+                            range,
+                            PrefixMismatch {
+                                unit: unit.into(),
+                                expected,
+                                actual: prefix,
                             },
-                            _ => {
-                                return Err(Error::new(
-                                    arg.text_range(),
-                                    Unexpected { kind: NUMBER },
-                                ))
-                            }
+                        ));
+                    }
+
+                    last = Some(name);
+                }
+            }
+            OP_POWER => {
+                let (kind, range) = match (last.take(), it.next()) {
+                    (Some(last), Some(node)) if node.kind() == NUMBER => {
+                        let range = node.text_range();
+
+                        let power = match str::parse::<i32>(&source[range]) {
+                            Ok(power) => power,
+                            Err(error) => return Err(Error::new(range, ParseIntError { error })),
                         };
 
                         compound.update_power(last, power * n);
+                        continue;
                     }
-                    (_, OP_MUL | OP_IMPLICIT_MUL) => {
-                        inner_unit(source, arg, bias, compound, 1)?;
-                    }
-                    (_, OP_DIV) => {
-                        inner_unit(source, arg, bias, compound, -1)?;
-                    }
-                    (_, kind) => {
-                        return Err(Error::new(op.text_range(), Unexpected { kind }));
-                    }
-                }
+                    (_, Some(node)) => (node.kind(), node.text_range()),
+                    _ => (node.kind(), node.text_range()),
+                };
+
+                return Err(Error::new(range, Unexpected { kind }));
             }
-
-            None
-        }
-        WORD => {
-            let range = node.text_range();
-            let unit = &source[range];
-            let mut parser = UnitParser::new(unit);
-
-            let mut last = None;
-
-            while let Some((prefix, name)) = parser
-                .next()
-                .map_err(|unit| Error::new(range, IllegalUnit { unit: unit.into() }))?
-            {
-                if let Err(expected) = compound.update(name, n, prefix) {
-                    return Err(Error::new(
-                        range,
-                        PrefixMismatch {
-                            unit: unit.into(),
-                            expected,
-                            actual: prefix,
-                        },
-                    ));
-                }
-
-                last = Some(name);
+            OP_MUL => {}
+            OP_DIV => {
+                n = n * -1;
             }
-
-            last
+            WHITESPACE => {}
+            kind => {
+                return Err(Error::new(node.text_range(), Unexpected { kind }));
+            }
         }
-        kind => {
-            return Err(Error::new(node.text_range(), Unexpected { kind }));
-        }
-    };
+    }
 
-    Ok(last)
+    Ok(compound)
 }
 
 /// Helper to delay evaluation of a syntax node so that we can modify its bias.
@@ -418,7 +392,14 @@ pub fn eval(q: &mut Query<'_>, node: SyntaxNode, bias: Bias) -> Result<Numeric> 
             }
         }
         PERCENTAGE => {
-            let number = node.first_token().expect("number of percentage");
+            let number = match node.first_token() {
+                Some(number) if number.kind() == NUMBER => number,
+                Some(node) => {
+                    return Err(Error::new(node.text_range(), Unexpected { kind: NUMBER }))
+                }
+                _ => return Err(Error::new(node.text_range(), Unexpected { kind: NUMBER })),
+            };
+
             let number = q.source(number.text_range());
             let number = match str::parse::<Rational>(number) {
                 Ok(number) => number,

@@ -143,3 +143,9 @@ fn test_times() {
     assert_query!("4year + 6years to decades", 1, decades);
     assert_query!("4decades + 6decades to centuries", 1, centuries);
 }
+
+#[test]
+fn test_relaxed_parser() {
+    assert_query!("1 newton second", 1, Ns);
+    assert_query!("1 newton^2 second / 1 second", 1, N ^ 2);
+}

@@ -4,7 +4,7 @@ use std::collections::{btree_map, BTreeMap};
 /// Helpers struct to build bases.
 ///
 /// ```
-/// use facts::{Unit, Powers};
+/// use anything::{Unit, Powers};
 ///
 /// let mut powers = Powers::default();
 /// powers.insert(Unit::Meter, 2);
@@ -23,7 +23,7 @@ impl Powers {
     /// Test if powers is empty.
     ///
     /// ```
-    /// use facts::Powers;
+    /// use anything::Powers;
     ///
     /// let powers = Powers::default();
     /// assert!(powers.is_empty());
@@ -35,7 +35,7 @@ impl Powers {
     /// Get the number of units in this collection.
     ///
     /// ```
-    /// use facts::{Unit, Powers};
+    /// use anything::{Unit, Powers};
     ///
     /// let mut powers = Powers::default();
     /// assert_eq!(powers.len(), 0);
@@ -53,7 +53,7 @@ impl Powers {
     /// Clear the current collection of powers.
     ///
     /// ```
-    /// use facts::{Unit, Powers};
+    /// use anything::{Unit, Powers};
     ///
     /// let mut powers = Powers::default();
     /// powers.insert(Unit::Meter, 2);
@@ -74,7 +74,7 @@ impl Powers {
     /// Get the power associated with the unit.
     ///
     /// ```
-    /// use facts::{Unit, Powers};
+    /// use anything::{Unit, Powers};
     ///
     /// let mut powers = Powers::default();
     /// powers.insert(Unit::Meter, 2);
@@ -93,7 +93,7 @@ impl Powers {
     /// This will accumulate the specified unit onto the existing powers.
     ///
     /// ```
-    /// use facts::{Unit, Powers};
+    /// use anything::{Unit, Powers};
     ///
     /// let mut powers = Powers::default();
     /// powers.insert(Unit::Meter, 2);
@@ -117,7 +117,7 @@ impl Powers {
     /// Iterate over all populated powers.
     ///
     /// ```
-    /// use facts::{Unit, Powers};
+    /// use anything::{Unit, Powers};
     ///
     /// let mut powers = Powers::default();
     /// powers.insert(Unit::Meter, 2);

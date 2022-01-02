@@ -32,7 +32,7 @@ impl From<(i32, i32)> for State {
 /// their corresponding SI prefix as the power of 10 it corresponds to.
 ///
 /// ```
-/// use facts::{Compound, Unit};
+/// use anything::{Compound, Unit};
 /// use std::iter::FromIterator;
 ///
 /// let b = Compound::from_iter([(Unit::Meter, (1, -2)), (Unit::Second, (-2, 0))]);
@@ -47,7 +47,7 @@ impl Compound {
     /// Construct the empty unit.
     ///
     /// ```
-    /// let unit = facts::Compound::empty();
+    /// let unit = anything::Compound::empty();
     /// assert!(unit.is_empty());
     /// ```
     pub fn empty() -> Self {
@@ -361,7 +361,7 @@ impl Compound {
     /// scenario that this compound unit is composed of a single unit.
     ///
     /// ```
-    /// let unit = str::parse::<facts::Compound>("decade/s").unwrap();
+    /// let unit = str::parse::<anything::Compound>("decade/s").unwrap();
     /// assert_eq!(unit.display(true).to_string(), "decades/s");
     /// ```
     pub fn display(&self, pluralize: bool) -> Display<'_> {
@@ -375,11 +375,11 @@ impl Compound {
 /// Construct a unit from an iterator of its constituent names and powers.
 ///
 /// ```
-/// use facts::{Unit, Compound};
+/// use anything::{Unit, Compound};
 /// use std::iter::FromIterator;
 ///
-/// let a = str::parse::<facts::Compound>("cm/s^2").unwrap();
-/// let b = facts::Compound::from_iter([(Unit::Meter, (1, -2)), (Unit::Second, (-2, 0))]);
+/// let a = str::parse::<anything::Compound>("cm/s^2").unwrap();
+/// let b = anything::Compound::from_iter([(Unit::Meter, (1, -2)), (Unit::Second, (-2, 0))]);
 ///
 /// assert_eq!(a, b);
 /// assert_eq!(a.to_string(), "cm/s²");

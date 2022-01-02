@@ -1,3 +1,4 @@
+use crate::rational::DisplaySpec;
 use crate::Rational;
 
 #[test]
@@ -46,19 +47,31 @@ fn test_exponent() {
 
 #[test]
 fn test_display() {
-    let s = Rational::new(1u32, 3u32).display(8, 6, true).to_string();
+    let basic = DisplaySpec {
+        limit: 8,
+        exponent_limit: 6,
+        show_continuation: true,
+    };
+
+    let extended = DisplaySpec {
+        limit: 40,
+        exponent_limit: 6,
+        show_continuation: true,
+    };
+
+    let s = Rational::new(1u32, 3u32).display(&basic).to_string();
     assert_eq!(s, "0.33333333…");
 
-    let s = Rational::new(1u32, 1415u32).display(8, 6, true).to_string();
+    let s = Rational::new(1u32, 1415u32).display(&basic).to_string();
     assert_eq!(s, "0.00070671378…");
 
     let s = Rational::new(1u32, 1415123312312333214u64)
-        .display(8, 6, true)
+        .display(&basic)
         .to_string();
     assert_eq!(s, "7.0665219…e-19");
 
     let s = Rational::new(1u32, 1415123312312333214u64)
-        .display(40, 6, true)
+        .display(&extended)
         .to_string();
     assert_eq!(s, "7.066521986454909362816626182915140226065…e-19");
 }

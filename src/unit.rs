@@ -37,7 +37,7 @@ impl Unit {
     /// Populate powers for the current unit.
     ///
     /// ```
-    /// use facts::Unit;
+    /// use anything::Unit;
     ///
     /// let second = Unit::Second;
     /// let mut powers = Default::default();

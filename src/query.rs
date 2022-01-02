@@ -87,6 +87,12 @@ impl Node<'_> {
 }
 
 /// Parse the given source and return the corresponding node.
+///
+/// ```
+/// use anything::parse;
+///
+/// let node = parse("0.99c");
+/// ```
 pub fn parse(source: &str) -> Node<'_> {
     let parser = Parser::new(source);
     let node = parser.parse_root();
@@ -95,11 +101,17 @@ pub fn parse(source: &str) -> Node<'_> {
 
 /// Perform a query over the given string and database.
 ///
-/// ```rust
-/// let db = facts::Db::open().unwrap();
-/// let mut values = facts::query("0.99c", &db);
+/// ```
+/// use anything::{Db, Options, parse, query};
 ///
-/// assert!(values.next().unwrap().is_ok());
+/// let db = Db::open().unwrap();
+/// let node = parse("0.99c");
+///
+/// let options = Options::default();
+/// let mut descriptions = Vec::new();
+/// let mut values = query(node, &db, options, &mut descriptions);
+///
+/// assert!(matches!(values.next(), Some(Ok(..))));
 /// ```
 pub fn query<'a>(
     node: Node<'a>,

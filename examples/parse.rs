@@ -1,5 +1,5 @@
 use anyhow::Result;
-use facts::syntax::parser;
+use anything::syntax::parser;
 use rowan::NodeOrToken;
 use std::collections::VecDeque;
 

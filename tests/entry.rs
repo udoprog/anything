@@ -40,12 +40,16 @@ macro_rules! ratio {
 
 #[macro_export]
 macro_rules! lit {
+    ($a:literal $(/ $b:literal)?) => {
+        anything::Numeric::new(ratio!($a $(/ $b)*), anything::Compound::empty())
+    };
+
     ($a:literal $(/ $b:literal)? $(, $($tt:tt)*)?) => {
         anything::Numeric::new(
             ratio!($a $(/ $b)*),
-            str::parse::<anything::Compound>(concat!($($(stringify!($tt)),*)*)).unwrap(),
+            str::parse::<anything::Compound>(concat!($($(stringify!($tt)),*)*)).unwrap()
         )
-    }
+    };
 }
 
 /// Assert that the result of the given query matches the given literal value.

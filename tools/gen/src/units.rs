@@ -72,10 +72,12 @@ impl Unit {
         }
     }
 
-    fn display(&self) -> String {
-        match self {
-            Unit::Base(base) => base.unit.clone(),
-            Unit::Derived(derived) => format!("Unit::Derived(units::{})", derived.name),
+    fn display(&self, unit: &rust::Import, units: &rust::Import) -> impl FormatInto<Rust> {
+        quote! {
+            #(match self {
+                Unit::Base(base) => #unit::#(&base.unit),
+                Unit::Derived(derived) => Unit::Derived(#units::#(&derived.name)),
+            })
         }
     }
 }
@@ -158,29 +160,21 @@ pub fn parser(doc: &Doc) -> rust::Tokens {
     let units = &rust::import("crate", "units");
 
     quote! {
-        #(register(unit))
-        #(register(prefix))
-        #(register(units))
-
         #[derive(#logos, Debug, Clone, Copy, PartialEq, Eq)]
         enum Combined {
-            #(for unit in &productive_units => #(ref t {
-                for name in unit.names() {
-                    if !prefixes.contains_key(name) {
-                        quote_in!(*t => #[token(#(quoted(name)))]#<push>);
-                    }
-                }
-
-                quote_in!(*t => #(unit.variant()),#<push>);
-            }))
+            #(for unit in &productive_units {
+                #(for name in unit.names() {
+                    #(if !prefixes.contains_key(name) {
+                        #[token(#(quoted(name)))]#<push>
+                    })
+                })
+                #(unit.variant()),#<push>
+            })
             #("/// Prefixes")
-            #(for unit in &doc.prefixes => #(ref t {
-                for name in &unit.names {
-                    quote_in!(*t => #[token(#(quoted(name)))]#<push>);
-                }
-
-                quote_in!(*t => #(&unit.variant),#<push>);
-            }))
+            #(for unit in &doc.prefixes {
+                #(for name in &unit.names => #[token(#(quoted(name)))]#<push>)
+                #(&unit.variant),#<push>
+            })
             #[token("-")]
             Separator,
             #[error]
@@ -189,13 +183,10 @@ pub fn parser(doc: &Doc) -> rust::Tokens {
 
         #[derive(#logos, Debug, Clone, Copy, PartialEq, Eq)]
         enum Units {
-            #(for unit in &doc.units => #(ref t {
-                for name in unit.names() {
-                    quote_in!(*t => #[token(#(quoted(name)))]#<push>);
-                }
-
-                quote_in!(*t => #(unit.variant()),#<push>);
-            }))
+            #(for unit in &doc.units {
+                #(for name in unit.names() join (#<push>) => #[token(#(quoted(name)))])
+                #(unit.variant()),#<push>
+            })
             #[token("-")]
             Separator,
             #[error]
@@ -211,21 +202,21 @@ pub fn parser(doc: &Doc) -> rust::Tokens {
                 let token = lexer.next()?;
 
                 let unit = match token {
-                    #(for unit in &productive_units join(#<push>) =>
-                        Combined::#(unit.variant()) => {
-                            #(if let Some(bias) = unit.prefix_bias() => prefix += #bias;)
-                            #(unit.display())
+                    #(for u in &productive_units join(#<push>) =>
+                        Combined::#(u.variant()) => {
+                            #(if let Some(bias) = u.prefix_bias() => prefix += #bias;)
+                            #(u.display(unit, units))
                         }
                     )
                     #(for p in &doc.prefixes join(#<push>) =>
                         Combined::#(&p.variant) => {
-                            #(if let Some(unit) = suffix_units.get(&p.variant) {
+                            #(if let Some(u) = suffix_units.get(&p.variant) {
                                 if lexer.remainder().is_empty() {
-                                    #(if let Some(bias) = unit.prefix_bias() => prefix += #bias;)
-                                    return Some(("", prefix, #(unit.display())));
+                                    #(if let Some(bias) = u.prefix_bias() => prefix += #bias;)
+                                    return Some(("", prefix, #(u.display(unit, units))));
                                 }#<line>
                             })
-                            prefix += #(&p.prefix);
+                            prefix += #prefix::#(&p.prefix);
                             break;
                         }
                     )
@@ -238,7 +229,7 @@ pub fn parser(doc: &Doc) -> rust::Tokens {
                 };
 
                 return Some((lexer.remainder(), prefix, unit));
-            };
+            }
 
             let mut lexer = Units::lexer(lexer.remainder());
 
@@ -246,12 +237,12 @@ pub fn parser(doc: &Doc) -> rust::Tokens {
                 let token = lexer.next()?;
 
                 match token {
-                    #(for unit in &doc.units join(#<push>) =>
-                        Units::#(unit.variant()) => {
-                            #(if let Some(bias) = unit.prefix_bias() => prefix += #bias;)
-                            break #(unit.display());
+                    #(for u in &doc.units join(#<push>) {
+                        Units::#(u.variant()) => {
+                            #(if let Some(bias) = u.prefix_bias() => prefix += #bias;)
+                            break #(u.display(unit, units));
                         }
-                    )
+                    })
                     Units::Separator => {
                         continue;
                     }

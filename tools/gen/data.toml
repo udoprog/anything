@@ -2,43 +2,43 @@
 type = "base"
 variant = "Second"
 names = ["s", "sec", "second", "seconds"]
-unit = "Unit::Second"
+unit = "Second"
 [[units]]
 type = "base"
 variant = "Meter"
 names = ["m", "metre", "meter", "meters"]
-unit = "Unit::Meter"
+unit = "Meter"
 [[units]]
 type = "base"
 variant = "Gram"
 names = ["g", "gram"]
-unit = "Unit::KiloGram"
+unit = "KiloGram"
 prefix_bias = -3
 [[units]]
 type = "base"
 variant = "Ampere"
 names = ["A", "ampere", "amperes"]
-unit = "Unit::Ampere"
+unit = "Ampere"
 [[units]]
 type = "base"
 variant = "Kelvin"
 names = ["K", "kelvin", "kelvins"]
-unit = "Unit::Kelvin"
+unit = "Kelvin"
 [[units]]
 type = "base"
 variant = "Mole"
 names = ["mol", "mols", "mole", "moles"]
-unit = "Unit::Mole"
+unit = "Mole"
 [[units]]
 type = "base"
 variant = "Candela"
 names = ["cd", "candela", "candelas"]
-unit = "Unit::Candela"
+unit = "Candela"
 [[units]]
 type = "base"
 variant = "Byte"
 names = ["B", "byte"]
-unit = "Unit::Byte"
+unit = "Byte"
 
 [[units]]
 type = "derived"
@@ -523,80 +523,80 @@ name = "SPECIFIC_IMPULSE"
 [[prefixes]]
 variant = "Yotta"
 names = ["Y", "yotta"]
-prefix = "Prefix::YOTTA"
+prefix = "YOTTA"
 [[prefixes]]
 variant = "Zetta"
 names = ["Z", "zetta"]
-prefix = "Prefix::ZETTA"
+prefix = "ZETTA"
 [[prefixes]]
 variant = "Exa"
 names = ["E", "exa"]
-prefix = "Prefix::EXA"
+prefix = "EXA"
 [[prefixes]]
 variant = "Peta"
 names = ["P", "peta"]
-prefix = "Prefix::PETA"
+prefix = "PETA"
 [[prefixes]]
 variant = "Tera"
 names = ["T", "tera"]
-prefix = "Prefix::TERA"
+prefix = "TERA"
 [[prefixes]]
 variant = "Giga"
 names = ["G", "giga"]
-prefix = "Prefix::GIGA"
+prefix = "GIGA"
 [[prefixes]]
 variant = "Mega"
 names = ["M", "mega"]
-prefix = "Prefix::MEGA"
+prefix = "MEGA"
 [[prefixes]]
 variant = "Kilo"
 names = ["k", "kilo"]
-prefix = "Prefix::KILO"
+prefix = "KILO"
 [[prefixes]]
 variant = "Hecto"
 names = ["h", "hecto"]
-prefix = "Prefix::HECTO"
+prefix = "HECTO"
 [[prefixes]]
 variant = "Deca"
 names = ["da", "deca"]
-prefix = "Prefix::DECA"
+prefix = "DECA"
 [[prefixes]]
 variant = "Deci"
 names = ["d", "deci"]
-prefix = "Prefix::DECI"
+prefix = "DECI"
 [[prefixes]]
 variant = "Centi"
 names = ["c", "centi"]
-prefix = "Prefix::CENTI"
+prefix = "CENTI"
 [[prefixes]]
 variant = "Milli"
 names = ["m", "milli"]
-prefix = "Prefix::MILLI"
+prefix = "MILLI"
 [[prefixes]]
 variant = "Micro"
 names = ["μ", "micro"]
-prefix = "Prefix::MICRO"
+prefix = "MICRO"
 [[prefixes]]
 variant = "Nano"
 names = ["n", "nano"]
-prefix = "Prefix::NANO"
+prefix = "NANO"
 [[prefixes]]
 variant = "Pico"
 names = ["p", "pico"]
-prefix = "Prefix::PICO"
+prefix = "PICO"
 [[prefixes]]
 variant = "Femto"
 names = ["f", "femto"]
-prefix = "Prefix::FEMTO"
+prefix = "FEMTO"
 [[prefixes]]
 variant = "Atto"
 names = ["a", "atto"]
-prefix = "Prefix::ATTO"
+prefix = "ATTO"
 [[prefixes]]
 variant = "Zepto"
 names = ["z", "zepto"]
-prefix = "Prefix::ZEPTO"
+prefix = "ZEPTO"
 [[prefixes]]
 variant = "Yocto"
 names = ["y", "yocto"]
-prefix = "Prefix::YOCTO"
+prefix = "YOCTO"

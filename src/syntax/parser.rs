@@ -9,6 +9,7 @@ pub struct Skip(usize);
 
 impl Skip {
     pub const ZERO: Self = Self(0);
+    pub const ONE: Self = Self(1);
 }
 
 /// The kind of a token.
@@ -146,16 +147,8 @@ impl<'a> Parser<'a> {
 
     /// Consume and parse a unit node.
     pub fn parse_unit(mut self) -> SyntaxNode {
-        if let EOF = self.nth(Skip::ZERO, 0) {
-            self.builder.start_node(WORD.into());
-            self.builder.finish_node();
-        } else {
-            let c = self.checkpoint();
-
-            if !grammar::unit(&mut self, Skip::ZERO) {
-                self.bump();
-                self.finish_node_at(c, ERROR);
-            }
+        if grammar::unit(&mut self, Skip::ZERO).is_none() {
+            self.bump_empty_node(ERROR);
         }
 
         SyntaxNode::new_root(self.builder.finish())
@@ -194,6 +187,11 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn checkpoint(&mut self) -> Checkpoint {
         self.builder.checkpoint()
+    }
+
+    pub(crate) fn bump_empty_node(&mut self, kind: SyntaxKind) {
+        self.builder.start_node(kind.into());
+        self.builder.finish_node();
     }
 
     pub(crate) fn bump_node(&mut self, kind: SyntaxKind) {
@@ -248,14 +246,6 @@ impl<'a> Parser<'a> {
             self.builder.token(t.kind.into(), text);
             self.buf.pop_front();
         }
-    }
-
-    pub(crate) fn start_node(&mut self, kind: SyntaxKind) {
-        self.builder.start_node(kind.into());
-    }
-
-    pub(crate) fn finish_node(&mut self) {
-        self.builder.finish_node();
     }
 
     pub fn count_skip(&mut self) -> Skip {

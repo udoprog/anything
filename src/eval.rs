@@ -178,7 +178,10 @@ fn pow(range: TextRange, base: Numeric, pow: Numeric) -> Result<Numeric> {
 /// Parse a unit.
 pub fn unit(source: &str, node: SyntaxNode, _bias: Bias) -> Result<Compound> {
     if node.kind() != UNIT {
-        return Ok(Compound::default());
+        return Err(Error::new(
+            node.text_range(),
+            Unexpected { kind: node.kind() },
+        ));
     }
 
     let mut n = 1;

@@ -32,7 +32,6 @@
 //! without the hassle of having to go online for your answers.
 
 #![deny(missing_docs)]
-#![allow(clippy::neg_multiply)]
 
 mod compound;
 mod config;

@@ -51,13 +51,13 @@ fn main() -> anyhow::Result<()> {
         options
     };
 
-    let node = anything::parse(files.source(id)?);
+    let parsed = anything::parse(files.source(id)?)?;
 
     if opts.syntax {
-        node.emit(&mut out)?;
+        parsed.emit(&mut out)?;
     }
 
-    for value in anything::query(node, &db, options, &mut descriptions) {
+    for value in anything::query(&parsed, &db, options, &mut descriptions) {
         match value {
             Ok(value) => {
                 if opts.exact {

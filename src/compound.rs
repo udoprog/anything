@@ -1,11 +1,14 @@
+use crate::error::ErrorKind;
 use crate::powers::Powers;
 use crate::rational::Rational;
-use crate::syntax::parser::Parser;
+use crate::syntax::parser::{Parser, Syntax};
 use crate::unit::{Conversion, Unit};
+use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::collections::{btree_map, BTreeMap};
 use std::fmt;
 use std::iter::FromIterator;
+use syntree::Span;
 
 #[non_exhaustive]
 pub(crate) struct CompoundError;
@@ -451,11 +454,35 @@ impl fmt::Display for Display<'_> {
 }
 
 impl std::str::FromStr for Compound {
-    type Err = crate::error::Error;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let node = Parser::new(s).parse_unit();
-        crate::eval::unit(s, node, Default::default())
+        let node = match Parser::new(s).parse_unit() {
+            Ok(node) => node,
+            Err(error) => {
+                return Err(Error::new(
+                    Span::new(0, s.len()),
+                    ErrorKind::TreeError { error },
+                ))
+            }
+        };
+
+        let children = match node.first() {
+            Some(node) if *node.value() == Syntax::UNIT => node.children(),
+            Some(node) => {
+                return Err(Error::new(
+                    node.span(),
+                    ErrorKind::Expected {
+                        expected: Syntax::UNIT,
+                        actual: *node.value(),
+                    },
+                )
+                .into())
+            }
+            None => Default::default(),
+        };
+
+        crate::eval::unit(s, children, Default::default())
     }
 }
 

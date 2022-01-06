@@ -1,28 +1,28 @@
 use crate::compound::Compound;
 use crate::db::LookupError;
 use crate::rational::ParseRationalError;
-use crate::syntax::parser::SyntaxKind;
-use rowan::TextRange;
+use crate::syntax::parser::Syntax;
 use std::num::ParseIntError;
 use std::ops::Range;
+use syntree::{Span, TreeError};
 use thiserror::Error;
 
 /// A facts error.
 #[derive(Debug, Error)]
 #[error("{kind}")]
 pub struct Error {
-    range: TextRange,
+    span: Span,
     kind: ErrorKind,
 }
 
 impl Error {
     /// Get the text range for the current error.
     pub fn range(&self) -> Range<usize> {
-        usize::from(self.range.start())..usize::from(self.range.end())
+        self.span.range()
     }
 
-    pub(crate) fn new(range: TextRange, kind: ErrorKind) -> Self {
-        Self { range, kind }
+    pub(crate) fn new(span: Span, kind: ErrorKind) -> Self {
+        Self { span, kind }
     }
 }
 
@@ -51,9 +51,11 @@ pub(crate) enum ErrorKind {
     #[error("bad decimal number: {error}")]
     ParseRationalError { error: ParseRationalError },
     #[error("bad number: {error}")]
-    ParseIntError { error: ParseIntError },
+    BadNumber { error: ParseIntError },
     #[error("unexpected syntax `{kind:?}` (internal error)")]
-    Unexpected { kind: SyntaxKind },
+    Unexpected { kind: Syntax },
+    #[error("unexpected syntax `{actual:?}`, expected {expected:?} (internal error)")]
+    Expected { actual: Syntax, expected: Syntax },
     #[error("nothing matching `{query}` found in database")]
     Missing { query: Box<str> },
     #[error("unit `{unit}` is not a valid unit")]
@@ -80,4 +82,10 @@ pub(crate) enum ErrorKind {
     IllegalPowerUnit,
     #[error("the power of a number must be an integer")]
     IllegalPowerNonInteger,
+    #[error("error when building tree")]
+    TreeError {
+        #[source]
+        #[from]
+        error: TreeError,
+    },
 }

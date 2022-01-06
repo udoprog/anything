@@ -9,8 +9,8 @@ macro_rules! query {
         let db = anything::Db::in_memory().unwrap();
         let options = Default::default();
         let mut descriptions = Vec::new();
-        let node = anything::parse($expr);
-        let mut values = anything::query(node, &db, options, &mut descriptions);
+        let parsed = anything::parse($expr).unwrap();
+        let mut values = anything::query(&parsed, &db, options, &mut descriptions);
         let value = values.next().unwrap().unwrap();
         assert!(values.next().is_none());
         value

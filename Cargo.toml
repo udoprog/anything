@@ -19,7 +19,7 @@ num = { version = "0.4.0", features = ["serde"] }
 anyhow = "1.0.52"
 hashbrown = "0.11.2"
 serde = { version = "1.0.133", features = ["derive"] }
-rowan = "0.15.2"
+syntree = "0.10.2"
 logos = "0.12.0"
 thiserror = "1.0.30"
 codespan-reporting = "0.11.1"
@@ -39,3 +39,6 @@ structopt = "0.3.25"
 members = [
     "tools/*",
 ]
+
+[patch.crates-io]
+syntree = { path = "../syntree" }

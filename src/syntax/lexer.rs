@@ -1,12 +1,13 @@
-use crate::syntax::parser::SyntaxKind;
-use crate::syntax::span::Span;
-use SyntaxKind::*;
+use crate::syntax::parser::Syntax;
+
+use Syntax::*;
 
 /// A lexed token.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Token {
-    pub span: Span,
-    pub kind: SyntaxKind,
+    pub len: usize,
+    pub kind: Syntax,
 }
 
 /// The facts lexer.
@@ -26,52 +27,39 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Get the text for the given span.
-    pub fn text(&self, span: Span) -> &str {
-        self.source
-            .get(span.start()..span.end())
-            .expect("expected span")
-    }
-
     /// Peek the next character.
     fn peek(&self) -> Option<char> {
         self.source.get(self.pos..)?.chars().next()
     }
 
     /// Peek the next next character.
-    fn peek2(&mut self) -> Option<char> {
-        self.source.get(self.pos..)?.chars().nth(1)
+    fn peek2(&mut self) -> Option<(char, char)> {
+        let mut it = self.source.get(self.pos..)?.chars();
+        Some((it.next()?, it.next().unwrap_or_default()))
     }
 
     /// Step to the next character.
     fn step(&mut self) {
-        let mut it = self.source.get(self.pos..).into_iter().flat_map(str::chars);
-
-        self.pos = match it.next() {
-            Some(c) => self.pos + c.len_utf8(),
-            None => self.source.len(),
-        };
+        if let Some(c) = self.source.get(self.pos..).and_then(|s| s.chars().next()) {
+            self.pos += c.len_utf8();
+        }
     }
 
     fn consume_number(&mut self, mut dot: bool) -> usize {
         let mut count = 0;
 
-        while let Some(c) = self.peek() {
-            match c {
-                '0'..='9' => {
+        while let Some((a, b)) = self.peek2() {
+            match (a, b) {
+                ('0'..='9', _) => {
                     self.step();
                     count += 1;
                 }
-                '.' if !dot => {
+                ('.', _) if !dot => {
                     self.step();
                     dot = true;
                     count += 1;
                 }
-                'e' | 'E' => {
-                    if !matches!(self.peek2(), Some('-' | '+' | '0'..='9')) {
-                        break;
-                    }
-
+                ('e' | 'E', '-' | '+' | '0'..='9') => {
                     self.step();
                     count += 1;
 
@@ -108,11 +96,7 @@ impl<'a> Lexer<'a> {
     fn consume_escaped_word(&mut self) -> usize {
         let mut count = 0;
 
-        while let Some(c) = self.peek() {
-            if c.is_whitespace() || c == '}' {
-                break;
-            }
-
+        while matches!(self.peek(), Some(c) if c.is_whitespace() || c == '}') {
             count += 1;
             self.step();
         }
@@ -122,11 +106,7 @@ impl<'a> Lexer<'a> {
 
     /// Consume until ws.
     fn consume_whitespace(&mut self) {
-        while let Some(c) = self.peek() {
-            if !c.is_whitespace() {
-                break;
-            }
-
+        while matches!(self.peek(), Some(c) if c.is_whitespace()) {
             self.step();
         }
     }
@@ -157,7 +137,7 @@ impl<'a> Lexer<'a> {
         };
 
         Some(Token {
-            span: Span::new(start as u32, self.pos as u32),
+            len: self.pos.saturating_sub(start),
             kind,
         })
     }
@@ -263,7 +243,7 @@ impl Iterator for Lexer<'_> {
         };
 
         Some(Token {
-            span: Span::new(start as u32, self.pos as u32),
+            len: self.pos.saturating_sub(start),
             kind,
         })
     }

@@ -1,6 +1,6 @@
 use crate::rational::Rational;
 use num::{One, ToPrimitive};
-use rowan::TextRange;
+use syntree::Span;
 
 use crate::error::ErrorKind::*;
 use crate::{Error, Numeric};
@@ -8,7 +8,7 @@ use crate::{Error, Numeric};
 type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Expect end decode a single argument.
-fn one(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
+fn one(range: Span, arguments: Vec<Numeric>) -> Result<Numeric> {
     let actual = arguments.len();
     let mut it = arguments.into_iter();
 
@@ -25,7 +25,7 @@ fn one(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
 }
 
 /// Calculate the sine of a number.
-pub(crate) fn sin(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
+pub(crate) fn sin(range: Span, arguments: Vec<Numeric>) -> Result<Numeric> {
     let first = one(range, arguments)?;
 
     let value = match first.value.to_f64() {
@@ -38,7 +38,7 @@ pub(crate) fn sin(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> 
 }
 
 /// Calculate the cosine of a number.
-pub(crate) fn cos(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
+pub(crate) fn cos(range: Span, arguments: Vec<Numeric>) -> Result<Numeric> {
     let first = one(range, arguments)?;
 
     let value = match first.value.to_f64() {
@@ -51,7 +51,7 @@ pub(crate) fn cos(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> 
 }
 
 /// Round a number with an optional power.
-pub(crate) fn round(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
+pub(crate) fn round(range: Span, arguments: Vec<Numeric>) -> Result<Numeric> {
     let actual = arguments.len();
     let mut it = arguments.into_iter();
 
@@ -94,7 +94,7 @@ pub(crate) fn round(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric
 }
 
 /// Floor a number.
-pub(crate) fn floor(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
+pub(crate) fn floor(range: Span, arguments: Vec<Numeric>) -> Result<Numeric> {
     let first = one(range, arguments)?;
     let value = first.value.floor();
     debug_assert!(value.denom().is_one());
@@ -102,7 +102,7 @@ pub(crate) fn floor(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric
 }
 
 /// Ceil a number.
-pub(crate) fn ceil(range: TextRange, arguments: Vec<Numeric>) -> Result<Numeric> {
+pub(crate) fn ceil(range: Span, arguments: Vec<Numeric>) -> Result<Numeric> {
     let first = one(range, arguments)?;
     let value = first.value.ceil();
     debug_assert!(value.denom().is_one());

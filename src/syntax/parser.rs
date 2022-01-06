@@ -1,7 +1,7 @@
 use crate::syntax::grammar;
 use crate::syntax::lexer::{Lexer, Token};
-use rowan::{Checkpoint, GreenNodeBuilder};
 use std::collections::VecDeque;
+use syntree::{Id, Tree, TreeBuilder, TreeError};
 
 /// Exact skip performed or to perform.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -13,12 +13,11 @@ impl Skip {
 }
 
 /// The kind of a token.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
-#[repr(u16)]
-pub enum SyntaxKind {
+pub enum Syntax {
     /// An expression whitespace.
-    WHITESPACE = 0,
+    WHITESPACE,
     /// `*`.
     STAR,
     /// `**`.
@@ -87,45 +86,14 @@ pub enum SyntaxKind {
     ERROR,
     /// End of input.
     EOF,
-    /// The root of an expression.
-    ROOT,
 }
 
-use SyntaxKind::*;
-
-/// A Facts syntax node.
-pub type SyntaxNode = rowan::SyntaxNode<FactsLang>;
-/// A Facts syntax token.
-pub type SyntaxToken = rowan::SyntaxToken<FactsLang>;
-
-impl From<SyntaxKind> for rowan::SyntaxKind {
-    fn from(kind: SyntaxKind) -> Self {
-        Self(kind as u16)
-    }
-}
-
-/// A rowan language definition for Facts.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum FactsLang {}
-
-impl rowan::Language for FactsLang {
-    type Kind = SyntaxKind;
-
-    fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
-        assert!(raw.0 <= SyntaxKind::ROOT as u16);
-        // Safety: we're asserting the layout above.
-        unsafe { std::mem::transmute::<u16, SyntaxKind>(raw.0) }
-    }
-
-    fn kind_to_raw(kind: Self::Kind) -> rowan::SyntaxKind {
-        kind.into()
-    }
-}
+use Syntax::*;
 
 /// A parser.
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
-    builder: GreenNodeBuilder<'static>,
+    builder: TreeBuilder<Syntax>,
     buf: VecDeque<Token>,
 }
 
@@ -134,27 +102,27 @@ impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Parser<'a> {
         Self {
             lexer: Lexer::new(source),
-            builder: GreenNodeBuilder::new(),
+            builder: TreeBuilder::new(),
             buf: VecDeque::new(),
         }
     }
 
     /// Consume and parse a root node.
-    pub fn parse_root(mut self) -> SyntaxNode {
-        grammar::root(&mut self);
-        SyntaxNode::new_root(self.builder.finish())
+    pub fn parse_root(mut self) -> Result<Tree<Syntax>, TreeError> {
+        grammar::root(&mut self)?;
+        Ok(self.builder.build()?)
     }
 
     /// Consume and parse a unit node.
-    pub fn parse_unit(mut self) -> SyntaxNode {
-        if grammar::unit(&mut self, Skip::ZERO).is_none() {
-            self.bump_empty_node(ERROR);
+    pub fn parse_unit(mut self) -> Result<Tree<Syntax>, TreeError> {
+        if grammar::unit(&mut self, Skip::ZERO)?.is_none() {
+            self.bump_empty_node(ERROR)?;
         }
 
-        SyntaxNode::new_root(self.builder.finish())
+        Ok(self.builder.build()?)
     }
 
-    pub(crate) fn eat(&mut self, skip: Skip, expected: &[SyntaxKind]) -> bool {
+    pub(crate) fn eat(&mut self, skip: Skip, expected: &[Syntax]) -> bool {
         for (n, k) in expected.iter().enumerate() {
             match self.get(n) {
                 Some(t) if t.kind == *k => {}
@@ -175,7 +143,7 @@ impl<'a> Parser<'a> {
 
     /// Bump until the given syntax kind has been reached (or the whole parses
     /// has been consumed).
-    pub(crate) fn bump_until(&mut self, kind: SyntaxKind) {
+    pub(crate) fn bump_until(&mut self, kind: Syntax) {
         while let Some(node) = self.get(0) {
             self.bump();
 
@@ -185,29 +153,31 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(crate) fn checkpoint(&mut self) -> Checkpoint {
+    pub(crate) fn checkpoint(&mut self) -> Id {
         self.builder.checkpoint()
     }
 
-    pub(crate) fn bump_empty_node(&mut self, kind: SyntaxKind) {
-        self.builder.start_node(kind.into());
-        self.builder.finish_node();
+    pub(crate) fn bump_empty_node(&mut self, kind: Syntax) -> Result<(), TreeError> {
+        self.builder.open(kind);
+        self.builder.close()?;
+        Ok(())
     }
 
-    pub(crate) fn bump_node(&mut self, kind: SyntaxKind) {
-        self.builder.start_node(kind.into());
+    pub(crate) fn bump_node(&mut self, kind: Syntax) -> Result<(), TreeError> {
+        self.builder.open(kind);
         self.bump();
-        self.builder.finish_node();
+        self.builder.close()?;
+        Ok(())
     }
 
-    pub(crate) fn finish_node_at(&mut self, c: Checkpoint, kind: SyntaxKind) {
-        self.builder.start_node_at(c, kind.into());
-        self.builder.finish_node();
+    pub(crate) fn close_at(&mut self, c: Id, kind: Syntax) -> Result<(), TreeError> {
+        self.builder.close_at(c, kind)?;
+        Ok(())
     }
 
-    pub(crate) fn error_node_at(&mut self, c: Checkpoint) {
-        self.builder.start_node_at(c, ERROR.into());
-        self.builder.finish_node();
+    pub(crate) fn error_node_at(&mut self, c: Id) -> Result<(), TreeError> {
+        self.builder.close_at(c, ERROR)?;
+        Ok(())
     }
 
     /// Fill the buffer up until the size of `n`.
@@ -233,7 +203,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(crate) fn nth(&mut self, skip: Skip, n: usize) -> SyntaxKind {
+    pub(crate) fn nth(&mut self, skip: Skip, n: usize) -> Syntax {
         match self.get(skip.0 + n) {
             Some(t) => t.kind,
             None => EOF,
@@ -242,8 +212,7 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn bump(&mut self) {
         if let Some(t) = self.get(0) {
-            let text = self.lexer.text(t.span);
-            self.builder.token(t.kind.into(), text);
+            self.builder.token(t.kind, t.len);
             self.buf.pop_front();
         }
     }

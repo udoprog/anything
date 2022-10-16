@@ -39,6 +39,3 @@ structopt = "0.3.25"
 members = [
     "tools/*",
 ]
-
-[patch.crates-io]
-syntree = { path = "../syntree" }

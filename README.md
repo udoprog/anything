@@ -32,5 +32,3 @@ The `any` command can do a couple of really interesting things:
 
 You can think of `any` is a **much** smaller and local wolfram engine,
 without the hassle of having to go online for your answers.
-
-License: MIT/Apache-2.0

@@ -2,17 +2,15 @@
 name = "anything"
 version = "0.1.3"
 authors = ["John-John Tedro <udoprog@tedro.se>"]
-license = "MIT/Apache-2.0"
 edition = "2021"
-readme = "README.md"
-repository = "https://github.com/udoprog/anything"
-homepage = "https://github.com/udoprog/anything"
+description = "Calculate everything and nothing with perfect precision."
 documentation = "https://docs.rs/anything"
-keywords = ["language", "scripting"]
-categories = []
-description = """
-Calculate everything and nothing with perfect precision.
-"""
+readme = "README.md"
+homepage = "https://github.com/udoprog/anything"
+repository = "https://github.com/udoprog/anything"
+license = "MIT/Apache-2.0"
+keywords = ["cli", "language", "scripting"]
+categories = ["command-line-interface"]
 
 [dependencies]
 num = { version = "0.4.0", features = ["serde"] }

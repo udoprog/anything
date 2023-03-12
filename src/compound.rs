@@ -75,7 +75,6 @@ impl Compound {
     /// Insert powers of the given unit, ensures that the prefix of any existing
     /// units matches otherwise will return the prefix that was expected as
     /// `Err(<prefix>)`.
-    #[must_use]
     pub fn update(&mut self, unit: Unit, power: i32, prefix: i32) -> Result<(), i32> {
         match self.names.entry(unit) {
             btree_map::Entry::Vacant(e) => {
@@ -165,7 +164,7 @@ impl Compound {
 
         for (name, state) in &self.names {
             if let Some(conversion) = name.conversion() {
-                apply_conversion(state.power * -1, value, conversion)?;
+                apply_conversion(-state.power, value, conversion)?;
             }
 
             *value /= Rational::new(10u32, 1u32).pow(state.prefix * state.power);
@@ -297,7 +296,7 @@ impl Compound {
                     // original factor modifier, which we apply to mod_power to
                     // get the original power back. Then we multiply by `-1`
                     // because we want to shed the multiples here.
-                    apply_conversion(mod_power * -1, out, conversion)?;
+                    apply_conversion(-mod_power, out, conversion)?;
                 }
             }
 
@@ -476,8 +475,7 @@ impl std::str::FromStr for Compound {
                         expected: Syntax::UNIT,
                         actual: *node.value(),
                     },
-                )
-                .into())
+                ))
             }
             None => Default::default(),
         };

@@ -274,7 +274,7 @@ fn open_index(config: &crate::config::Config) -> Result<(bool, Index)> {
     };
 
     if !force_rebuild {
-        if let Some(index) = Index::open_in_dir(&config.index_path).ok() {
+        if let Ok(index) = Index::open_in_dir(&config.index_path) {
             log::trace!("opened index: {}", config.index_path.display());
             return Ok((false, index));
         }

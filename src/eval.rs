@@ -239,7 +239,7 @@ pub(crate) fn unit(source: &str, mut nodes: Nodes<'_, Syntax>, _bias: Bias) -> R
                 return Err(Error::new(span, Unexpected { kind }));
             }
             OP_DIV => {
-                current = current * -1;
+                current = -current;
             }
             WHITESPACE | OP_MUL => {}
             kind => {
@@ -385,7 +385,7 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Num
                             .push(Description::Constant(s.into(), c.clone()));
                     }
 
-                    Ok(Numeric::new(c.value.clone(), c.unit.clone()))
+                    Ok(Numeric::new(c.value.clone(), c.unit))
                 }
             }
         }

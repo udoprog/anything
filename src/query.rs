@@ -26,10 +26,7 @@ pub struct Options {
 impl Options {
     /// Enable description of a query.
     pub fn describe(self) -> Self {
-        Self {
-            describe: true,
-            ..self
-        }
+        Self { describe: true }
     }
 }
 

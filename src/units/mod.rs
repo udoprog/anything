@@ -1,5 +1,7 @@
 //! Available derived units.
 
+#![allow(clippy::neg_multiply)]
+
 use crate::unit::{Conversion, ConversionFraction, Derived, DerivedVtable, Unit};
 
 pub mod area;

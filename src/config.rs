@@ -85,7 +85,7 @@ pub fn open() -> Result<Config> {
         None
     };
 
-    let meta = meta.unwrap_or_else(|| Meta {
+    let meta = meta.unwrap_or(Meta {
         version: None,
         database_hash: None,
     });
@@ -102,7 +102,7 @@ fn try_read(path: &Path) -> Option<Meta> {
     let f = match fs::File::open(path) {
         Ok(f) => f,
         Err(e) => {
-            log::error!("failed to open meta file: {}", e);
+            log::error!("failed to open meta file: {e}");
             return None;
         }
     };
@@ -110,8 +110,8 @@ fn try_read(path: &Path) -> Option<Meta> {
     match serde_json::from_reader(f) {
         Ok(meta) => Some(meta),
         Err(e) => {
-            log::error!("failed to open meta: {}", e);
-            return None;
+            log::error!("failed to open meta: {e}");
+            None
         }
     }
 }

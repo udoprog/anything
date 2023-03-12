@@ -110,7 +110,7 @@ impl<'a> Parser<'a> {
     /// Consume and parse a root node.
     pub fn parse_root(mut self) -> Result<Tree<Syntax>, TreeError> {
         grammar::root(&mut self)?;
-        Ok(self.builder.build()?)
+        self.builder.build()
     }
 
     /// Consume and parse a unit node.
@@ -119,7 +119,7 @@ impl<'a> Parser<'a> {
             self.bump_empty_node(ERROR)?;
         }
 
-        Ok(self.builder.build()?)
+        self.builder.build()
     }
 
     pub(crate) fn eat(&mut self, skip: Skip, expected: &[Syntax]) -> bool {

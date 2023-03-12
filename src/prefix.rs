@@ -24,7 +24,7 @@ const PREFIXES: [(i32, Prefix); 21] = [
     (Prefix::YOTTA, Prefix::Yotta),
 ];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum Prefix {
     Yotta,
@@ -37,6 +37,7 @@ pub enum Prefix {
     Kilo,
     Hecto,
     Deca,
+    #[default]
     None,
     Deci,
     Centi,
@@ -82,12 +83,6 @@ impl Prefix {
         };
 
         (prefix, p - pow)
-    }
-}
-
-impl Default for Prefix {
-    fn default() -> Self {
-        Prefix::None
     }
 }
 

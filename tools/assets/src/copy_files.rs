@@ -34,8 +34,8 @@ pub async fn copy_files(db: &mut Db) -> Result<()> {
 
     for e in std::fs::read_dir(&db_path)? {
         let e = e?;
-        let content = fs::read(e.path()).await?;
-        let inner_db: InnerDb = toml::from_slice(&content)?;
+        let content = fs::read_to_string(e.path()).await?;
+        let inner_db: InnerDb = toml::from_str(&content)?;
 
         for c in inner_db.constants {
             db.constants.push(Constant {

@@ -120,10 +120,7 @@ fn test_velocities() {
 fn test_multiple_identity_sheds() {
     let expected = query!("0.05c / 500 years * mass of earth to N");
 
-    assert_eq!(
-        expected.value.clone(),
-        ratio!(223795069897000000000000000 / 39447)
-    );
+    assert_eq!(expected.value, ratio!(223795069897000000000000000 / 39447));
 
     let mut alternatives = Vec::new();
     alternatives.push("(0.05c to m/s) / 500years * mass of earth to N");

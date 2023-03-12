@@ -27,34 +27,16 @@ where
     Ok(())
 }
 
-#[derive(Serialize)]
+#[derive(Default, Serialize)]
 /// A database with constants.
 pub struct Db {
     /// Constant in the database.
     pub constants: Vec<Constant>,
 }
 
-impl Db {
-    /// Construct a new empty database file.
-    pub fn new() -> Self {
-        Self {
-            constants: Vec::new(),
-        }
-    }
-}
-
-#[derive(Serialize)]
+#[derive(Default, Serialize)]
 /// Data sources.
 pub struct Sources {
     /// Sources in the database.
     pub sources: Vec<Source>,
-}
-
-impl Sources {
-    /// Construct a new sources container.
-    pub fn new() -> Self {
-        Self {
-            sources: Vec::new(),
-        }
-    }
 }

@@ -23,6 +23,7 @@ const PLANETS_URL: &str =
     "https://raw.githubusercontent.com/devstronomy/nasa-data-scraper/master/data/json/planets.json";
 
 #[derive(Debug, Deserialize)]
+#[allow(unused)]
 pub struct Planet {
     id: u64,
     name: String,
@@ -158,6 +159,7 @@ const SATELLITES_URL: &str =
     "https://raw.githubusercontent.com/devstronomy/nasa-data-scraper/master/data/json/satellites.json";
 
 #[derive(Debug, Deserialize)]
+#[allow(unused)]
 pub struct Satellite {
     id: u64,
     #[serde(rename = "planetId")]

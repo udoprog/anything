@@ -174,7 +174,7 @@ impl fmt::Display for Display<'_> {
                     f.write_char('-')?;
                 }
 
-                if exp.abs() as usize >= self.spec.exponent_limit {
+                if exp.unsigned_abs() as usize >= self.spec.exponent_limit {
                     d.fmt(f)?;
                     continue;
                 }

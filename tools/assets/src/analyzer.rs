@@ -8,21 +8,6 @@ pub struct Analyzer {
 }
 
 impl Analyzer {
-    /// Construct a new analyzer.
-    pub fn new() -> Self {
-        let mut stop_words = HashSet::new();
-
-        for word in STOP_WORDS.split('\n') {
-            let word = word.trim();
-
-            if !word.is_empty() {
-                stop_words.insert(word.to_owned());
-            }
-        }
-
-        Self { stop_words }
-    }
-
     /// Filter a word with the analyzer.
     pub(crate) fn filter<'a>(&'a self, word: &'a str) -> impl Iterator<Item = Box<str>> + 'a {
         let it = word.split(split_fn);
@@ -44,5 +29,22 @@ impl Analyzer {
 
             matches!(c, '/' | '-')
         }
+    }
+}
+
+/// Construct a new analyzer.
+impl Default for Analyzer {
+    fn default() -> Self {
+        let mut stop_words = HashSet::new();
+
+        for word in STOP_WORDS.split('\n') {
+            let word = word.trim();
+
+            if !word.is_empty() {
+                stop_words.insert(word.to_owned());
+            }
+        }
+
+        Self { stop_words }
     }
 }

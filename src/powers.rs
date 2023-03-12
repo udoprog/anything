@@ -145,7 +145,7 @@ impl<'a> IntoIterator for &'a Powers {
     }
 }
 
-impl<'a> IntoIterator for Powers {
+impl IntoIterator for Powers {
     type Item = (Unit, i32);
     type IntoIter = IntoIter;
 
@@ -179,7 +179,7 @@ pub struct IntoIter {
     iter: btree_map::IntoIter<Unit, i32>,
 }
 
-impl<'a> Iterator for IntoIter {
+impl Iterator for IntoIter {
     type Item = (Unit, i32);
 
     fn next(&mut self) -> Option<Self::Item> {

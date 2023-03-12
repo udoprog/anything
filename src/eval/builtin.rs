@@ -77,16 +77,14 @@ pub(crate) fn round(range: Span, arguments: Vec<Numeric>) -> Result<Numeric> {
 
     let value = if second >= 0 && first.value.denom().is_one() {
         first.value
+    } else if second == 0 {
+        first.value.round()
     } else {
-        if second == 0 {
-            first.value.round()
-        } else {
-            let ten = Rational::new(10u32, 1u32).pow(second);
-            first.value *= &ten;
-            let mut value = first.value.round();
-            value /= &ten;
-            value
-        }
+        let ten = Rational::new(10u32, 1u32).pow(second);
+        first.value *= &ten;
+        let mut value = first.value.round();
+        value /= &ten;
+        value
     };
 
     debug_assert!(value.denom().is_one());

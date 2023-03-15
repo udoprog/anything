@@ -1,33 +1,36 @@
 use std::cmp::Ordering;
 
 use crate::syntax::parser::{Parser, Skip, Syntax};
-use syntree::{Id, TreeError};
+use syntree::Checkpoint;
+
+type PointerU32 = <u32 as syntree::pointer::Width>::Pointer;
+type Result<T, E = syntree::Error> = std::result::Result<T, E>;
 
 use Syntax::*;
 
 /// Parse the root of an expression.
-pub fn root(p: &mut Parser<'_>) -> Result<(), TreeError> {
+pub fn root(p: &mut Parser<'_>) -> Result<()> {
     let mut error = false;
     let mut skip = p.count_skip();
 
-    let c = p.checkpoint();
+    let c = p.checkpoint()?;
 
     loop {
         match p.nth(skip, 0) {
             EOF => {
-                p.skip(skip);
+                p.skip(skip)?;
                 break;
             }
             OPEN_BRACE | OPEN_PAREN | WORD | NUMBER => {
                 if let Some(s) = operation(p, skip)? {
                     skip = s;
                 } else {
-                    p.error_node_at(c)?;
+                    p.error_node_at(&c)?;
                 }
             }
             _ => {
-                p.skip(skip);
-                p.bump();
+                p.skip(skip)?;
+                p.bump()?;
                 error = true;
                 skip = p.count_skip();
             }
@@ -35,14 +38,14 @@ pub fn root(p: &mut Parser<'_>) -> Result<(), TreeError> {
     }
 
     if error {
-        p.close_at(c, ERROR)?;
+        p.close_at(&c, ERROR)?;
     }
 
     Ok(())
 }
 
-fn call_arguments(p: &mut Parser<'_>) -> Result<bool, TreeError> {
-    let c = p.checkpoint();
+fn call_arguments(p: &mut Parser<'_>) -> Result<bool> {
+    let c = p.checkpoint()?;
 
     let skip = loop {
         let skip = p.count_skip();
@@ -58,64 +61,64 @@ fn call_arguments(p: &mut Parser<'_>) -> Result<bool, TreeError> {
                     return Ok(false);
                 };
 
-                if !p.eat(skip, &[COMMA]) {
+                if !p.eat(skip, &[COMMA])? {
                     break skip;
                 }
             }
         }
     };
 
-    p.close_at(c, FN_ARGUMENTS)?;
-    Ok(p.eat(skip, &[CLOSE_PAREN]))
+    p.close_at(&c, FN_ARGUMENTS)?;
+    p.eat(skip, &[CLOSE_PAREN])
 }
 
-fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Id>, TreeError> {
+fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerU32>>> {
     match p.nth(skip, 0) {
         // Escape sequence.
         OPEN_BRACE => {
-            p.skip(skip);
-            let start = p.checkpoint();
+            p.skip(skip)?;
+            let start = p.checkpoint()?;
 
-            p.bump();
+            p.bump()?;
 
-            let c = p.checkpoint();
+            let c = p.checkpoint()?;
             let mut skip = p.count_skip();
             let mut words = 0usize;
 
             while let WORD = p.nth(skip, 0) {
-                p.skip(skip);
+                p.skip(skip)?;
                 p.bump_node(WORD)?;
                 skip = p.count_skip();
                 words += 1;
             }
 
             if words > 1 {
-                p.close_at(c, SENTENCE)?;
+                p.close_at(&c, SENTENCE)?;
             }
 
-            if !p.eat(skip, &[CLOSE_BRACE]) {
-                p.bump_until(CLOSE_BRACE);
+            if !p.eat(skip, &[CLOSE_BRACE])? {
+                p.bump_until(CLOSE_BRACE)?;
                 return Ok(None);
             }
 
             Ok(Some(start))
         }
         WORD => {
-            p.skip(skip);
-            let start = p.checkpoint();
+            p.skip(skip)?;
+            let start = p.checkpoint()?;
 
-            let c = p.checkpoint();
+            let c = p.checkpoint()?;
             p.bump_node(WORD)?;
 
             if let OPEN_PAREN = p.nth(Skip::ZERO, 0) {
-                p.close_at(c, FN_NAME)?;
-                p.bump();
+                p.close_at(&c, FN_NAME)?;
+                p.bump()?;
 
                 if !call_arguments(p)? {
                     return Ok(None);
                 }
 
-                p.close_at(c, FN_CALL)?;
+                p.close_at(&c, FN_CALL)?;
                 return Ok(Some(start));
             }
 
@@ -123,29 +126,29 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Id>, TreeError> {
             let mut is_sentence = false;
 
             while let WORD | NUMBER = p.nth(skip, 0) {
-                p.skip(skip);
+                p.skip(skip)?;
                 p.bump_node(WORD)?;
                 skip = p.count_skip();
                 is_sentence = true;
             }
 
             if is_sentence {
-                p.close_at(c, SENTENCE)?;
+                p.close_at(&c, SENTENCE)?;
             }
 
             Ok(Some(start))
         }
         NUMBER => {
-            p.skip(skip);
-            let c = p.checkpoint();
-            p.bump();
+            p.skip(skip)?;
+            let c = p.checkpoint()?;
+            p.bump()?;
 
             let skip = p.count_skip();
 
             let kind = match p.nth(skip, 0) {
                 PERCENTAGE => {
-                    p.skip(skip);
-                    p.bump();
+                    p.skip(skip)?;
+                    p.bump()?;
                     PERCENTAGE
                 }
                 _ => {
@@ -157,20 +160,20 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Id>, TreeError> {
                 }
             };
 
-            p.close_at(c, kind)?;
+            p.close_at(&c, kind)?;
             Ok(Some(c))
         }
         OPEN_PAREN => {
-            p.skip(skip);
-            let c = p.checkpoint();
-            p.bump();
+            p.skip(skip)?;
+            let c = p.checkpoint()?;
+            p.bump()?;
 
             let skip = match operation(p, skip)? {
                 Some(skip) => skip,
                 None => return Ok(None),
             };
 
-            if !p.eat(skip, &[CLOSE_PAREN]) {
+            if !p.eat(skip, &[CLOSE_PAREN])? {
                 return Ok(None);
             }
 
@@ -182,10 +185,10 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Id>, TreeError> {
 
 /// Parse an operation. An operation is [value]s separated by one or more
 /// operators of the same priority.
-pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>, TreeError> {
-    let open = p.checkpoint();
+pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>> {
+    let open = p.checkpoint()?;
 
-    let mut stack = Vec::<(Id, i32, bool)>::new();
+    let mut stack = Vec::<(Checkpoint<PointerU32>, i32, bool)>::new();
     let mut first = true;
 
     loop {
@@ -202,14 +205,14 @@ pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>, Tre
         };
 
         if std::mem::take(&mut first) {
-            stack.push((open, priority, extra));
+            stack.push((open.clone(), priority, extra));
         }
 
         while let Some(prev) = stack.last_mut() {
             match priority.cmp(&prev.1) {
                 Ordering::Less => {
-                    p.close_at(prev.0, OPERATION)?;
-                    *prev = (prev.0, priority, extra);
+                    p.close_at(&prev.0, OPERATION)?;
+                    *prev = (prev.0.clone(), priority, extra);
                     continue;
                 }
                 Ordering::Greater => {
@@ -224,20 +227,24 @@ pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>, Tre
 
         // Defer the skip as long as possible so it's not included in the
         // OPERATION span.
-        p.skip(cur_skip);
+        p.skip(cur_skip)?;
         p.bump_node(operator)?;
         skip = p.count_skip();
     }
 
     while let Some((last, _, _)) = stack.pop() {
-        p.close_at(last, OPERATION)?;
+        p.close_at(&last, OPERATION)?;
     }
 
     return Ok(Some(skip));
 
-    fn operand(p: &mut Parser<'_>, skip: Skip, is_unit: bool) -> Result<Option<Id>, TreeError> {
+    fn operand(
+        p: &mut Parser<'_>,
+        skip: Skip,
+        is_unit: bool,
+    ) -> Result<Option<Checkpoint<PointerU32>>> {
         let c = if is_unit {
-            p.skip(skip);
+            p.skip(skip)?;
             unit(p, Skip::ZERO)?
         } else {
             value(p, skip)?
@@ -265,7 +272,7 @@ pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>, Tre
 }
 
 /// Parse a unit.
-pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Id>, TreeError> {
+pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Checkpoint<PointerU32>>> {
     let mut c = None;
 
     'outer: loop {
@@ -276,10 +283,10 @@ pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Id>, TreeError>
             _ => break,
         };
 
-        p.skip(skip);
+        p.skip(skip)?;
 
         if c.is_none() {
-            c = Some(p.checkpoint());
+            c = Some(p.checkpoint()?);
         }
 
         p.bump_node(kind)?;
@@ -300,7 +307,7 @@ pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Id>, TreeError>
         };
     }
 
-    if let Some(c) = c {
+    if let Some(c) = &c {
         p.close_at(c, UNIT)?;
     }
 

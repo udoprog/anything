@@ -1,17 +1,19 @@
+use std::num::ParseIntError;
+use std::ops::Range;
+
+use syntree::Span;
+use thiserror::Error;
+
 use crate::compound::Compound;
 use crate::db::LookupError;
 use crate::rational::ParseRationalError;
 use crate::syntax::parser::Syntax;
-use std::num::ParseIntError;
-use std::ops::Range;
-use syntree::{Span, TreeError};
-use thiserror::Error;
 
 /// A facts error.
 #[derive(Debug, Error)]
 #[error("{kind}")]
 pub struct Error {
-    span: Span,
+    span: Span<u32>,
     kind: ErrorKind,
 }
 
@@ -21,7 +23,7 @@ impl Error {
         self.span.range()
     }
 
-    pub(crate) fn new(span: Span, kind: ErrorKind) -> Self {
+    pub(crate) fn new(span: Span<u32>, kind: ErrorKind) -> Self {
         Self { span, kind }
     }
 }
@@ -86,6 +88,6 @@ pub(crate) enum ErrorKind {
     TreeError {
         #[source]
         #[from]
-        error: TreeError,
+        error: syntree::Error,
     },
 }

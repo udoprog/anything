@@ -460,7 +460,7 @@ impl std::str::FromStr for Compound {
             Ok(node) => node,
             Err(error) => {
                 return Err(Error::new(
-                    Span::new(0, s.len()),
+                    Span::new(0, s.len() as u32),
                     ErrorKind::TreeError { error },
                 ))
             }
@@ -470,7 +470,7 @@ impl std::str::FromStr for Compound {
             Some(node) if *node.value() == Syntax::UNIT => node.children(),
             Some(node) => {
                 return Err(Error::new(
-                    node.span(),
+                    *node.span(),
                     ErrorKind::Expected {
                         expected: Syntax::UNIT,
                         actual: *node.value(),

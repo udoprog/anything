@@ -260,7 +260,7 @@ impl Db {
                 doc.add_text(self.field_name, token.as_ref());
             }
 
-            writer.add_document(doc);
+            writer.add_document(doc)?;
         }
 
         Ok(())

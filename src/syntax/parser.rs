@@ -1,7 +1,12 @@
+use std::collections::VecDeque;
+
+use syntree::pointer::Width;
+use syntree::{Builder, Checkpoint, Tree};
+
 use crate::syntax::grammar;
 use crate::syntax::lexer::{Lexer, Token};
-use std::collections::VecDeque;
-use syntree::{Id, Tree, TreeBuilder, TreeError};
+
+type Result<T, E = syntree::Error> = std::result::Result<T, E>;
 
 /// Exact skip performed or to perform.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -93,7 +98,7 @@ use Syntax::*;
 /// A parser.
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
-    builder: TreeBuilder<Syntax>,
+    builder: Builder<Syntax, u32, u32>,
     buf: VecDeque<Token>,
 }
 
@@ -102,19 +107,19 @@ impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Parser<'a> {
         Self {
             lexer: Lexer::new(source),
-            builder: TreeBuilder::new(),
+            builder: Builder::new_with(),
             buf: VecDeque::new(),
         }
     }
 
     /// Consume and parse a root node.
-    pub fn parse_root(mut self) -> Result<Tree<Syntax>, TreeError> {
+    pub fn parse_root(mut self) -> Result<Tree<Syntax, u32, u32>> {
         grammar::root(&mut self)?;
         self.builder.build()
     }
 
     /// Consume and parse a unit node.
-    pub fn parse_unit(mut self) -> Result<Tree<Syntax>, TreeError> {
+    pub fn parse_unit(mut self) -> Result<Tree<Syntax, u32, u32>> {
         if grammar::unit(&mut self, Skip::ZERO)?.is_none() {
             self.bump_empty_node(ERROR)?;
         }
@@ -122,60 +127,66 @@ impl<'a> Parser<'a> {
         self.builder.build()
     }
 
-    pub(crate) fn eat(&mut self, skip: Skip, expected: &[Syntax]) -> bool {
+    pub(crate) fn eat(&mut self, skip: Skip, expected: &[Syntax]) -> Result<bool> {
         for (n, k) in expected.iter().enumerate() {
             match self.get(n) {
                 Some(t) if t.kind == *k => {}
-                _ => return false,
+                _ => return Ok(false),
             }
         }
 
         for _ in 0..skip.0 {
-            self.bump();
+            self.bump()?;
         }
 
         for _ in 0..expected.len() {
-            self.bump();
+            self.bump()?;
         }
 
-        true
+        Ok(true)
     }
 
     /// Bump until the given syntax kind has been reached (or the whole parses
     /// has been consumed).
-    pub(crate) fn bump_until(&mut self, kind: Syntax) {
+    pub(crate) fn bump_until(&mut self, kind: Syntax) -> Result<()> {
         while let Some(node) = self.get(0) {
-            self.bump();
+            self.bump()?;
 
             if node.kind == kind {
                 break;
             }
         }
+
+        Ok(())
     }
 
-    pub(crate) fn checkpoint(&mut self) -> Id {
+    pub(crate) fn checkpoint(&mut self) -> Result<Checkpoint<<u32 as Width>::Pointer>> {
         self.builder.checkpoint()
     }
 
-    pub(crate) fn bump_empty_node(&mut self, kind: Syntax) -> Result<(), TreeError> {
-        self.builder.open(kind);
+    pub(crate) fn bump_empty_node(&mut self, kind: Syntax) -> Result<()> {
+        self.builder.open(kind)?;
         self.builder.close()?;
         Ok(())
     }
 
-    pub(crate) fn bump_node(&mut self, kind: Syntax) -> Result<(), TreeError> {
-        self.builder.open(kind);
-        self.bump();
+    pub(crate) fn bump_node(&mut self, kind: Syntax) -> Result<()> {
+        self.builder.open(kind)?;
+        self.bump()?;
         self.builder.close()?;
         Ok(())
     }
 
-    pub(crate) fn close_at(&mut self, c: Id, kind: Syntax) -> Result<(), TreeError> {
+    pub(crate) fn close_at(
+        &mut self,
+        c: &Checkpoint<<u32 as Width>::Pointer>,
+        kind: Syntax,
+    ) -> Result<()> {
         self.builder.close_at(c, kind)?;
         Ok(())
     }
 
-    pub(crate) fn error_node_at(&mut self, c: Id) -> Result<(), TreeError> {
+    pub(crate) fn error_node_at(&mut self, c: &Checkpoint<<u32 as Width>::Pointer>) -> Result<()> {
         self.builder.close_at(c, ERROR)?;
         Ok(())
     }
@@ -197,10 +208,12 @@ impl<'a> Parser<'a> {
         self.buf.get(n).copied()
     }
 
-    pub(crate) fn skip(&mut self, skip: Skip) {
+    pub(crate) fn skip(&mut self, skip: Skip) -> Result<()> {
         for _ in 0..skip.0 {
-            self.bump();
+            self.bump()?;
         }
+
+        Ok(())
     }
 
     pub(crate) fn nth(&mut self, skip: Skip, n: usize) -> Syntax {
@@ -210,11 +223,13 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(crate) fn bump(&mut self) {
+    pub(crate) fn bump(&mut self) -> Result<()> {
         if let Some(t) = self.get(0) {
-            self.builder.token(t.kind, t.len);
+            self.builder.token(t.kind, t.len)?;
             self.buf.pop_front();
         }
+
+        Ok(())
     }
 
     pub fn count_skip(&mut self) -> Skip {

@@ -2,8 +2,8 @@ use std::io;
 
 use anyhow::Result;
 use codespan_reporting::term::termcolor::StandardStream;
-use syntree::Span;
-use syntree::{Nodes, Tree};
+use syntree::node::Children;
+use syntree::{Span, Tree};
 
 use crate::db;
 use crate::error::Error;
@@ -33,7 +33,7 @@ impl Options {
 /// A parsed node with associated source.
 pub struct Parsed<'a> {
     source: &'a str,
-    tree: Tree<Syntax>,
+    tree: Tree<Syntax, u32, u32>,
 }
 
 impl Parsed<'_> {
@@ -98,7 +98,7 @@ pub struct Query<'a> {
     pub(crate) ctx: Context,
     pub(crate) source: &'a str,
     pub(crate) db: &'a db::Db,
-    pub(crate) children: Nodes<'a, Syntax>,
+    pub(crate) children: Children<'a, Syntax, u32, u32>,
     pub(crate) options: Options,
     pub(crate) descriptions: &'a mut Vec<Description>,
 }
@@ -110,7 +110,7 @@ impl<'a> Query<'a> {
     }
 
     /// Lookup the source corresponding to the given range.
-    pub(crate) fn source(&self, span: Span) -> &'a str {
+    pub(crate) fn source(&self, span: Span<u32>) -> &'a str {
         &self.source[span.range()]
     }
 }

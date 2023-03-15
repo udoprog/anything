@@ -1,3 +1,8 @@
+use num::bigint::Sign;
+use num::{Signed, Zero};
+use syntree::node::Children;
+use syntree::{Node, Span};
+
 use crate::compound::{Compound, CompoundError};
 use crate::error::{Error, ErrorKind};
 use crate::numeric::Numeric;
@@ -6,9 +11,6 @@ use crate::rational::Rational;
 use crate::syntax::parser::Syntax;
 use crate::unit_parser::UnitParser;
 use crate::{db, Query};
-use num::bigint::Sign;
-use num::{Signed, Zero};
-use syntree::{Node, Nodes, Span};
 
 use ErrorKind::*;
 use Syntax::*;
@@ -18,7 +20,7 @@ type Result<T, E = Error> = std::result::Result<T, E>;
 mod builtin;
 
 /// Built-in function to use.
-pub(crate) type BuiltIn = fn(Span, Vec<Numeric>) -> Result<Numeric>;
+pub(crate) type BuiltIn = fn(Span<u32>, Vec<Numeric>) -> Result<Numeric>;
 
 /// Try to look up a built-in function.
 pub(crate) fn builtin(name: &str) -> Option<BuiltIn> {
@@ -57,7 +59,7 @@ impl Bias {
     }
 }
 
-fn add(span: Span, a: Numeric, mut b: Numeric) -> Result<Numeric> {
+fn add(span: Span<u32>, a: Numeric, mut b: Numeric) -> Result<Numeric> {
     match a.unit.factor(&b.unit, &mut b.value) {
         Ok(true) => Ok(Numeric::new(a.value + b.value, a.unit)),
         Ok(false) => Err(Error::new(
@@ -78,7 +80,7 @@ fn add(span: Span, a: Numeric, mut b: Numeric) -> Result<Numeric> {
     }
 }
 
-fn sub(span: Span, a: Numeric, mut b: Numeric) -> Result<Numeric> {
+fn sub(span: Span<u32>, a: Numeric, mut b: Numeric) -> Result<Numeric> {
     match a.unit.factor(&b.unit, &mut b.value) {
         Ok(true) => Ok(Numeric::new(a.value - b.value, a.unit)),
         Ok(false) => Err(Error::new(
@@ -99,7 +101,7 @@ fn sub(span: Span, a: Numeric, mut b: Numeric) -> Result<Numeric> {
     }
 }
 
-fn div(span: Span, mut a: Numeric, mut b: Numeric) -> Result<Numeric> {
+fn div(span: Span<u32>, mut a: Numeric, mut b: Numeric) -> Result<Numeric> {
     let unit = match a.unit.mul(&b.unit, -1, &mut a.value, &mut b.value) {
         Ok(unit) => unit,
         Err(CompoundError) => {
@@ -120,7 +122,7 @@ fn div(span: Span, mut a: Numeric, mut b: Numeric) -> Result<Numeric> {
     Ok(Numeric::new(a.value / b.value, unit))
 }
 
-fn mul(span: Span, mut a: Numeric, mut b: Numeric) -> Result<Numeric> {
+fn mul(span: Span<u32>, mut a: Numeric, mut b: Numeric) -> Result<Numeric> {
     let unit = match a.unit.mul(&b.unit, 1, &mut a.value, &mut b.value) {
         Ok(unit) => unit,
         Err(CompoundError) => {
@@ -141,7 +143,7 @@ fn mul(span: Span, mut a: Numeric, mut b: Numeric) -> Result<Numeric> {
     Ok(Numeric::new(a.value * b.value, unit))
 }
 
-fn pow(span: Span, base: Numeric, pow: Numeric) -> Result<Numeric> {
+fn pow(span: Span<u32>, base: Numeric, pow: Numeric) -> Result<Numeric> {
     if !pow.unit.is_empty() {
         return Err(Error::new(span, IllegalPowerUnit));
     }
@@ -176,7 +178,11 @@ fn pow(span: Span, base: Numeric, pow: Numeric) -> Result<Numeric> {
 }
 
 /// Parse a unit.
-pub(crate) fn unit(source: &str, mut nodes: Nodes<'_, Syntax>, _bias: Bias) -> Result<Compound> {
+pub(crate) fn unit(
+    source: &str,
+    mut nodes: Children<'_, Syntax, u32, u32>,
+    _bias: Bias,
+) -> Result<Compound> {
     let mut current = 1;
     let mut compound = Compound::default();
     let mut last = None;
@@ -186,11 +192,11 @@ pub(crate) fn unit(source: &str, mut nodes: Nodes<'_, Syntax>, _bias: Bias) -> R
             NUMBER => {
                 let power = match str::parse::<i32>(&source[node.range()]) {
                     Ok(power) => power,
-                    Err(error) => return Err(Error::new(node.span(), BadNumber { error })),
+                    Err(error) => return Err(Error::new(*node.span(), BadNumber { error })),
                 };
 
                 if power != 1 {
-                    return Err(Error::new(node.span(), IllegalUnitNumber));
+                    return Err(Error::new(*node.span(), IllegalUnitNumber));
                 }
             }
             WORD => {
@@ -201,13 +207,16 @@ pub(crate) fn unit(source: &str, mut nodes: Nodes<'_, Syntax>, _bias: Bias) -> R
                     let (prefix, name) = match result {
                         Ok(out) => out,
                         Err(unit) => {
-                            return Err(Error::new(node.span(), IllegalUnit { unit: unit.into() }));
+                            return Err(Error::new(
+                                *node.span(),
+                                IllegalUnit { unit: unit.into() },
+                            ));
                         }
                     };
 
                     if let Err(expected) = compound.update(name, current, prefix) {
                         return Err(Error::new(
-                            node.span(),
+                            *node.span(),
                             PrefixMismatch {
                                 unit: unit.into(),
                                 expected,
@@ -226,14 +235,14 @@ pub(crate) fn unit(source: &str, mut nodes: Nodes<'_, Syntax>, _bias: Bias) -> R
 
                         let power = match str::parse::<i32>(&source[span.range()]) {
                             Ok(power) => power,
-                            Err(error) => return Err(Error::new(span, BadNumber { error })),
+                            Err(error) => return Err(Error::new(*span, BadNumber { error })),
                         };
 
                         compound.update_power(last, power * current);
                         continue;
                     }
-                    (_, Some(node)) => (*node.value(), node.span()),
-                    _ => (*node.value(), node.span()),
+                    (_, Some(node)) => (*node.value(), *node.span()),
+                    _ => (*node.value(), *node.span()),
                 };
 
                 return Err(Error::new(span, Unexpected { kind }));
@@ -243,7 +252,7 @@ pub(crate) fn unit(source: &str, mut nodes: Nodes<'_, Syntax>, _bias: Bias) -> R
             }
             WHITESPACE | OP_MUL => {}
             kind => {
-                return Err(Error::new(node.span(), Unexpected { kind }));
+                return Err(Error::new(*node.span(), Unexpected { kind }));
             }
         }
     }
@@ -253,7 +262,7 @@ pub(crate) fn unit(source: &str, mut nodes: Nodes<'_, Syntax>, _bias: Bias) -> R
 
 /// Helper to delay evaluation of a syntax node so that we can modify its bias.
 enum DelayedEval<'a> {
-    Node(Node<'a, Syntax>),
+    Node(Node<'a, Syntax, u32, u32>),
     Numeric(Numeric),
 }
 
@@ -267,14 +276,14 @@ impl DelayedEval<'_> {
 }
 
 /// Evaluate the given syntax node.
-pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Numeric> {
+pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax, u32, u32>, bias: Bias) -> Result<Numeric> {
     match *node.value() {
         OPERATION => {
             let mut it = node.children().skip_tokens();
 
             let base = match it.next() {
                 Some(base) => base,
-                None => return Err(Error::new(node.span(), MissingNode)),
+                None => return Err(Error::new(*node.span(), MissingNode)),
             };
 
             let mut base = DelayedEval::Node(base);
@@ -296,7 +305,7 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Num
                             Ok(true) => {}
                             Ok(false) => {
                                 return Err(Error::new(
-                                    node.span(),
+                                    *node.span(),
                                     IllegalCast {
                                         from: lhs.unit,
                                         to: rhs,
@@ -305,7 +314,7 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Num
                             }
                             Err(CompoundError) => {
                                 return Err(Error::new(
-                                    node.span(),
+                                    *node.span(),
                                     ConversionNotPossible {
                                         from: lhs.unit,
                                         to: rhs,
@@ -317,26 +326,26 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Num
                         base = DelayedEval::Numeric(Numeric::new(lhs.value, rhs));
                         continue;
                     }
-                    ERROR => return Err(Error::new(op.span(), SyntaxError)),
+                    ERROR => return Err(Error::new(*op.span(), SyntaxError)),
                     kind => {
-                        return Err(Error::new(op.span(), Unexpected { kind }));
+                        return Err(Error::new(*op.span(), Unexpected { kind }));
                     }
                 };
 
                 let rhs = eval(q, rhs, bias)?;
                 let b = base.eval(q, bias)?;
 
-                base = DelayedEval::Numeric(op(node.span(), b, rhs)?);
+                base = DelayedEval::Numeric(op(*node.span(), b, rhs)?);
             }
 
             let numeric = base.eval(q, bias)?;
             Ok(numeric)
         }
         NUMBER => {
-            let number = q.source(node.span());
+            let number = q.source(*node.span());
             let number = match str::parse::<Rational>(number) {
                 Ok(number) => number,
-                Err(error) => return Err(Error::new(node.span(), ParseRationalError { error })),
+                Err(error) => return Err(Error::new(*node.span(), ParseRationalError { error })),
             };
             Ok(Numeric::new(number, Compound::empty()))
         }
@@ -345,21 +354,21 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Num
 
             let value_node = match nodes.next() {
                 Some(number) => number,
-                None => return Err(Error::new(node.span(), MissingNode)),
+                None => return Err(Error::new(*node.span(), MissingNode)),
             };
 
             let unit_node = match nodes.next_node() {
                 Some(unit) if *unit.value() == UNIT => unit,
                 Some(unit) => {
                     return Err(Error::new(
-                        unit.span(),
+                        *unit.span(),
                         Expected {
                             expected: UNIT,
                             actual: *unit.value(),
                         },
                     ))
                 }
-                None => return Err(Error::new(node.span(), MissingNode)),
+                None => return Err(Error::new(*node.span(), MissingNode)),
             };
 
             let value = eval(q, value_node, bias)?;
@@ -367,15 +376,15 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Num
             Ok(Numeric::new(value.value, unit))
         }
         SENTENCE | WORD => {
-            let s = q.source(node.span());
+            let s = q.source(*node.span());
 
             let m = match q
                 .db
                 .lookup(s)
-                .map_err(|error| Error::new(node.span(), LookupError { error }))?
+                .map_err(|error| Error::new(*node.span(), LookupError { error }))?
             {
                 Some(m) => m,
-                None => return Err(Error::new(node.span(), Missing { query: s.into() })),
+                None => return Err(Error::new(*node.span(), Missing { query: s.into() })),
             };
 
             match m {
@@ -392,14 +401,14 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Num
         PERCENTAGE => {
             let number = match node.first() {
                 Some(number) if *number.value() == NUMBER => number,
-                Some(node) => return Err(Error::new(node.span(), Unexpected { kind: NUMBER })),
-                _ => return Err(Error::new(node.span(), Unexpected { kind: NUMBER })),
+                Some(node) => return Err(Error::new(*node.span(), Unexpected { kind: NUMBER })),
+                _ => return Err(Error::new(*node.span(), Unexpected { kind: NUMBER })),
             };
 
-            let number = q.source(number.span());
+            let number = q.source(*number.span());
             let number = match str::parse::<Rational>(number) {
                 Ok(number) => number,
-                Err(error) => return Err(Error::new(node.span(), ParseRationalError { error })),
+                Err(error) => return Err(Error::new(*node.span(), ParseRationalError { error })),
             };
             let one_hundred = Rational::new(100u32, 1u32);
 
@@ -410,15 +419,15 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Num
 
             let name = match it.next() {
                 Some(name) if *name.value() == FN_NAME => name,
-                _ => return Err(Error::new(node.span(), Unexpected { kind: FN_NAME })),
+                _ => return Err(Error::new(*node.span(), Unexpected { kind: FN_NAME })),
             };
 
             let arguments = match it.next() {
                 Some(arguments) if *arguments.value() == FN_ARGUMENTS => arguments,
-                _ => return Err(Error::new(node.span(), Unexpected { kind: FN_ARGUMENTS })),
+                _ => return Err(Error::new(*node.span(), Unexpected { kind: FN_ARGUMENTS })),
             };
 
-            let name = q.source(name.span());
+            let name = q.source(*name.span());
 
             let mut args = Vec::new();
 
@@ -427,15 +436,15 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax>, bias: Bias) -> Result<Num
             }
 
             if let Some(builtin) = builtin(name) {
-                return builtin(node.span(), args);
+                return builtin(*node.span(), args);
             }
 
             Err(Error::new(
-                node.span(),
+                *node.span(),
                 MissingFunction { name: name.into() },
             ))
         }
-        ERROR => Err(Error::new(node.span(), SyntaxError)),
-        kind => Err(Error::new(node.span(), Unexpected { kind })),
+        ERROR => Err(Error::new(*node.span(), SyntaxError)),
+        kind => Err(Error::new(*node.span(), Unexpected { kind })),
     }
 }

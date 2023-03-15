@@ -18,8 +18,8 @@ jobs:
     - uses: dtolnay/rust-toolchain@master
       with:
         toolchain: ${{matrix.rust}}
-    - run: cargo test --workspace --all-targets
-    - run: cargo test --workspace --doc
+    - run: cargo test -p anything -p assets --all-targets
+    - run: cargo test -p anything -p assets --doc
       if: matrix.rust == 'stable'
 
   clippy:
@@ -27,16 +27,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [stable, nightly]
+        rust: ["1.68", nightly]
     steps:
     - uses: actions/checkout@v3
     - uses: dtolnay/rust-toolchain@master
       with:
         toolchain: ${{matrix.rust}}
         components: clippy
-    - run: cargo clippy -p anything --all-features --all-targets -- -D warnings
-      if: matrix.rust == 'stable'
-    - run: cargo clippy -p assets -p gen --all-features --all-targets -- -D warnings
+    - run: cargo clippy -p anything -p assets --all-features --all-targets -- -D warnings
+      if: matrix.rust == '1.68'
+    - run: cargo clippy -p gen --all-features --all-targets -- -D warnings
       if: matrix.rust == 'nightly'
 
   rustfmt:

@@ -385,8 +385,6 @@ enum Combined {
     Yocto,
     #[token("-")]
     Separator,
-    #[error]
-    Error,
 }
 
 #[derive(Logos, Debug, Clone, Copy, PartialEq, Eq)]
@@ -718,8 +716,6 @@ enum Units {
     SpecificImpulse,
     #[token("-")]
     Separator,
-    #[error]
-    Error,
 }
 
 /// Generated unit parsing function
@@ -728,7 +724,9 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
     let mut prefix = 0;
 
     loop {
-        let token = lexer.next()?;
+        let Ok(token) = lexer.next()? else {
+            return None;
+        };
 
         let unit = match token {
             Combined::Second => Unit::Second,
@@ -930,9 +928,6 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             Combined::Separator => {
                 continue;
             }
-            Combined::Error => {
-                return None;
-            }
         };
 
         return Some((lexer.remainder(), prefix, unit));
@@ -941,7 +936,9 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
     let mut lexer = Units::lexer(lexer.remainder());
 
     let unit = loop {
-        let token = lexer.next()?;
+        let Ok(token) = lexer.next()? else {
+            return None;
+        };
 
         match token {
             Units::Second => {
@@ -1205,9 +1202,6 @@ pub fn parse(s: &str) -> Option<(&str, i32, Unit)> {
             }
             Units::Separator => {
                 continue;
-            }
-            Units::Error => {
-                return None;
             }
         }
     };

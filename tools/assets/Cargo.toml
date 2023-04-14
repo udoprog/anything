@@ -5,12 +5,12 @@ edition = "2021"
 publish = false
 
 [dependencies]
-anyhow = "1.0.69"
-reqwest = { version = "0.11.14", features = ["json"] }
-tokio = { version = "1.26.0", features = ["full"] }
-serde = { version = "1.0.155", features = ["derive"] }
-serde_json = { version = "1.0.94", features = ["arbitrary_precision"] }
-toml = "0.7.2"
+anyhow = "1.0.70"
+reqwest = { version = "0.11.16", features = ["json"] }
+tokio = { version = "1.27.0", features = ["full"] }
+serde = { version = "1.0.160", features = ["derive"] }
+serde_json = { version = "1.0.96", features = ["arbitrary_precision"] }
+toml = "0.7.3"
 calamine = "0.19.1"
 bytes = "1.4.0"
 flate2 = "1.0.25"

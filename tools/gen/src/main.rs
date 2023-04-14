@@ -23,8 +23,8 @@ async fn main() -> Result<()> {
     };
 
     let units_path = PathBuf::from(root).join("data.toml");
-    let units = fs::read(units_path)?;
-    let doc: gen::units::Doc = toml::from_slice(&units)?;
+    let units = fs::read_to_string(units_path)?;
+    let doc: gen::units::Doc = toml::from_str(&units)?;
 
     let g = Path::new("src").join("generated");
 

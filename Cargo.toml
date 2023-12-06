@@ -9,7 +9,7 @@ documentation = "https://docs.rs/anything"
 readme = "README.md"
 homepage = "https://github.com/udoprog/anything"
 repository = "https://github.com/udoprog/anything"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 keywords = ["cli", "language", "scripting"]
 categories = ["command-line-interface"]
 

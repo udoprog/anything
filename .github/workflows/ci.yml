@@ -24,20 +24,10 @@ jobs:
 
   clippy:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: ["stable", nightly]
     steps:
     - uses: actions/checkout@v3
-    - uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{matrix.rust}}
-        components: clippy
-    - run: cargo clippy -p anything -p assets --all-features --all-targets -- -D warnings
-      if: matrix.rust == 'stable'
-    - run: cargo clippy -p gen --all-features --all-targets -- -D warnings
-      if: matrix.rust == 'nightly'
+    - uses: dtolnay/rust-toolchain@1.74
+    - run: cargo clippy --all-features --all-targets -- -D warnings
 
   rustfmt:
     runs-on: ubuntu-latest

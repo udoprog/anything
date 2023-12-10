@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: ["1.68", nightly]
+        rust: ["stable", nightly]
     steps:
     - uses: actions/checkout@v3
     - uses: dtolnay/rust-toolchain@master
@@ -35,7 +35,7 @@ jobs:
         toolchain: ${{matrix.rust}}
         components: clippy
     - run: cargo clippy -p anything -p assets --all-features --all-targets -- -D warnings
-      if: matrix.rust == '1.68'
+      if: matrix.rust == 'stable'
     - run: cargo clippy -p gen --all-features --all-targets -- -D warnings
       if: matrix.rust == 'nightly'
 

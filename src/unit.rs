@@ -210,14 +210,16 @@ impl fmt::Debug for Derived {
 }
 
 impl cmp::PartialEq for Derived {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.id.eq(&other.id)
     }
 }
 
 impl cmp::PartialOrd for Derived {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        self.id.partial_cmp(&other.id)
+        Some(self.cmp(other))
     }
 }
 

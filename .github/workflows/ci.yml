@@ -29,6 +29,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: dtolnay/rust-toolchain@1.74
+      with:
+        components: clippy
     - run: cargo clippy --all-features --all-targets -- -D warnings
 
   rustfmt:

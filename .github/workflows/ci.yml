@@ -18,7 +18,9 @@ jobs:
     - uses: dtolnay/rust-toolchain@master
       with:
         toolchain: ${{matrix.rust}}
+    - run: cargo build -p anything -p assets --all-targets
     - run: cargo test -p anything -p assets --all-targets
+      if: matrix.rust == 'stable'
     - run: cargo test -p anything -p assets --doc
       if: matrix.rust == 'stable'
 

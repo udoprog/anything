@@ -107,6 +107,7 @@ pub struct Doc {
     #[serde(default)]
     pub constants: Vec<PartialConstant>,
     #[serde(default)]
+    #[allow(unused)]
     pub sources: Vec<Source>,
 }
 

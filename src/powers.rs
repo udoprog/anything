@@ -163,7 +163,7 @@ pub struct Iter<'a> {
     iter: btree_map::Iter<'a, Unit, i32>,
 }
 
-impl<'a> Iterator for Iter<'a> {
+impl Iterator for Iter<'_> {
     type Item = (Unit, i32);
 
     fn next(&mut self) -> Option<Self::Item> {

@@ -54,7 +54,7 @@ impl Config {
 
         let mut hash = twox_hash::xxh3::Hash128::with_seed(SEED);
 
-        hash.write_usize(self.this_version.as_bytes().len());
+        hash.write_usize(self.this_version.len());
         hash.write(self.this_version.as_bytes());
 
         for name in Asset::iter() {

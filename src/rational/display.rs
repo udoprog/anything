@@ -202,7 +202,7 @@ impl fmt::Display for Display<'_> {
         }
 
         if exp != 0 {
-            write!(f, "e{}", exp)?;
+            write!(f, "e{exp}")?;
         }
 
         Ok(())

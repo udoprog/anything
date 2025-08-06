@@ -66,8 +66,7 @@ impl Compound {
     pub(crate) fn new(names: BTreeMap<Unit, State>) -> Self {
         debug_assert!(
             names.values().all(|s| s.power != 0),
-            "all powers of a constructed unit must be non-zero; {:?}",
-            names
+            "all powers of a constructed unit must be non-zero; {names:?}"
         );
         Self { names }
     }

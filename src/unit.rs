@@ -116,9 +116,9 @@ impl fmt::Display for Display<'_> {
         let (prefix, extra) = Prefix::find(self.data.prefix + self.unit.prefix_bias());
 
         if extra == 0 {
-            write!(f, "{}", prefix)?;
+            write!(f, "{prefix}")?;
         } else {
-            write!(f, "e{}{}", extra, prefix)?;
+            write!(f, "e{extra}{prefix}")?;
         }
 
         self.unit.format_suffix(f, self.pluralize)?;
@@ -256,8 +256,7 @@ impl<'de> de::Deserialize<'de> for Derived {
         match crate::generated::ids::id_to_derived(id) {
             Some(derived) => Ok(derived),
             None => Err(<D::Error as de::Error>::custom(format!(
-                "{} is not the identifier for a derived unit",
-                id
+                "{id} is not the identifier for a derived unit"
             ))),
         }
     }

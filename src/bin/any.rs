@@ -81,7 +81,7 @@ fn main() -> anyhow::Result<()> {
                 }
 
                 let disp = value.unit.display(!value.value.is_one());
-                writeln!(out, "{}", disp)?;
+                writeln!(out, "{disp}")?;
             }
             Err(e) => {
                 let labels = vec![Label::primary(id, e.range()).with_message(e.to_string())];

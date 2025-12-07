@@ -466,13 +466,13 @@ impl std::str::FromStr for Compound {
         };
 
         let children = match node.first() {
-            Some(node) if *node.value() == Syntax::UNIT => node.children(),
+            Some(node) if node.value() == Syntax::UNIT => node.children(),
             Some(node) => {
                 return Err(Error::new(
                     *node.span(),
                     ErrorKind::Expected {
                         expected: Syntax::UNIT,
-                        actual: *node.value(),
+                        actual: node.value(),
                     },
                 ))
             }

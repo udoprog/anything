@@ -1,7 +1,7 @@
 use num::bigint::Sign;
 use num::{Signed, Zero};
 use syntree::node::Children;
-use syntree::{Node, Span};
+use syntree::{FlavorDefault, Node, Span};
 
 use crate::compound::{Compound, CompoundError};
 use crate::error::{Error, ErrorKind};
@@ -180,7 +180,7 @@ fn pow(span: Span<u32>, base: Numeric, pow: Numeric) -> Result<Numeric> {
 /// Parse a unit.
 pub(crate) fn unit(
     source: &str,
-    mut nodes: Children<'_, Syntax, u32, u32>,
+    mut nodes: Children<'_, Syntax, FlavorDefault>,
     _bias: Bias,
 ) -> Result<Compound> {
     let mut current = 1;
@@ -188,7 +188,7 @@ pub(crate) fn unit(
     let mut last = None;
 
     while let Some(node) = nodes.next_node() {
-        match *node.value() {
+        match node.value() {
             NUMBER => {
                 let power = match str::parse::<i32>(&source[node.range()]) {
                     Ok(power) => power,
@@ -230,7 +230,7 @@ pub(crate) fn unit(
             }
             OP_POWER => {
                 let (kind, span) = match (last.take(), nodes.next_node()) {
-                    (Some(last), Some(node)) if *node.value() == NUMBER => {
+                    (Some(last), Some(node)) if node.value() == NUMBER => {
                         let span = node.span();
 
                         let power = match str::parse::<i32>(&source[span.range()]) {
@@ -241,8 +241,8 @@ pub(crate) fn unit(
                         compound.update_power(last, power * current);
                         continue;
                     }
-                    (_, Some(node)) => (*node.value(), *node.span()),
-                    _ => (*node.value(), *node.span()),
+                    (_, Some(node)) => (node.value(), *node.span()),
+                    _ => (node.value(), *node.span()),
                 };
 
                 return Err(Error::new(span, Unexpected { kind }));
@@ -262,7 +262,7 @@ pub(crate) fn unit(
 
 /// Helper to delay evaluation of a syntax node so that we can modify its bias.
 enum DelayedEval<'a> {
-    Node(Node<'a, Syntax, u32, u32>),
+    Node(Node<'a, Syntax, FlavorDefault>),
     Numeric(Numeric),
 }
 
@@ -276,8 +276,12 @@ impl DelayedEval<'_> {
 }
 
 /// Evaluate the given syntax node.
-pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax, u32, u32>, bias: Bias) -> Result<Numeric> {
-    match *node.value() {
+pub fn eval(
+    q: &mut Query<'_>,
+    node: Node<'_, Syntax, FlavorDefault>,
+    bias: Bias,
+) -> Result<Numeric> {
+    match node.value() {
         OPERATION => {
             let mut it = node.children().skip_tokens();
 
@@ -289,7 +293,7 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax, u32, u32>, bias: Bias) -> 
             let mut base = DelayedEval::Node(base);
 
             while let (Some(op), Some(rhs)) = (it.next(), it.next()) {
-                let op = match *op.value() {
+                let op = match op.value() {
                     OP_ADD => add,
                     OP_SUB => sub,
                     OP_DIV => div,
@@ -358,13 +362,13 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax, u32, u32>, bias: Bias) -> 
             };
 
             let unit_node = match nodes.next_node() {
-                Some(unit) if *unit.value() == UNIT => unit,
+                Some(unit) if unit.value() == UNIT => unit,
                 Some(unit) => {
                     return Err(Error::new(
                         *unit.span(),
                         Expected {
                             expected: UNIT,
-                            actual: *unit.value(),
+                            actual: unit.value(),
                         },
                     ))
                 }
@@ -400,7 +404,7 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax, u32, u32>, bias: Bias) -> 
         }
         PERCENTAGE => {
             let number = match node.first() {
-                Some(number) if *number.value() == NUMBER => number,
+                Some(number) if number.value() == NUMBER => number,
                 Some(node) => return Err(Error::new(*node.span(), Unexpected { kind: NUMBER })),
                 _ => return Err(Error::new(*node.span(), Unexpected { kind: NUMBER })),
             };
@@ -418,12 +422,12 @@ pub fn eval(q: &mut Query<'_>, node: Node<'_, Syntax, u32, u32>, bias: Bias) -> 
             let mut it = node.children().skip_tokens();
 
             let name = match it.next() {
-                Some(name) if *name.value() == FN_NAME => name,
+                Some(name) if name.value() == FN_NAME => name,
                 _ => return Err(Error::new(*node.span(), Unexpected { kind: FN_NAME })),
             };
 
             let arguments = match it.next() {
-                Some(arguments) if *arguments.value() == FN_ARGUMENTS => arguments,
+                Some(arguments) if arguments.value() == FN_ARGUMENTS => arguments,
                 _ => return Err(Error::new(*node.span(), Unexpected { kind: FN_ARGUMENTS })),
             };
 

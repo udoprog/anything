@@ -1,5 +1,3 @@
-use crate::compound::Compound;
-use crate::rational::Rational;
 use anyhow::{anyhow, Context, Result};
 use flate2::read::GzDecoder;
 use hashbrown::HashMap;
@@ -12,8 +10,11 @@ use tantivy::schema::{
     Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, Value, STORED,
 };
 use tantivy::tokenizer::{LowerCaser, NgramTokenizer, TextAnalyzer};
-use tantivy::{Document, Index, IndexReader, IndexWriter, ReloadPolicy, TantivyError};
+use tantivy::{Index, IndexReader, IndexWriter, ReloadPolicy, TantivyDocument, TantivyError};
 use thiserror::Error;
+
+use crate::compound::Compound;
+use crate::rational::Rational;
 
 const SOURCES_BIN_GZ: &str = "sources.bin.gz";
 
@@ -163,18 +164,17 @@ impl Db {
             index
         };
 
-        let tokenizer = TextAnalyzer::from(NgramTokenizer::new(1, 7, true)).filter(LowerCaser);
+        let ngram = NgramTokenizer::new(1, 7, true)?;
+
+        let tokenizer = TextAnalyzer::builder(ngram).filter(LowerCaser).build();
+
         index.tokenizers().register("ngram", tokenizer);
 
         let schema = index.schema();
 
-        let field_data = schema
-            .get_field("data")
-            .ok_or_else(|| anyhow!("missing field `data`"))?;
+        let field_data = schema.get_field("data")?;
 
-        let field_name = schema
-            .get_field("name")
-            .ok_or_else(|| anyhow!("missing field `name`"))?;
+        let field_name = schema.get_field("name")?;
 
         let reader = index
             .reader_builder()
@@ -234,10 +234,14 @@ impl Db {
         let top_docs = searcher.search(&query, &TopDocs::with_limit(1))?;
 
         for (_score, id) in top_docs {
-            let doc = searcher.doc(id)?;
+            let doc: TantivyDocument = searcher.doc(id)?;
 
-            if let Some(Value::Bytes(data)) = doc.get_first(self.field_data) {
-                let c: Constant = match serde_cbor::from_slice(data) {
+            if let Some(value) = doc.get_first(self.field_data) {
+                let Some(bytes) = value.as_bytes() else {
+                    continue;
+                };
+
+                let c: Constant = match serde_cbor::from_slice(bytes) {
                     Ok(c) => c,
                     Err(..) => continue,
                 };
@@ -254,8 +258,10 @@ impl Db {
         let doc: Doc = load_bytes(bytes)?;
 
         for c in doc.constants {
-            let mut doc = Document::default();
-            doc.add_bytes(self.field_data, serde_cbor::to_vec(&c)?);
+            let mut doc = TantivyDocument::default();
+
+            let bytes = serde_cbor::to_vec(&c)?;
+            doc.add_bytes(self.field_data, &bytes);
 
             for token in &c.tokens {
                 doc.add_text(self.field_name, token.as_ref());

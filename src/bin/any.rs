@@ -88,7 +88,7 @@ fn main() -> anyhow::Result<()> {
                 let diagnostic = Diagnostic::error()
                     .with_message(e.to_string())
                     .with_labels(labels);
-                term::emit(&mut out, &config, &files, &diagnostic)?;
+                term::emit_to_io_write(&mut out, &config, &files, &diagnostic)?;
             }
         }
     }

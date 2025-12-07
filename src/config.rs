@@ -47,28 +47,25 @@ impl Config {
 
     /// Hash all available assets so we can determine if we need to rebuild or not.
     pub fn hash_assets(&self) -> String {
-        use std::hash::Hasher;
-        use twox_hash::xxh3::HasherExt;
-
         const SEED: u64 = 0x9a7f42b11904b426;
 
-        let mut hash = twox_hash::xxh3::Hash128::with_seed(SEED);
+        let mut hash = twox_hash::xxhash3_128::Hasher::with_seed(SEED);
 
-        hash.write_usize(self.this_version.len());
+        hash.write(&self.this_version.len().to_le_bytes());
         hash.write(self.this_version.as_bytes());
 
         for name in Asset::iter() {
             if let Some(content) = Asset::get(name.as_ref()) {
                 let name = name.as_ref().as_bytes();
 
-                hash.write_usize(name.len());
+                hash.write(&name.len().to_le_bytes());
                 hash.write(name);
-                hash.write_usize(content.data.len());
+                hash.write(&content.data.len().to_le_bytes());
                 hash.write(&content.metadata.sha256_hash()[..]);
             }
         }
 
-        format!("{:x}", hash.finish_ext())
+        format!("{:x}", hash.finish_128())
     }
 }
 

@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
-use syntree::pointer::Width;
-use syntree::{Builder, Checkpoint, Tree};
+use syntree::pointer::PointerUsize;
+use syntree::{Builder, Checkpoint, FlavorDefault, Tree};
 
 use crate::syntax::grammar;
 use crate::syntax::lexer::{Lexer, Token};
@@ -98,7 +98,7 @@ use Syntax::*;
 /// A parser.
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
-    builder: Builder<Syntax, u32, u32>,
+    builder: Builder<Syntax, FlavorDefault>,
     buf: VecDeque<Token>,
 }
 
@@ -113,13 +113,13 @@ impl<'a> Parser<'a> {
     }
 
     /// Consume and parse a root node.
-    pub fn parse_root(mut self) -> Result<Tree<Syntax, u32, u32>> {
+    pub fn parse_root(mut self) -> Result<Tree<Syntax, FlavorDefault>> {
         grammar::root(&mut self)?;
         self.builder.build()
     }
 
     /// Consume and parse a unit node.
-    pub fn parse_unit(mut self) -> Result<Tree<Syntax, u32, u32>> {
+    pub fn parse_unit(mut self) -> Result<Tree<Syntax, FlavorDefault>> {
         if grammar::unit(&mut self, Skip::ZERO)?.is_none() {
             self.bump_empty_node(ERROR)?;
         }
@@ -160,7 +160,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    pub(crate) fn checkpoint(&mut self) -> Result<Checkpoint<<u32 as Width>::Pointer>> {
+    pub(crate) fn checkpoint(&mut self) -> Result<Checkpoint<PointerUsize>> {
         self.builder.checkpoint()
     }
 
@@ -177,16 +177,12 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    pub(crate) fn close_at(
-        &mut self,
-        c: &Checkpoint<<u32 as Width>::Pointer>,
-        kind: Syntax,
-    ) -> Result<()> {
+    pub(crate) fn close_at(&mut self, c: &Checkpoint<PointerUsize>, kind: Syntax) -> Result<()> {
         self.builder.close_at(c, kind)?;
         Ok(())
     }
 
-    pub(crate) fn error_node_at(&mut self, c: &Checkpoint<<u32 as Width>::Pointer>) -> Result<()> {
+    pub(crate) fn error_node_at(&mut self, c: &Checkpoint<PointerUsize>) -> Result<()> {
         self.builder.close_at(c, ERROR)?;
         Ok(())
     }

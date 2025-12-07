@@ -1,9 +1,10 @@
 use std::cmp::Ordering;
 
-use crate::syntax::parser::{Parser, Skip, Syntax};
+use syntree::pointer::PointerUsize;
 use syntree::Checkpoint;
 
-type PointerU32 = <u32 as syntree::pointer::Width>::Pointer;
+use crate::syntax::parser::{Parser, Skip, Syntax};
+
 type Result<T, E = syntree::Error> = std::result::Result<T, E>;
 
 use Syntax::*;
@@ -72,7 +73,7 @@ fn call_arguments(p: &mut Parser<'_>) -> Result<bool> {
     p.eat(skip, &[CLOSE_PAREN])
 }
 
-fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerU32>>> {
+fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerUsize>>> {
     match p.nth(skip, 0) {
         // Escape sequence.
         OPEN_BRACE => {
@@ -188,7 +189,7 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerU32>
 pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>> {
     let open = p.checkpoint()?;
 
-    let mut stack = Vec::<(Checkpoint<PointerU32>, i32, bool)>::new();
+    let mut stack = Vec::<(Checkpoint<PointerUsize>, i32, bool)>::new();
     let mut first = true;
 
     loop {
@@ -242,7 +243,7 @@ pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>> {
         p: &mut Parser<'_>,
         skip: Skip,
         is_unit: bool,
-    ) -> Result<Option<Checkpoint<PointerU32>>> {
+    ) -> Result<Option<Checkpoint<PointerUsize>>> {
         let c = if is_unit {
             p.skip(skip)?;
             unit(p, Skip::ZERO)?
@@ -272,7 +273,7 @@ pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>> {
 }
 
 /// Parse a unit.
-pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Checkpoint<PointerU32>>> {
+pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Checkpoint<PointerUsize>>> {
     let mut c = None;
 
     'outer: loop {

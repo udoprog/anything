@@ -10,14 +10,14 @@ use crate::db::{Db, Sources};
 
 const SOURCE: u64 = 0x23afb9ae5087db93;
 
-const URL: &str = "https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/EXCEL_FILES/1_Population/WPP2019_POP_F01_1_TOTAL_POPULATION_BOTH_SEXES.xlsx";
+const URL: &str = "https://population.un.org/wpp/assets/Excel%20Files/1_Indicator%20(Standard)/EXCEL_FILES/2_Population/WPP2024_POP_F01_1_POPULATION_SINGLE_AGE_BOTH_SEXES.xlsx";
 
 /// Download and format planetary constants.
 pub async fn download(analyzer: &Analyzer, db: &mut Db, sources: &mut Sources) -> Result<()> {
     sources.sources.push(Source {
         id: SOURCE,
         description: "Population data from the UN".into(),
-        url: Some("https://population.un.org/wpp/Download/Standard/Population/".into()),
+        url: Some("https://population.un.org/wpp/".into()),
     });
 
     let bytes = cache::get("populations", URL).await?;

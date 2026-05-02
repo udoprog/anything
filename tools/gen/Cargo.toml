@@ -6,7 +6,7 @@ publish = false
 [dependencies]
 anyhow = "1.0.70"
 serde = { version = "1.0.160", features = ["derive"] }
-toml = "0.9.8"
+toml = "1.1.2"
 genco = "0.19.0"
-reqwest = "0.12.24"
+reqwest = "0.13.3"
 tokio = { version = "1.27.0", features = ["full"] }

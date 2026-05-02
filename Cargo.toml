@@ -16,13 +16,12 @@ categories = ["command-line-interface"]
 [dependencies]
 num = { version = "0.4.0", features = ["serde"] }
 anyhow = "1.0.70"
-hashbrown = "0.16.1"
 serde = { version = "1.0.160", features = ["derive"] }
 syntree = "0.18.0"
-logos = "0.15.0"
+logos = "0.16.1"
 thiserror = "2.0.17"
 codespan-reporting = "0.13.1"
-tantivy = "0.25.0"
+tantivy = "0.26.1"
 rust-embed = "8.9.0"
 directories = "6.0.0"
 twox-hash = { version = "2.1.2", features = ["xxhash3_128"] }

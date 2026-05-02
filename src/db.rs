@@ -1,9 +1,10 @@
-use anyhow::{anyhow, Context, Result};
-use flate2::read::GzDecoder;
-use hashbrown::HashMap;
-use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::io::Cursor;
+
+use anyhow::{anyhow, Context, Result};
+use flate2::read::GzDecoder;
+use serde::{Deserialize, Serialize};
 use tantivy::collector::TopDocs;
 use tantivy::query::{QueryParser, QueryParserError};
 use tantivy::schema::{
@@ -231,7 +232,7 @@ impl Db {
 
         let query_parser = QueryParser::for_index(&self.index, vec![self.field_name]);
         let query = query_parser.parse_query(query)?;
-        let top_docs = searcher.search(&query, &TopDocs::with_limit(1))?;
+        let top_docs = searcher.search(&query, &TopDocs::with_limit(1).order_by_score())?;
 
         for (_score, id) in top_docs {
             let doc: TantivyDocument = searcher.doc(id)?;

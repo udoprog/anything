@@ -7,7 +7,6 @@ rust-version = "1.91"
 description = "Calculate everything and nothing with perfect precision."
 documentation = "https://docs.rs/anything"
 readme = "README.md"
-homepage = "https://github.com/udoprog/anything"
 repository = "https://github.com/udoprog/anything"
 license = "MIT OR Apache-2.0"
 keywords = ["cli", "language", "scripting"]

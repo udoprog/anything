@@ -2408,9 +2408,9 @@ dependencies = [
 
 [[package]]
 name = "syntree"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "108d16bbb714549988d78eb522b72356e7b639fb2a88bb52cc2e531f5bd681c3"
+checksum = "766e439a7239c06cb29e2981c041b3ad997285192a809819c9b90e072e70fc5f"
 
 [[package]]
 name = "system-configuration"

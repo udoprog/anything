@@ -16,7 +16,7 @@ categories = ["command-line-interface"]
 num = { version = "0.4.0", features = ["serde"] }
 anyhow = "1.0.70"
 serde = { version = "1.0.160", features = ["derive"] }
-syntree = "0.20.0"
+syntree = "0.20.1"
 logos = "0.16.1"
 thiserror = "2.0.17"
 codespan-reporting = "0.13.1"

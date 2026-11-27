@@ -275,6 +275,13 @@ impl DelayedEval<'_> {
     }
 }
 
+fn number(q: &Query<'_>, span: Span<u32>) -> Result<Rational> {
+    match str::parse::<Rational>(q.source(span)) {
+        Ok(number) => Ok(number),
+        Err(error) => Err(Error::new(span, ParseRationalError { error })),
+    }
+}
+
 /// Evaluate the given syntax node.
 pub fn eval(
     q: &mut Query<'_>,
@@ -346,18 +353,15 @@ pub fn eval(
             Ok(numeric)
         }
         NUMBER => {
-            let number = q.source(*node.span());
-            let number = match str::parse::<Rational>(number) {
-                Ok(number) => number,
-                Err(error) => return Err(Error::new(*node.span(), ParseRationalError { error })),
-            };
+            let number = number(q, *node.span())?;
             Ok(Numeric::new(number, Compound::empty()))
         }
         WITH_UNIT => {
             let mut nodes = node.children();
 
-            let value_node = match nodes.next() {
-                Some(number) => number,
+            let value = match nodes.next() {
+                Some(number) if number.value() == NUMBER => number,
+                Some(number) => return Err(Error::new(number.span(), Unexpected { kind: NUMBER })),
                 None => return Err(Error::new(*node.span(), MissingNode)),
             };
 
@@ -375,9 +379,9 @@ pub fn eval(
                 None => return Err(Error::new(*node.span(), MissingNode)),
             };
 
-            let value = eval(q, value_node, bias)?;
+            let value = number(q, value.span())?;
             let unit = unit(q.source_as_str(), unit_node.children(), bias)?;
-            Ok(Numeric::new(value.value, unit))
+            Ok(Numeric::new(value, unit))
         }
         SENTENCE | WORD => {
             let s = q.source(*node.span());
@@ -403,17 +407,13 @@ pub fn eval(
             }
         }
         PERCENTAGE => {
-            let number = match node.first() {
+            let token = match node.first() {
                 Some(number) if number.value() == NUMBER => number,
-                Some(node) => return Err(Error::new(*node.span(), Unexpected { kind: NUMBER })),
+                Some(node) => return Err(Error::new(node.span(), Unexpected { kind: NUMBER })),
                 _ => return Err(Error::new(*node.span(), Unexpected { kind: NUMBER })),
             };
 
-            let number = q.source(*number.span());
-            let number = match str::parse::<Rational>(number) {
-                Ok(number) => number,
-                Err(error) => return Err(Error::new(*node.span(), ParseRationalError { error })),
-            };
+            let number = number(q, token.span())?;
             let one_hundred = Rational::new(100u32, 1u32);
 
             Ok(Numeric::new(number / one_hundred, Compound::empty()))

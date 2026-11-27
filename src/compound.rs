@@ -465,7 +465,7 @@ impl std::str::FromStr for Compound {
             }
         };
 
-        let children = match node.first() {
+        let children = match node.children().next_node() {
             Some(node) if node.value() == Syntax::UNIT => node.children(),
             Some(node) => {
                 return Err(Error::new(

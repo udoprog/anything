@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use syntree::pointer::PointerUsize;
+use syntree::pointer::PointerU32;
 use syntree::{Builder, Checkpoint, FlavorDefault, Tree};
 
 use crate::syntax::grammar;
@@ -160,7 +160,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    pub(crate) fn checkpoint(&mut self) -> Result<Checkpoint<PointerUsize>> {
+    pub(crate) fn checkpoint(&mut self) -> Result<Checkpoint<PointerU32>> {
         self.builder.checkpoint()
     }
 
@@ -177,12 +177,12 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    pub(crate) fn close_at(&mut self, c: &Checkpoint<PointerUsize>, kind: Syntax) -> Result<()> {
+    pub(crate) fn close_at(&mut self, c: Checkpoint<PointerU32>, kind: Syntax) -> Result<()> {
         self.builder.close_at(c, kind)?;
         Ok(())
     }
 
-    pub(crate) fn error_node_at(&mut self, c: &Checkpoint<PointerUsize>) -> Result<()> {
+    pub(crate) fn error_node_at(&mut self, c: Checkpoint<PointerU32>) -> Result<()> {
         self.builder.close_at(c, ERROR)?;
         Ok(())
     }

@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use syntree::pointer::PointerUsize;
+use syntree::pointer::PointerU32;
 use syntree::Checkpoint;
 
 use crate::syntax::parser::{Parser, Skip, Syntax};
@@ -26,7 +26,7 @@ pub fn root(p: &mut Parser<'_>) -> Result<()> {
                 if let Some(s) = operation(p, skip)? {
                     skip = s;
                 } else {
-                    p.error_node_at(&c)?;
+                    p.error_node_at(c)?;
                 }
             }
             _ => {
@@ -39,7 +39,7 @@ pub fn root(p: &mut Parser<'_>) -> Result<()> {
     }
 
     if error {
-        p.close_at(&c, ERROR)?;
+        p.close_at(c, ERROR)?;
     }
 
     Ok(())
@@ -69,11 +69,11 @@ fn call_arguments(p: &mut Parser<'_>) -> Result<bool> {
         }
     };
 
-    p.close_at(&c, FN_ARGUMENTS)?;
+    p.close_at(c, FN_ARGUMENTS)?;
     p.eat(skip, &[CLOSE_PAREN])
 }
 
-fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerUsize>>> {
+fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerU32>>> {
     match p.nth(skip, 0) {
         // Escape sequence.
         OPEN_BRACE => {
@@ -94,7 +94,7 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerUsiz
             }
 
             if words > 1 {
-                p.close_at(&c, SENTENCE)?;
+                p.close_at(c, SENTENCE)?;
             }
 
             if !p.eat(skip, &[CLOSE_BRACE])? {
@@ -112,14 +112,14 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerUsiz
             p.bump_node(WORD)?;
 
             if let OPEN_PAREN = p.nth(Skip::ZERO, 0) {
-                p.close_at(&c, FN_NAME)?;
+                p.close_at(c, FN_NAME)?;
                 p.bump()?;
 
                 if !call_arguments(p)? {
                     return Ok(None);
                 }
 
-                p.close_at(&c, FN_CALL)?;
+                p.close_at(c, FN_CALL)?;
                 return Ok(Some(start));
             }
 
@@ -134,7 +134,7 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerUsiz
             }
 
             if is_sentence {
-                p.close_at(&c, SENTENCE)?;
+                p.close_at(c, SENTENCE)?;
             }
 
             Ok(Some(start))
@@ -161,7 +161,7 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerUsiz
                 }
             };
 
-            p.close_at(&c, kind)?;
+            p.close_at(c, kind)?;
             Ok(Some(c))
         }
         OPEN_PAREN => {
@@ -189,7 +189,7 @@ fn value(p: &mut Parser<'_>, skip: Skip) -> Result<Option<Checkpoint<PointerUsiz
 pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>> {
     let open = p.checkpoint()?;
 
-    let mut stack = Vec::<(Checkpoint<PointerUsize>, i32, bool)>::new();
+    let mut stack = Vec::<(Checkpoint<PointerU32>, i32, bool)>::new();
     let mut first = true;
 
     loop {
@@ -206,14 +206,14 @@ pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>> {
         };
 
         if std::mem::take(&mut first) {
-            stack.push((open.clone(), priority, extra));
+            stack.push((open, priority, extra));
         }
 
         while let Some(prev) = stack.last_mut() {
             match priority.cmp(&prev.1) {
                 Ordering::Less => {
-                    p.close_at(&prev.0, OPERATION)?;
-                    *prev = (prev.0.clone(), priority, extra);
+                    p.close_at(prev.0, OPERATION)?;
+                    *prev = (prev.0, priority, extra);
                     continue;
                 }
                 Ordering::Greater => {
@@ -234,7 +234,7 @@ pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>> {
     }
 
     while let Some((last, _, _)) = stack.pop() {
-        p.close_at(&last, OPERATION)?;
+        p.close_at(last, OPERATION)?;
     }
 
     return Ok(Some(skip));
@@ -243,7 +243,7 @@ pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>> {
         p: &mut Parser<'_>,
         skip: Skip,
         is_unit: bool,
-    ) -> Result<Option<Checkpoint<PointerUsize>>> {
+    ) -> Result<Option<Checkpoint<PointerU32>>> {
         let c = if is_unit {
             p.skip(skip)?;
             unit(p, Skip::ZERO)?
@@ -273,7 +273,7 @@ pub fn operation(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Skip>> {
 }
 
 /// Parse a unit.
-pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Checkpoint<PointerUsize>>> {
+pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Checkpoint<PointerU32>>> {
     let mut c = None;
 
     'outer: loop {
@@ -308,7 +308,7 @@ pub fn unit(p: &mut Parser<'_>, mut skip: Skip) -> Result<Option<Checkpoint<Poin
         };
     }
 
-    if let Some(c) = &c {
+    if let Some(c) = c {
         p.close_at(c, UNIT)?;
     }
 

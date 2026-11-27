@@ -119,7 +119,7 @@ impl Iterator for Query<'_> {
     type Item = Result<Numeric, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let node = self.children.next()?;
+        let node = self.children.next_node()?;
         Some(crate::eval::eval(self, node, Default::default()))
     }
 }
